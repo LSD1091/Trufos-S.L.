@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AESD S.L. — Gestión de Pisos</title>
+<title>Trufos S.L. — Gestión de Pisos</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0f0f13;--surface:#18181f;--surface2:#1f1f2a;--border:#2a2a38;--accent:#7c6af7;--accent2:#f7c46a;--accent3:#6af7b8;--danger:#f76a6a;--text:#e8e8f0;--text2:#8888a8;--radius:12px;--radius-lg:18px;}
@@ -216,7 +216,7 @@ textarea{resize:vertical;min-height:68px;}
 <!-- ── PIN SCREEN ── -->
 <div id="pinScreen">
   <div class="pin-card">
-    <div class="pin-logo">AESD <span>S.L.</span></div>
+    <div class="pin-logo">Trufos <span>S.L.</span></div>
     <div class="pin-sub">Introduce tu PIN de acceso</div>
     <div class="pin-dots">
       <div class="pin-dot" id="pd0"></div>
@@ -246,7 +246,7 @@ textarea{resize:vertical;min-height:68px;}
 <!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="sidebar-logo">
-    <div class="logo-text">AESD <span>S.L.</span></div>
+    <div class="logo-text">Trufos <span>S.L.</span></div>
     <div class="logo-sub">Gestión de pisos</div>
   </div>
   <nav class="sidebar-nav">
@@ -262,7 +262,7 @@ textarea{resize:vertical;min-height:68px;}
   </nav>
   <div class="sidebar-footer">
     <div class="piso-badge" id="sidebarPiso">
-      <div class="piso-name">AESD S.L.</div>
+      <div class="piso-name">Trufos S.L.</div>
       <div class="piso-addr">Sin configurar</div>
     </div>
   </div>
@@ -559,12 +559,12 @@ textarea{resize:vertical;min-height:68px;}
 
 <script>
 // ═══ PIN ═══
-const PIN_CODE='0412';
+const PIN_CODE='2704';
 const PIN_TTL=30*60*1000; // 30 minutos en ms
 let _pinBuffer='';
 
 function checkPinSession(){
-  const ts=sessionStorage.getItem('aesd_pin_ts');
+  const ts=sessionStorage.getItem('trufos_pin_ts');
   if(ts&&(Date.now()-parseInt(ts))<PIN_TTL){
     unlockApp(true);return true;
   }
@@ -573,7 +573,7 @@ function checkPinSession(){
 function unlockApp(silent=false){
   document.getElementById('pinScreen').style.display='none';
   document.getElementById('mainApp').style.display='flex';
-  if(!silent)sessionStorage.setItem('aesd_pin_ts',Date.now().toString());
+  if(!silent)sessionStorage.setItem('trufos_pin_ts',Date.now().toString());
 }
 function pinKey(k){
   if(_pinBuffer.length>=4)return;
@@ -607,17 +607,17 @@ function checkPin(){
 }
 // Renovar sesión en cada interacción
 document.addEventListener('click',()=>{
-  if(sessionStorage.getItem('aesd_pin_ts'))
-    sessionStorage.setItem('aesd_pin_ts',Date.now().toString());
+  if(sessionStorage.getItem('trufos_pin_ts'))
+    sessionStorage.setItem('trufos_pin_ts',Date.now().toString());
 },{passive:true});
 
 // ═══ DATA ═══
-let DB={pisos:[],currentPisoId:null,habitaciones:[],inquilinos:[],contratos:[],cobros:[],gastos:[],_deleted:{}};let currentPiso=null;
-const SYNC_BIN_ID='6a072fad250b1311c355330a';
+let DB={pisos:[],currentPisoId:null,habitaciones:[],inquilinos:[],contratos:[],cobros:[],gastos:[]};let currentPiso=null;
+const SYNC_BIN_ID='6a070e8dc0954111d8296430';
 const SYNC_API_KEY='$2a$10$Pip4BJmfyqD.HokbqQlK/eRAZrv/hrytyW/mrkIuyc7y0XzIBCp9C';
 let SYNC={apiKey:SYNC_API_KEY,binId:SYNC_BIN_ID};
 function sanitizeDB(d){
-  const def={pisos:[],currentPisoId:null,habitaciones:[],inquilinos:[],contratos:[],cobros:[],gastos:[],_deleted:{}};
+  const def={pisos:[],currentPisoId:null,habitaciones:[],inquilinos:[],contratos:[],cobros:[],gastos:[]};
   if(!d||typeof d!=='object')return def;
   // Migración: si viene del formato antiguo con d.piso, convertirlo
   let pisos=Array.isArray(d.pisos)?d.pisos:[];
@@ -635,21 +635,13 @@ function sanitizeDB(d){
     contratos:Array.isArray(d.contratos)?d.contratos:[],
     cobros:Array.isArray(d.cobros)?d.cobros:[],
     gastos:Array.isArray(d.gastos)?d.gastos:[],
-    _deleted:(d._deleted&&typeof d._deleted==='object')?d._deleted:{},
   };
 }
-// Registra un borrado con timestamp (tombstone) y elimina del array
-function markDeleted(col,id){
-  const ts=new Date().toISOString();
-  if(!DB._deleted)DB._deleted={};
-  DB._deleted[id]=ts;
-  DB[col]=DB[col].filter(x=>x.id!==id);
-}
 function loadLocal(){
-  const d=localStorage.getItem('aesd_db');if(d)try{DB=sanitizeDB(JSON.parse(d));}catch(e){}
+  const d=localStorage.getItem('trufos_db');if(d)try{DB=sanitizeDB(JSON.parse(d));}catch(e){}
   // credenciales fijas — no se leen de localStorage
 }
-function saveLocal(){localStorage.setItem('aesd_db',JSON.stringify(DB));}
+function saveLocal(){localStorage.setItem('trufos_db',JSON.stringify(DB));}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
 loadLocal();
 
@@ -693,12 +685,6 @@ async function pullFromCloud(silent=false){
   if(!silent)setSyncStatus('loading','Cargando datos…');
   try{
     const remote=await _fetchCloud();
-    // Aplicar tombstones locales sobre los datos remotos para no restaurar borrados
-    const localDeleted=DB._deleted||{};
-    const cols=['pisos','habitaciones','inquilinos','contratos','cobros','gastos'];
-    cols.forEach(col=>{if(Array.isArray(remote[col]))remote[col]=remote[col].filter(x=>!localDeleted[x.id]);});
-    // Fusionar mapas de borrados
-    remote._deleted=Object.assign({},remote._deleted||{},localDeleted);
     DB=remote;
     saveLocal();
     setSyncStatus('ok','✓ '+new Date().toLocaleTimeString('es'));
@@ -736,41 +722,35 @@ async function saveDB(){
     catch(e){ remote=null; } // si falla la descarga, subimos igualmente
     
     // 2. Merge: si hay datos remotos, fusionar con los locales
-    // Los tombstones (_deleted) garantizan que los borrados no se restauren.
+    // Regla: para cada colección, unir por id. Si hay conflicto (mismo id), 
+    // gana el que tenga campo "updatedAt" más reciente (o el local si no hay campo).
     let merged=DB;
     if(remote){
-      // Fusionar mapas de borrados: gana el timestamp más reciente
-      const mergedDeleted=Object.assign({},remote._deleted||{});
-      const localDeleted=DB._deleted||{};
-      for(const id of Object.keys(localDeleted)){
-        if(!mergedDeleted[id]||localDeleted[id]>=mergedDeleted[id])
-          mergedDeleted[id]=localDeleted[id];
-      }
       const mergeCollection=(local,rem)=>{
         const byId={};
+        // Primero los remotos
         rem.forEach(item=>byId[item.id]=item);
+        // Luego los locales (sobreescriben si son más nuevos o iguales)
         local.forEach(item=>{
           const existing=byId[item.id];
           if(!existing){byId[item.id]=item;}
           else{
+            // Gana el más reciente por updatedAt, si no por creado
             const tLocal=item.updatedAt||item.creado||'';
             const tRemote=existing.updatedAt||existing.creado||'';
             if(tLocal>=tRemote)byId[item.id]=item;
           }
         });
-        // Eliminar items borrados (tombstones)
-        for(const id of Object.keys(mergedDeleted)) delete byId[id];
         return Object.values(byId);
       };
       merged={
         pisos:mergeCollection(DB.pisos,remote.pisos||[]),
         currentPisoId:DB.currentPisoId||remote.currentPisoId||null,
-        habitaciones:mergeCollection(DB.habitaciones,remote.habitaciones||[]),
-        inquilinos:mergeCollection(DB.inquilinos,remote.inquilinos||[]),
-        contratos:mergeCollection(DB.contratos,remote.contratos||[]),
-        cobros:mergeCollection(DB.cobros,remote.cobros||[]),
-        gastos:mergeCollection(DB.gastos,remote.gastos||[]),
-        _deleted:mergedDeleted,
+        habitaciones:mergeCollection(DB.habitaciones,remote.habitaciones),
+        inquilinos:mergeCollection(DB.inquilinos,remote.inquilinos),
+        contratos:mergeCollection(DB.contratos,remote.contratos),
+        cobros:mergeCollection(DB.cobros,remote.cobros),
+        gastos:mergeCollection(DB.gastos,remote.gastos),
       };
       DB=merged;
       saveLocal();
@@ -893,7 +873,7 @@ async function eliminarPiso(id){
   const tieneHabs=DB.habitaciones.some(h=>h.pisoId===id);
   if(tieneHabs&&!confirm('Este inmueble tiene habitaciones asociadas. ¿Eliminar igualmente?'))return;
   if(!confirm('¿Eliminar este inmueble?'))return;
-  markDeleted('pisos',id);
+  DB.pisos=DB.pisos.filter(x=>x.id!==id);
   if(DB.currentPisoId===id)DB.currentPisoId=DB.pisos[0]?.id||null;
   await saveDB();
   renderConfigPage();
@@ -958,7 +938,7 @@ function updateSidebarPiso(){
   const p=getCurrentPiso();
   document.getElementById('sidebarPiso').innerHTML=p
     ?`<div class="piso-name">${p.nombre}</div><div class="piso-addr">${p.direccion?p.direccion.split(',')[0]:'Sin dirección'}</div>`
-    :`<div class="piso-name">AESD S.L.</div><div class="piso-addr">Sin inmueble</div>`;
+    :`<div class="piso-name">Trufos S.L.</div><div class="piso-addr">Sin inmueble</div>`;
 }
 function updatePageSubtitles(){
   const p=getCurrentPiso();
@@ -982,7 +962,7 @@ async function saveHab(){
   else{DB.habitaciones.push(stampUpdate({id:uid(),pisoId:DB.currentPisoId||null,...data}));toast('Habitación creada');}
   await saveDB();closeModal('modalHab');renderHabs();
 }
-async function deleteHab(id){if(!confirm('¿Eliminar?'))return;markDeleted('habitaciones',id);await saveDB();renderHabs();toast('Eliminada');}
+async function deleteHab(id){if(!confirm('¿Eliminar?'))return;DB.habitaciones=DB.habitaciones.filter(x=>x.id!==id);await saveDB();renderHabs();toast('Eliminada');}
 function filterHabs(f,btn){habFilter=f;document.querySelectorAll('#page-habitaciones .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderHabs();}
 function renderHabs(){
   renderPisoInfo();
@@ -1019,7 +999,7 @@ async function saveInquilino(){
   else{DB.inquilinos.push(stampUpdate({id:uid(),...data}));toast('Inquilino añadido');}
   await saveDB();closeModal('modalInquilino');renderInquilinos();
 }
-async function deleteInquilino(id){if(!confirm('¿Eliminar?'))return;markDeleted('inquilinos',id);await saveDB();renderInquilinos();toast('Eliminado');}
+async function deleteInquilino(id){if(!confirm('¿Eliminar?'))return;DB.inquilinos=DB.inquilinos.filter(x=>x.id!==id);await saveDB();renderInquilinos();toast('Eliminado');}
 function filterInquilinos(f,btn){inqFilter=f;document.querySelectorAll('#page-inquilinos .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderInquilinos();}
 function renderInquilinos(){
   const habIdsPiso=new Set(DB.habitaciones.filter(h=>!DB.currentPisoId||h.pisoId===DB.currentPisoId).map(h=>h.id));let inqs=DB.inquilinos.filter(i=>!i.habitacion||habIdsPiso.has(i.habitacion));if(inqFilter!=='todos')inqs=inqs.filter(i=>i.estado===inqFilter);
@@ -1097,7 +1077,7 @@ async function saveContrato(){
   else{DB.contratos.push(stampUpdate({id:uid(),creado:new Date().toISOString(),...data}));toast('Contrato creado');}
   await saveDB();closeModal('modalContrato');renderContratos();
 }
-async function deleteContrato(id){if(!confirm('¿Eliminar?'))return;markDeleted('contratos',id);await saveDB();renderContratos();toast('Eliminado');}
+async function deleteContrato(id){if(!confirm('¿Eliminar?'))return;DB.contratos=DB.contratos.filter(x=>x.id!==id);await saveDB();renderContratos();toast('Eliminado');}
 function filterContratos(f,btn){ctFilter=f;document.querySelectorAll('#page-contratos .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderContratos();}
 function renderContratos(){
   const habIdsPisoC=new Set(DB.habitaciones.filter(h=>!DB.currentPisoId||h.pisoId===DB.currentPisoId).map(h=>h.id));let cts=DB.contratos.filter(c=>!c.habitacion||habIdsPisoC.has(c.habitacion));if(ctFilter!=='todos')cts=cts.filter(c=>c.estado===ctFilter);
@@ -1131,7 +1111,7 @@ async function saveCobro(){
   else{DB.cobros.push(stampUpdate({id:uid(),creado:new Date().toISOString(),...data}));toast('Cobro registrado');}
   await saveDB();closeModal('modalCobro');renderCobros();
 }
-async function deleteCobro(id){if(!confirm('¿Eliminar?'))return;markDeleted('cobros',id);await saveDB();renderCobros();toast('Eliminado');}
+async function deleteCobro(id){if(!confirm('¿Eliminar?'))return;DB.cobros=DB.cobros.filter(x=>x.id!==id);await saveDB();renderCobros();toast('Eliminado');}
 async function marcarPagado(id){const i=DB.cobros.findIndex(x=>x.id===id);DB.cobros[i].estado='pagado';DB.cobros[i].fecha=new Date().toISOString().split('T')[0];await saveDB();renderCobros();toast('Marcado como pagado');}
 function filterCobros(f,btn){cbFilter=f;document.querySelectorAll('#page-cobros .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCobros();}
 function renderCobros(){
@@ -1166,7 +1146,7 @@ async function saveGasto(){
   else{DB.gastos.push(stampUpdate({id:uid(),creado:new Date().toISOString(),...data}));toast('Factura registrada');}
   await saveDB();closeModal('modalGasto');renderGastos();
 }
-async function deleteGasto(id){if(!confirm('¿Eliminar?'))return;markDeleted('gastos',id);await saveDB();renderGastos();toast('Eliminada');}
+async function deleteGasto(id){if(!confirm('¿Eliminar?'))return;DB.gastos=DB.gastos.filter(x=>x.id!==id);await saveDB();renderGastos();toast('Eliminada');}
 function filterGastos(f,btn){gtFilter=f;document.querySelectorAll('#page-gastos .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderGastos();}
 function calcProrrateo(){
   const mes=v('prorrateoMes');const tipo=v('prorrateoTipo');const el=document.getElementById('prorrateoResult');
@@ -1325,14 +1305,14 @@ document.addEventListener('DOMContentLoaded', function(){
 function _origUnlockApp(silent=false){
   document.getElementById('pinScreen').style.display='none';
   document.getElementById('mainApp').style.display='flex';
-  if(!silent)sessionStorage.setItem('aesd_pin_ts',Date.now().toString());
+  if(!silent)sessionStorage.setItem('trufos_pin_ts',Date.now().toString());
   bootApp();
 }
 // Override unlockApp para que arranque la app al desbloquear
 function unlockApp(silent=false){
   document.getElementById('pinScreen').style.display='none';
   document.getElementById('mainApp').style.display='flex';
-  if(!silent)sessionStorage.setItem('aesd_pin_ts',Date.now().toString());
+  if(!silent)sessionStorage.setItem('trufos_pin_ts',Date.now().toString());
   bootApp();
 }
 
