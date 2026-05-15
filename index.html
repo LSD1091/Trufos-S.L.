@@ -10,6 +10,23 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{width:100%;max-width:100%;overflow-x:hidden;}
 body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh;}
+/* ── PIN SCREEN ── */
+#pinScreen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:24px;}
+.pin-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px 28px;width:100%;max-width:340px;text-align:center;}
+.pin-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;margin-bottom:4px;}
+.pin-logo span{color:var(--accent);}
+.pin-sub{font-size:12px;color:var(--text2);margin-bottom:28px;}
+.pin-dots{display:flex;justify-content:center;gap:14px;margin-bottom:24px;}
+.pin-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);transition:all .2s;}
+.pin-dot.filled{background:var(--accent);border-color:var(--accent);}
+.pin-dot.error{background:var(--danger);border-color:var(--danger);animation:shake .3s;}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.pin-key{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:18px 8px;font-size:20px;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;transition:all .15s;color:var(--text);}
+.pin-key:hover{background:var(--accent);border-color:var(--accent);color:#fff;}
+.pin-key:active{transform:scale(.94);}
+.pin-key.del{font-size:16px;font-weight:400;}
+.pin-error{color:var(--danger);font-size:12px;height:18px;margin-top:8px;}
 .app{display:flex;min-height:100vh;}
 .main{flex:1;padding:28px;min-width:0;max-width:100%;}
 .page{display:none;}.page.active{display:block;}
@@ -188,7 +205,35 @@ textarea{resize:vertical;min-height:68px;}
 </style>
 </head>
 <body>
-<div class="app">
+<!-- ── PIN SCREEN ── -->
+<div id="pinScreen">
+  <div class="pin-card">
+    <div class="pin-logo">Trufos <span>S.L.</span></div>
+    <div class="pin-sub">Introduce tu PIN de acceso</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-grid">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key" onclick="pinKey('0')" style="grid-column:2">0</button>
+      <button class="pin-key del" onclick="pinDel()">⌫</button>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+  </div>
+</div>
+
+<div class="app" id="mainApp" style="display:none">
 
 <!-- SIDEBAR -->
 <aside class="sidebar">
@@ -205,6 +250,8 @@ textarea{resize:vertical;min-height:68px;}
     <div class="nav-item" onclick="showPage('contratos')"><span class="icon">📄</span><span>Contratos</span></div>
     <div class="nav-item" onclick="showPage('cobros')"><span class="icon">💸</span><span>Cobros</span></div>
     <div class="nav-item" onclick="showPage('gastos')"><span class="icon">⚡</span><span>Gastos</span></div>
+    <div class="nav-label">Sistema</div>
+    <div class="nav-item" onclick="showPage('configurar')"><span class="icon">⚙️</span><span>Configurar</span></div>
   </nav>
   <div class="sidebar-footer">
     <div class="piso-badge" id="sidebarPiso">
@@ -220,8 +267,8 @@ textarea{resize:vertical;min-height:68px;}
 <!-- DASHBOARD -->
 <div class="page active" id="page-dashboard">
   <div class="topbar">
-    <div><div class="page-title">Dashboard</div><div class="page-sub">Resumen de tu propiedad</div></div>
-    <button class="btn btn-secondary" onclick="showPage('habitaciones')">⚙️ Configurar</button>
+    <div><div class="page-title">Dashboard</div><div class="page-sub">Resumen de tu propiedad</div><div class="current-piso-name" style="font-size:12px;color:var(--accent);margin-top:2px;font-weight:600"></div></div>
+    <button class="btn btn-secondary" onclick="showPage('configurar')">⚙️ Configurar</button>
   </div>
   <div id="syncBar" class="sync-bar">
     <div class="sync-dot" id="syncDot"></div>
@@ -235,16 +282,10 @@ textarea{resize:vertical;min-height:68px;}
 <!-- HABITACIONES -->
 <div class="page" id="page-habitaciones">
   <div class="topbar">
-    <div><div class="page-title">Habitaciones</div><div class="page-sub">Gestión del inmueble</div></div>
+    <div><div class="page-title">Habitaciones</div><div class="page-sub">Gestión del inmueble</div><div class="current-piso-name" style="font-size:12px;color:var(--accent);margin-top:2px;font-weight:600"></div></div>
     <button class="btn btn-primary" onclick="openModalHab()">+ Nueva</button>
   </div>
-  <div class="card" style="margin-bottom:16px">
-    <div class="card-header">
-      <div class="card-title">🏠 Datos del inmueble</div>
-      <button class="btn btn-secondary btn-sm" onclick="openModalPiso()">Editar</button>
-    </div>
-    <div id="pisoInfo"></div>
-  </div>
+  <div id="pisoInfo" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;font-size:13px"></div>
   <div class="filters">
     <button class="filter-btn active" onclick="filterHabs('todas',this)">Todas</button>
     <button class="filter-btn" onclick="filterHabs('libre',this)">Libres</button>
@@ -258,7 +299,7 @@ textarea{resize:vertical;min-height:68px;}
 <!-- INQUILINOS -->
 <div class="page" id="page-inquilinos">
   <div class="topbar">
-    <div><div class="page-title">Inquilinos</div><div class="page-sub">Registro de arrendatarios</div></div>
+    <div><div class="page-title">Inquilinos</div><div class="page-sub">Registro de arrendatarios</div><div class="current-piso-name" style="font-size:12px;color:var(--accent);margin-top:2px;font-weight:600"></div></div>
     <button class="btn btn-primary" onclick="openModalInquilino()">+ Nuevo</button>
   </div>
   <div class="filters">
@@ -277,7 +318,7 @@ textarea{resize:vertical;min-height:68px;}
 <!-- CONTRATOS -->
 <div class="page" id="page-contratos">
   <div class="topbar">
-    <div><div class="page-title">Contratos</div><div class="page-sub">Contratos de arrendamiento</div></div>
+    <div><div class="page-title">Contratos</div><div class="page-sub">Contratos de arrendamiento</div><div class="current-piso-name" style="font-size:12px;color:var(--accent);margin-top:2px;font-weight:600"></div></div>
     <button class="btn btn-primary" onclick="openModalContrato()">+ Nuevo</button>
   </div>
   <div class="filters">
@@ -295,7 +336,7 @@ textarea{resize:vertical;min-height:68px;}
 <!-- COBROS -->
 <div class="page" id="page-cobros">
   <div class="topbar">
-    <div><div class="page-title">Cobros</div><div class="page-sub">Facturación y pagos</div></div>
+    <div><div class="page-title">Cobros</div><div class="page-sub">Facturación y pagos</div><div class="current-piso-name" style="font-size:12px;color:var(--accent);margin-top:2px;font-weight:600"></div></div>
     <button class="btn btn-primary" onclick="openModalCobro()">+ Registrar</button>
   </div>
   <div class="stats-row" id="cobrosStats"></div>
@@ -315,7 +356,7 @@ textarea{resize:vertical;min-height:68px;}
 <!-- GASTOS -->
 <div class="page" id="page-gastos">
   <div class="topbar">
-    <div><div class="page-title">⚡ Gastos</div><div class="page-sub">Suministros y prorrateo</div></div>
+    <div><div class="page-title">⚡ Gastos</div><div class="page-sub">Suministros y prorrateo</div><div class="current-piso-name" style="font-size:12px;color:var(--accent);margin-top:2px;font-weight:600"></div></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-secondary" onclick="crearCobrosAlquiler()" title="Crea un cobro de alquiler pendiente para cada habitación ocupada">🏠 Cobros alquiler</button>
       <button class="btn btn-secondary" onclick="crearCobrosProrateados()" title="Prorratea las facturas pendientes entre habitaciones ocupadas">⚡ Cobros suministros</button>
@@ -362,18 +403,29 @@ textarea{resize:vertical;min-height:68px;}
   <button class="bottom-nav-item" id="bn-contratos" onclick="showPage('contratos')"><span class="bn-icon">📄</span><span>Contratos</span></button>
   <button class="bottom-nav-item" id="bn-cobros" onclick="showPage('cobros')"><span class="bn-icon">💸</span><span>Cobros</span></button>
   <button class="bottom-nav-item" id="bn-gastos" onclick="showPage('gastos')"><span class="bn-icon">⚡</span><span>Gastos</span></button>
+  <button class="bottom-nav-item" id="bn-configurar" onclick="showPage('configurar')"><span class="bn-icon">⚙️</span><span>Config.</span></button>
 </nav>
+</div><!-- /mainApp -->
+
+<!-- CONFIGURAR -->
+<div class="page" id="page-configurar">
+  <div class="topbar">
+    <div><div class="page-title">⚙️ Configurar</div><div class="page-sub">Gestión de inmuebles</div><div class="current-piso-name" style="font-size:12px;color:var(--accent);margin-top:2px;font-weight:600"></div></div>
+    <button class="btn btn-primary" onclick="openModalNuevoPiso()">+ Nuevo inmueble</button>
+  </div>
+  <div id="pisosGrid" class="cards-grid"></div>
 </div>
 
 <!-- ═══ MODALES ═══ -->
 
 <!-- PISO -->
 <div class="modal-overlay" id="modalPiso"><div class="modal">
-  <div class="modal-title">🏠 Datos del inmueble</div>
+  <div class="modal-title" id="modalPisoTitle">Nuevo inmueble</div>
   <div class="form-row"><div class="form-group"><label>Nombre</label><input id="pisoNombre" placeholder="Piso Gran Vía"></div><div class="form-group"><label>Ref. catastral</label><input id="pisoCatastral"></div></div>
   <div class="form-group"><label>Dirección completa</label><input id="pisoDireccion" placeholder="Calle, nº, piso, ciudad"></div>
-  <div class="form-row"><div class="form-group"><label>Metros²</label><input type="number" id="pisoMetros"></div><div class="form-group"><label>Habitaciones</label><input id="pisoHabs" readonly></div></div>
-  <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modalPiso')">Cancelar</button><button class="btn btn-primary" onclick="savePiso()">Guardar</button></div>
+  <div class="form-row"><div class="form-group"><label>Metros²</label><input type="number" id="pisoMetros"></div><div class="form-group"><label>Nº habitaciones aprox.</label><input type="number" id="pisoHabs"></div></div>
+  <input type="hidden" id="pisoEditId">
+  <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modalPiso')">Cancelar</button><button class="btn btn-primary" onclick="guardarPiso()">Guardar</button></div>
 </div></div>
 
 <!-- HABITACIÓN -->
@@ -497,16 +549,78 @@ textarea{resize:vertical;min-height:68px;}
 <div class="toast" id="toast"></div>
 
 <script>
+// ═══ PIN ═══
+const PIN_CODE='2704';
+const PIN_TTL=30*60*1000; // 30 minutos en ms
+let _pinBuffer='';
+
+function checkPinSession(){
+  const ts=sessionStorage.getItem('trufos_pin_ts');
+  if(ts&&(Date.now()-parseInt(ts))<PIN_TTL){
+    unlockApp(true);return true;
+  }
+  return false;
+}
+function unlockApp(silent=false){
+  document.getElementById('pinScreen').style.display='none';
+  document.getElementById('mainApp').style.display='flex';
+  if(!silent)sessionStorage.setItem('trufos_pin_ts',Date.now().toString());
+}
+function pinKey(k){
+  if(_pinBuffer.length>=4)return;
+  _pinBuffer+=k;
+  updatePinDots();
+  if(_pinBuffer.length===4)setTimeout(checkPin,120);
+}
+function pinDel(){
+  _pinBuffer=_pinBuffer.slice(0,-1);
+  updatePinDots();
+  document.getElementById('pinError').textContent='';
+}
+function updatePinDots(){
+  for(let i=0;i<4;i++){
+    const d=document.getElementById('pd'+i);
+    d.classList.toggle('filled',i<_pinBuffer.length);
+    d.classList.remove('error');
+  }
+}
+function checkPin(){
+  if(_pinBuffer===PIN_CODE){
+    unlockApp();
+  } else {
+    for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.add('error');
+    document.getElementById('pinError').textContent='PIN incorrecto. Inténtalo de nuevo.';
+    setTimeout(()=>{
+      _pinBuffer='';
+      updatePinDots();
+    },700);
+  }
+}
+// Renovar sesión en cada interacción
+document.addEventListener('click',()=>{
+  if(sessionStorage.getItem('trufos_pin_ts'))
+    sessionStorage.setItem('trufos_pin_ts',Date.now().toString());
+},{passive:true});
+
 // ═══ DATA ═══
-let DB={piso:{nombre:'',direccion:'',catastral:'',metros:''},habitaciones:[],inquilinos:[],contratos:[],cobros:[],gastos:[]};
+let DB={pisos:[],currentPisoId:null,habitaciones:[],inquilinos:[],contratos:[],cobros:[],gastos:[]};let currentPiso=null;
 const SYNC_BIN_ID='6a04c673adc21f119a968b8e';
 const SYNC_API_KEY='$2a$10$Pip4BJmfyqD.HokbqQlK/eRAZrv/hrytyW/mrkIuyc7y0XzIBCp9C';
 let SYNC={apiKey:SYNC_API_KEY,binId:SYNC_BIN_ID};
 function sanitizeDB(d){
-  const def={piso:{nombre:'',direccion:'',catastral:'',metros:''},habitaciones:[],inquilinos:[],contratos:[],cobros:[],gastos:[]};
+  const def={pisos:[],currentPisoId:null,habitaciones:[],inquilinos:[],contratos:[],cobros:[],gastos:[]};
   if(!d||typeof d!=='object')return def;
+  // Migración: si viene del formato antiguo con d.piso, convertirlo
+  let pisos=Array.isArray(d.pisos)?d.pisos:[];
+  let currentPisoId=d.currentPisoId||null;
+  if(!pisos.length&&d.piso&&(d.piso.nombre||d.piso.direccion)){
+    const migrado={id:'piso_migrado',nombre:d.piso.nombre||'Piso 1',direccion:d.piso.direccion||'',catastral:d.piso.catastral||'',metros:d.piso.metros||''};
+    pisos=[migrado];
+    currentPisoId=migrado.id;
+  }
   return{
-    piso:{...def.piso,...(d.piso||{})},
+    pisos,
+    currentPisoId,
     habitaciones:Array.isArray(d.habitaciones)?d.habitaciones:[],
     inquilinos:Array.isArray(d.inquilinos)?d.inquilinos:[],
     contratos:Array.isArray(d.contratos)?d.contratos:[],
@@ -555,11 +669,13 @@ async function pullFromCloud(silent=false){
     DB=remote;
     saveLocal();
     setSyncStatus('ok','✓ '+new Date().toLocaleTimeString('es'));
+    currentPiso=DB.pisos.find(p=>p.id===DB.currentPisoId)||DB.pisos[0]||null;
+    updateSidebarPiso();updatePageSubtitles();
     // Rerenderizar página activa
     const active=document.querySelector('.page.active');
     if(active){
       const page=active.id.replace('page-','');
-      const renders={dashboard:renderDashboard,habitaciones:renderHabs,inquilinos:renderInquilinos,contratos:renderContratos,cobros:renderCobros,gastos:renderGastos};
+      const renders={dashboard:renderDashboard,habitaciones:renderHabs,inquilinos:renderInquilinos,contratos:renderContratos,cobros:renderCobros,gastos:renderGastos,configurar:renderConfigPage};updatePageSubtitles();
       if(renders[page])renders[page]();
     }
   }catch(e){
@@ -608,7 +724,8 @@ async function saveDB(){
         return Object.values(byId);
       };
       merged={
-        piso:DB.piso, // el piso lo gana siempre el local (último que lo edita)
+        pisos:mergeCollection(DB.pisos,remote.pisos||[]),
+        currentPisoId:DB.currentPisoId||remote.currentPisoId||null,
         habitaciones:mergeCollection(DB.habitaciones,remote.habitaciones),
         inquilinos:mergeCollection(DB.inquilinos,remote.inquilinos),
         contratos:mergeCollection(DB.contratos,remote.contratos),
@@ -665,7 +782,7 @@ function showPage(page){
   document.getElementById('page-'+page).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>{if((n.getAttribute('onclick')||'').includes("'"+page+"'"))n.classList.add('active');});
   const bn=document.getElementById('bn-'+page);if(bn)bn.classList.add('active');
-  const renders={dashboard:renderDashboard,habitaciones:renderHabs,inquilinos:renderInquilinos,contratos:renderContratos,cobros:renderCobros,gastos:renderGastos};
+  const renders={dashboard:renderDashboard,habitaciones:renderHabs,inquilinos:renderInquilinos,contratos:renderContratos,cobros:renderCobros,gastos:renderGastos,configurar:renderConfigPage};updatePageSubtitles();
   if(renders[page])renders[page]();
   window.scrollTo(0,0);
 }
@@ -685,14 +802,121 @@ function fmt(n){return Number(n||0).toLocaleString('es',{minimumFractionDigits:0
 const ICON={Luz:'💡',Agua:'💧',Gas:'🔥',Internet:'🌐',Comunidad:'🏢',Otros:'📦'};
 
 // ═══ PISO ═══
-function openModalPiso(){const p=DB.piso;document.getElementById('pisoNombre').value=p.nombre||'';document.getElementById('pisoDireccion').value=p.direccion||'';document.getElementById('pisoCatastral').value=p.catastral||'';document.getElementById('pisoMetros').value=p.metros||'';document.getElementById('pisoHabs').value=DB.habitaciones.length;openModal('modalPiso');}
-async function savePiso(){DB.piso={nombre:v('pisoNombre'),direccion:v('pisoDireccion'),catastral:v('pisoCatastral'),metros:v('pisoMetros')};await saveDB();closeModal('modalPiso');renderPisoInfo();updateSidebarPiso();toast('Inmueble guardado');}
+// ═══ GESTIÓN DE PISOS ═══
+function openModalNuevoPiso(){
+  document.getElementById('modalPisoTitle').textContent='Nuevo inmueble';
+  ['pisoNombre','pisoCatastral','pisoDireccion','pisoMetros','pisoHabs'].forEach(f=>document.getElementById(f).value='');
+  document.getElementById('pisoEditId').value='';
+  openModal('modalPiso');
+}
+function openModalEditarPiso(id){
+  const p=DB.pisos.find(x=>x.id===id);if(!p)return;
+  document.getElementById('modalPisoTitle').textContent='Editar inmueble';
+  document.getElementById('pisoNombre').value=p.nombre||'';
+  document.getElementById('pisoCatastral').value=p.catastral||'';
+  document.getElementById('pisoDireccion').value=p.direccion||'';
+  document.getElementById('pisoMetros').value=p.metros||'';
+  document.getElementById('pisoHabs').value=p.numHabs||'';
+  document.getElementById('pisoEditId').value=id;
+  openModal('modalPiso');
+}
+async function guardarPiso(){
+  const nombre=v('pisoNombre').trim();
+  if(!nombre){toast('El nombre es obligatorio','error');return;}
+  const data={nombre,catastral:v('pisoCatastral'),direccion:v('pisoDireccion'),metros:v('pisoMetros'),numHabs:v('pisoHabs')};
+  const eid=v('pisoEditId');
+  if(eid){
+    const i=DB.pisos.findIndex(x=>x.id===eid);
+    DB.pisos[i]={...DB.pisos[i],...data};
+    toast('Inmueble actualizado');
+  } else {
+    const nuevo={id:uid(),...data};
+    DB.pisos.push(nuevo);
+    // Si es el primero, seleccionarlo automáticamente
+    if(DB.pisos.length===1){DB.currentPisoId=nuevo.id;currentPiso=nuevo;}
+    toast('Inmueble creado');
+  }
+  await saveDB();
+  closeModal('modalPiso');
+  renderConfigPage();
+  updateSidebarPiso();
+  updatePageSubtitles();
+}
+async function eliminarPiso(id){
+  const tieneHabs=DB.habitaciones.some(h=>h.pisoId===id);
+  if(tieneHabs&&!confirm('Este inmueble tiene habitaciones asociadas. ¿Eliminar igualmente?'))return;
+  if(!confirm('¿Eliminar este inmueble?'))return;
+  DB.pisos=DB.pisos.filter(x=>x.id!==id);
+  if(DB.currentPisoId===id)DB.currentPisoId=DB.pisos[0]?.id||null;
+  await saveDB();
+  renderConfigPage();
+  updateSidebarPiso();
+  updatePageSubtitles();
+  toast('Inmueble eliminado');
+}
+async function seleccionarPiso(id){
+  DB.currentPisoId=id;
+  currentPiso=DB.pisos.find(x=>x.id===id)||null;
+  saveLocal(); // no hace push — solo preferencia local
+  renderConfigPage();
+  updateSidebarPiso();
+  updatePageSubtitles();
+  renderDashboard();
+  toast('Inmueble seleccionado: '+currentPiso?.nombre);
+}
+function renderConfigPage(){
+  const grid=document.getElementById('pisosGrid');
+  if(!grid)return;
+  if(!DB.pisos.length){
+    grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🏠</div><div class="empty-title">Sin inmuebles</div><p class="text-muted" style="margin-top:5px">Añade tu primer inmueble con el botón "+"</p></div>`;
+    return;
+  }
+  grid.innerHTML=DB.pisos.map(p=>{
+    const numHabs=DB.habitaciones.filter(h=>h.pisoId===p.id).length;
+    const numInqs=DB.inquilinos.filter(i=>{
+      const h=DB.habitaciones.find(x=>x.id===i.habitacion);
+      return h&&h.pisoId===p.id&&i.estado==='activo';
+    }).length;
+    const isActive=DB.currentPisoId===p.id;
+    return `<div class="card" style="${isActive?'border-color:var(--accent);background:rgba(124,106,247,.06)':''}">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${p.nombre}</div>
+          <div class="text-sm text-muted" style="margin-top:2px">${p.direccion||'Sin dirección'}</div>
+        </div>
+        ${isActive?'<span class="badge badge-activo">✓ Activo</span>':''}
+      </div>
+      <div class="room-detail-row"><span class="room-detail-label">Habitaciones</span><span class="room-detail-value">${numHabs}</span></div>
+      <div class="room-detail-row"><span class="room-detail-label">Inquilinos activos</span><span class="room-detail-value">${numInqs}</span></div>
+      ${p.metros?`<div class="room-detail-row"><span class="room-detail-label">Metros</span><span class="room-detail-value">${p.metros} m²</span></div>`:''}
+      ${p.catastral?`<div class="room-detail-row"><span class="room-detail-label">Catastral</span><span class="room-detail-value text-sm text-muted">${p.catastral}</span></div>`:''}
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+        ${!isActive?`<button class="btn btn-primary btn-sm" onclick="seleccionarPiso('${p.id}')">Operar este</button>`:'<span class="text-sm text-muted" style="line-height:2">Inmueble activo</span>'}
+        <button class="btn btn-secondary btn-sm" onclick="openModalEditarPiso('${p.id}')">✏️ Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarPiso('${p.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function openModalPiso(){openModalNuevoPiso();}
+async function savePiso(){await guardarPiso();}
 function renderPisoInfo(){
-  const p=DB.piso;const el=document.getElementById('pisoInfo');
-  if(!p.nombre&&!p.direccion){el.innerHTML='<span class="text-muted text-sm">Sin configurar. Haz clic en "Editar".</span>';return;}
+  const p=getCurrentPiso();const el=document.getElementById('pisoInfo');
+  if(!p){el.innerHTML='<span class="text-muted text-sm">Sin inmueble seleccionado. Ve a ⚙️ Configurar para añadir uno.</span>';return;}
   el.innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:14px"><div><div class="text-sm text-muted">Nombre</div><div style="font-weight:600">${p.nombre||'—'}</div></div><div style="flex:2;min-width:160px"><div class="text-sm text-muted">Dirección</div><div>${p.direccion||'—'}</div></div><div><div class="text-sm text-muted">Catastral</div><div>${p.catastral||'—'}</div></div><div><div class="text-sm text-muted">Metros</div><div>${p.metros?p.metros+' m²':'—'}</div></div></div>`;
 }
-function updateSidebarPiso(){const p=DB.piso;document.getElementById('sidebarPiso').innerHTML=`<div class="piso-name">${p.nombre||'Trufos S.L.'}</div><div class="piso-addr">${p.direccion?p.direccion.split(',')[0]:'Sin configurar'}</div>`;}
+function getCurrentPiso(){return DB.pisos.find(p=>p.id===DB.currentPisoId)||DB.pisos[0]||null;}
+function updateSidebarPiso(){
+  const p=getCurrentPiso();
+  document.getElementById('sidebarPiso').innerHTML=p
+    ?`<div class="piso-name">${p.nombre}</div><div class="piso-addr">${p.direccion?p.direccion.split(',')[0]:'Sin dirección'}</div>`
+    :`<div class="piso-name">Trufos S.L.</div><div class="piso-addr">Sin inmueble</div>`;
+}
+function updatePageSubtitles(){
+  const p=getCurrentPiso();
+  const nombre=p?p.nombre:'Sin inmueble seleccionado';
+  document.querySelectorAll('.current-piso-name').forEach(el=>el.textContent=nombre);
+}
 
 // ═══ HABITACIONES ═══
 let habFilter='todas';
@@ -707,14 +931,14 @@ async function saveHab(){
   const data={nombre,estado:v('habEstado'),precio:parseFloat(v('habPrecio'))||0,fianza:parseFloat(v('habFianza'))||0,metros:v('habMetros'),equipamiento:v('habEquipamiento').split(',').map(s=>s.trim()).filter(Boolean),notas:v('habNotas')};
   const eid=v('habEditId');
   if(eid){const i=DB.habitaciones.findIndex(x=>x.id===eid);DB.habitaciones[i]=stampUpdate({...DB.habitaciones[i],...data});toast('Actualizada');}
-  else{DB.habitaciones.push(stampUpdate({id:uid(),...data}));toast('Habitación creada');}
+  else{DB.habitaciones.push(stampUpdate({id:uid(),pisoId:DB.currentPisoId||null,...data}));toast('Habitación creada');}
   await saveDB();closeModal('modalHab');renderHabs();
 }
 async function deleteHab(id){if(!confirm('¿Eliminar?'))return;DB.habitaciones=DB.habitaciones.filter(x=>x.id!==id);await saveDB();renderHabs();toast('Eliminada');}
 function filterHabs(f,btn){habFilter=f;document.querySelectorAll('#page-habitaciones .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderHabs();}
 function renderHabs(){
   renderPisoInfo();
-  let habs=DB.habitaciones;if(habFilter!=='todas')habs=habs.filter(h=>h.estado===habFilter);
+  const pid=DB.currentPisoId;let habs=DB.habitaciones.filter(h=>!pid||h.pisoId===pid);if(habFilter!=='todas')habs=habs.filter(h=>h.estado===habFilter);
   const grid=document.getElementById('habsGrid');
   if(!habs.length){grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🏠</div><div class="empty-title">No hay habitaciones</div></div>`;return;}
   grid.innerHTML=habs.map(h=>{
@@ -750,7 +974,7 @@ async function saveInquilino(){
 async function deleteInquilino(id){if(!confirm('¿Eliminar?'))return;DB.inquilinos=DB.inquilinos.filter(x=>x.id!==id);await saveDB();renderInquilinos();toast('Eliminado');}
 function filterInquilinos(f,btn){inqFilter=f;document.querySelectorAll('#page-inquilinos .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderInquilinos();}
 function renderInquilinos(){
-  let inqs=DB.inquilinos;if(inqFilter!=='todos')inqs=inqs.filter(i=>i.estado===inqFilter);
+  const habIdsPiso=new Set(DB.habitaciones.filter(h=>!DB.currentPisoId||h.pisoId===DB.currentPisoId).map(h=>h.id));let inqs=DB.inquilinos.filter(i=>!i.habitacion||habIdsPiso.has(i.habitacion));if(inqFilter!=='todos')inqs=inqs.filter(i=>i.estado===inqFilter);
   const tbody=document.getElementById('inquilinosTable');
   if(!inqs.length){const empty=`<div class="empty"><div class="empty-icon">👤</div><div class="empty-title">No hay inquilinos</div></div>`;tbody.innerHTML=`<tr><td colspan="6">${empty}</td></tr>`;document.getElementById('inquilinosMob').innerHTML='';return;}
   tbody.innerHTML=inqs.map(q=>{const h=DB.habitaciones.find(x=>x.id===q.habitacion);return `<tr><td><strong>${q.nombre}</strong></td><td class="text-muted">${q.dni||'—'}</td><td>${h?h.nombre:'<span class="text-muted">—</span>'}</td><td>${q.telefono||'—'}</td><td><span class="badge badge-${q.estado}">${cap(q.estado)}</span></td><td><div class="flex gap-2"><button class="btn btn-secondary btn-sm" onclick="openModalInquilino('${q.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteInquilino('${q.id}')">🗑</button></div></td></tr>`;}).join('');
@@ -828,7 +1052,7 @@ async function saveContrato(){
 async function deleteContrato(id){if(!confirm('¿Eliminar?'))return;DB.contratos=DB.contratos.filter(x=>x.id!==id);await saveDB();renderContratos();toast('Eliminado');}
 function filterContratos(f,btn){ctFilter=f;document.querySelectorAll('#page-contratos .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderContratos();}
 function renderContratos(){
-  let cts=DB.contratos;if(ctFilter!=='todos')cts=cts.filter(c=>c.estado===ctFilter);
+  const habIdsPisoC=new Set(DB.habitaciones.filter(h=>!DB.currentPisoId||h.pisoId===DB.currentPisoId).map(h=>h.id));let cts=DB.contratos.filter(c=>!c.habitacion||habIdsPisoC.has(c.habitacion));if(ctFilter!=='todos')cts=cts.filter(c=>c.estado===ctFilter);
   const alerta=ct=>{const d=ct.fin?Math.ceil((new Date(ct.fin)-new Date())/86400000):null;if(d!==null&&d<=30&&d>0)return`<br><span class="text-sm text-yellow">⚠️ ${d}d</span>`;if(d!==null&&d<=0)return`<br><span class="text-sm text-red">Vencido</span>`;return'';};
   const tbody=document.getElementById('contratosTable');
   if(!cts.length){const e=`<div class="empty"><div class="empty-icon">📄</div><div class="empty-title">No hay contratos</div></div>`;tbody.innerHTML=`<tr><td colspan="7">${e}</td></tr>`;document.getElementById('contratosMob').innerHTML='';return;}
@@ -867,7 +1091,7 @@ function renderCobros(){
   const pe=DB.cobros.filter(c=>c.estado==='pendiente').reduce((s,c)=>s+c.importe,0);
   const im=DB.cobros.filter(c=>c.estado==='impagado').reduce((s,c)=>s+c.importe,0);
   document.getElementById('cobrosStats').innerHTML=`<div class="stat-card"><div class="stat-value stat-green">€${fmt(ti)}</div><div class="stat-label">Total cobrado</div></div><div class="stat-card"><div class="stat-value stat-yellow">€${fmt(pe)}</div><div class="stat-label">Pendiente</div></div><div class="stat-card"><div class="stat-value stat-red">€${fmt(im)}</div><div class="stat-label">Impagado</div></div><div class="stat-card"><div class="stat-value stat-accent">${DB.cobros.length}</div><div class="stat-label">Registros</div></div>`;
-  let cbs=DB.cobros;if(cbFilter!=='todos')cbs=cbs.filter(c=>c.estado===cbFilter);
+  const habIdsPisoCb=new Set(DB.habitaciones.filter(h=>!DB.currentPisoId||h.pisoId===DB.currentPisoId).map(h=>h.id));let cbs=DB.cobros.filter(c=>!c.habitacion||habIdsPisoCb.has(c.habitacion));if(cbFilter!=='todos')cbs=cbs.filter(c=>c.estado===cbFilter);
   cbs=[...cbs].sort((a,b)=>(b.creado||'')>(a.creado||'')?1:-1);
   const tbody=document.getElementById('cobrosTable');
   if(!cbs.length){const e=`<div class="empty"><div class="empty-icon">💸</div><div class="empty-title">No hay cobros</div></div>`;tbody.innerHTML=`<tr><td colspan="8">${e}</td></tr>`;document.getElementById('cobrosMob').innerHTML='';return;}
@@ -1034,15 +1258,40 @@ function renderDashboard(){
 
 // ═══ INIT ═══
 document.addEventListener('DOMContentLoaded', function(){
+  // PIN check primero
+  if(checkPinSession()){
+    bootApp();
+  }
+  // Si no hay sesión, el pinScreen ya está visible y bootApp se llama desde unlockApp
+});
+
+function _origUnlockApp(silent=false){
+  document.getElementById('pinScreen').style.display='none';
+  document.getElementById('mainApp').style.display='flex';
+  if(!silent)sessionStorage.setItem('trufos_pin_ts',Date.now().toString());
+  bootApp();
+}
+// Override unlockApp para que arranque la app al desbloquear
+function unlockApp(silent=false){
+  document.getElementById('pinScreen').style.display='none';
+  document.getElementById('mainApp').style.display='flex';
+  if(!silent)sessionStorage.setItem('trufos_pin_ts',Date.now().toString());
+  bootApp();
+}
+
+function bootApp(){
+  currentPiso=DB.pisos.find(p=>p.id===DB.currentPisoId)||DB.pisos[0]||null;
+  if(currentPiso&&!DB.currentPisoId)DB.currentPisoId=currentPiso.id;
   updateSidebarPiso();
+  updatePageSubtitles();
   renderDashboard();
   setSyncStatus('loading','Conectando…');
   pullFromCloud(false).then(()=>{
-    startAutoRefresh(); // refresco automático cada 30s
+    startAutoRefresh();
   }).catch(()=>{
     startAutoRefresh();
   });
-});
+}
 </script>
 </body>
 </html>
