@@ -47,6 +47,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 .btn-danger{background:rgba(247,106,106,.15);color:var(--danger);border:1px solid rgba(247,106,106,.3);}.btn-danger:hover{background:rgba(247,106,106,.25);}
 .btn-sm{padding:6px 12px;font-size:12px;}.btn-icon{padding:7px;}.btn:disabled{opacity:.5;cursor:not-allowed;}
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+.cards-grid-habs{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;align-items:start;}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;transition:border-color .15s;}
 .card:hover{border-color:var(--accent);}
 .card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
@@ -147,7 +148,7 @@ textarea{resize:vertical;min-height:68px;}
 .bottom-nav-item .bn-icon{font-size:18px;line-height:1.1;}
 .bottom-nav-item.active{color:var(--accent);}
 @media(min-width:769px){.sidebar{display:flex;}.main{margin-left:220px;}.bottom-nav{display:none!important;}.table-wrap{display:block;}.mob-list{display:none!important;}}
-@media(max-width:768px){.sidebar{display:none!important;}.main{margin-left:0;padding:12px 12px 76px;}.bottom-nav{display:flex;}.table-wrap{display:none!important;}.mob-list{display:block!important;}.topbar{flex-direction:column;gap:8px;margin-bottom:16px;}.topbar .btn{width:100%;justify-content:center;}.page-title{font-size:19px;}.cards-grid{grid-template-columns:1fr;}.stats-row{grid-template-columns:1fr 1fr;gap:8px;}.stat-card{padding:11px 12px;}.form-row{grid-template-columns:1fr;}.modal{padding:16px 13px;}.modal-footer{justify-content:stretch;}.modal-footer .btn{flex:1;justify-content:center;}.cfg-header{flex-direction:row!important;}.cfg-btn{width:auto!important;}}
+@media(max-width:768px){.sidebar{display:none!important;}.main{margin-left:0;padding:12px 12px 76px;}.bottom-nav{display:flex;}.table-wrap{display:none!important;}.mob-list{display:block!important;}.topbar{flex-direction:column;gap:8px;margin-bottom:16px;}.topbar .btn{width:100%;justify-content:center;}.page-title{font-size:19px;}.cards-grid{grid-template-columns:1fr;}.cards-grid-habs{grid-template-columns:1fr;}.stats-row{grid-template-columns:1fr 1fr;gap:8px;}.stat-card{padding:11px 12px;}.form-row{grid-template-columns:1fr;}.modal{padding:16px 13px;}.modal-footer{justify-content:stretch;}.modal-footer .btn{flex:1;justify-content:center;}.cfg-header{flex-direction:row!important;}.cfg-btn{width:auto!important;}}
 .divider{height:1px;background:var(--border);margin:18px 0;}
 .flex{display:flex;}.gap-2{gap:8px;}.items-center{align-items:center;}.justify-between{justify-content:space-between;}
 .mt-2{margin-top:8px;}.mb-3{margin-bottom:12px;}.font-bold{font-weight:700;}
@@ -187,6 +188,7 @@ textarea{resize:vertical;min-height:68px;}
     <div class="nav-label">Inmueble</div>
     <div class="nav-item" onclick="showPage('siniestros')"><span class="icon">🚨</span><span>Siniestros</span></div>
     <div class="nav-item" onclick="showPage('datosinteres')"><span class="icon">📋</span><span>Datos interés</span></div>
+    <div class="nav-item" onclick="showPage('bugs')"><span class="icon">🐛</span><span>Bugs/mejoras</span></div>
   </nav>
   <div class="sidebar-footer">
     <div class="piso-badge" id="sidebarPiso"><div class="piso-name">—</div><div class="piso-addr">Sin inmueble</div></div>
@@ -199,13 +201,13 @@ textarea{resize:vertical;min-height:68px;}
   <div class="topbar"><div><div class="page-title">Dashboard</div><div class="page-sub">Resumen de tu propiedad</div><div class="current-piso-name" style="font-size:12px;color:var(--accent);margin-top:2px;font-weight:600"></div></div><button class="btn btn-secondary" onclick="showPage('configurar')">⚙️ Configurar</button></div>
   <div class="sync-bar"><div class="sync-dot" id="syncDot"></div><span id="syncMsg">—</span><button class="btn btn-secondary btn-sm" id="btnRefresh" style="margin-left:auto" onclick="loadAllData()">🔄 Actualizar</button></div>
   <div class="stats-row" id="dashboardStats"></div>
-  <div class="cards-grid" id="dashboardHabs"></div>
+  <div class="cards-grid-habs" id="dashboardHabs"></div>
 </div>
 <div class="page" id="page-habitaciones">
   <div class="topbar"><div><div class="page-title">Habitaciones</div><div class="page-sub">Gestión del inmueble</div><div class="current-piso-name" style="font-size:12px;color:var(--accent);margin-top:2px;font-weight:600"></div></div><button class="btn btn-primary" onclick="openModalHab()">+ Nueva</button></div>
   <div id="pisoInfo" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;font-size:13px"></div>
   <div class="filters"><button class="filter-btn active" onclick="filterHabs('todas',this)">Todas</button><button class="filter-btn" onclick="filterHabs('libre',this)">Libres</button><button class="filter-btn" onclick="filterHabs('ocupada',this)">Ocupadas</button><button class="filter-btn" onclick="filterHabs('reservada',this)">Reservadas</button><button class="filter-btn" onclick="filterHabs('mantenimiento',this)">Mantenimiento</button></div>
-  <div class="cards-grid" id="habsGrid"></div>
+  <div class="cards-grid-habs" id="habsGrid"></div>
 </div>
 <div class="page" id="page-inquilinos">
   <div class="topbar"><div><div class="page-title">Inquilinos</div><div class="page-sub">Registro de arrendatarios</div><div class="current-piso-name" style="font-size:12px;color:var(--accent);margin-top:2px;font-weight:600"></div></div><button class="btn btn-primary" onclick="openModalInquilino()">+ Nuevo</button></div>
@@ -480,6 +482,17 @@ textarea{resize:vertical;min-height:68px;}
   </div>
   <div class="cards-grid" id="datosGrid"></div>
 </div>
+
+<div class="page" id="page-bugs">
+  <div class="topbar">
+    <div><div class="page-title">🐛 Bugs / Mejoras</div><div class="page-sub">Anota problemas detectados o funcionalidades pendientes</div></div>
+  </div>
+  <div style="display:flex;gap:10px;margin-bottom:18px;align-items:flex-start">
+    <textarea id="bugInput" placeholder="Describe el bug o mejora…" rows="2" style="flex:1;resize:vertical;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:10px 12px;font-size:13px;font-family:'DM Sans',sans-serif"></textarea>
+    <button class="btn btn-primary" onclick="addBug()" style="align-self:flex-end">+ Añadir</button>
+  </div>
+  <div id="bugsList"></div>
+</div>
 </main>
 <nav class="bottom-nav">
   <button class="bottom-nav-item active" id="bn-dashboard" onclick="showPage('dashboard')"><span class="bn-icon">📊</span><span>Inicio</span></button>
@@ -492,6 +505,7 @@ textarea{resize:vertical;min-height:68px;}
   <button class="bottom-nav-item" id="bn-estadisticas" onclick="showPage('estadisticas')"><span class="bn-icon">📈</span><span>Stats</span></button>
   <button class="bottom-nav-item" id="bn-siniestros" onclick="showPage('siniestros')"><span class="bn-icon">🚨</span><span>Siniest.</span></button>
   <button class="bottom-nav-item" id="bn-datosinteres" onclick="showPage('datosinteres')"><span class="bn-icon">📋</span><span>Datos</span></button>
+  <button class="bottom-nav-item" id="bn-bugs" onclick="showPage('bugs')"><span class="bn-icon">🐛</span><span>Bugs</span></button>
 </nav>
 </div>
 <!-- MODALES -->
@@ -776,7 +790,7 @@ let STATE = {
   habitaciones: [], inquilinos: [], contratos: [],
   cobros: [], gastos: [], historicoGastos: [], tiposSupl: [],
   siniestros: [], datosInteres: [],
-  propietarios: [], banco: []
+  propietarios: [], banco: [], bugs: []
 };
 
 const SUML_DEFAULTS = [
@@ -827,7 +841,7 @@ async function doLogin(){
 }
 async function doLogout(){
   await sb.auth.signOut();
-  STATE={user:null,empresa:'Mi empresa',pisos:[],currentPisoId:null,habitaciones:[],inquilinos:[],contratos:[],cobros:[],gastos:[],historicoGastos:[],tiposSupl:[],siniestros:[],datosInteres:[],propietarios:[],banco:[]};
+  STATE={user:null,empresa:'Mi empresa',pisos:[],currentPisoId:null,habitaciones:[],inquilinos:[],contratos:[],cobros:[],gastos:[],historicoGastos:[],tiposSupl:[],siniestros:[],datosInteres:[],propietarios:[],banco:[],bugs:[]};
   document.getElementById('mainApp').style.display='none';
   document.getElementById('authScreen').style.display='flex';
   document.getElementById('authError').textContent='';
@@ -858,7 +872,7 @@ async function loadAllData(){
   setSyncStatus('loading','Actualizando…');
   try{
     const uid=STATE.user.id;
-    const[{data:pisos},{data:habs},{data:inqs},{data:cts},{data:cbs},{data:gts},{data:hist},{data:suml},{data:sins},{data:datos},{data:props},{data:banco}]=await Promise.all([
+    const[{data:pisos},{data:habs},{data:inqs},{data:cts},{data:cbs},{data:gts},{data:hist},{data:suml},{data:sins},{data:datos},{data:props},{data:banco},{data:bugs}]=await Promise.all([
       sb.from('pisos').select('*').eq('user_id',uid).order('created_at'),
       sb.from('habitaciones').select('*').eq('user_id',uid).order('created_at'),
       sb.from('inquilinos').select('*').eq('user_id',uid).order('created_at'),
@@ -871,11 +885,12 @@ async function loadAllData(){
       sb.from('datos_interes').select('*').eq('user_id',uid).order('created_at'),
       sb.from('propietarios').select('*').eq('user_id',uid).order('created_at'),
       sb.from('movimientos_banco').select('*').eq('user_id',uid).order('fecha',{ascending:false}),
+      sb.from('bugs').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
     ]);
     STATE.pisos=pisos||[];STATE.habitaciones=habs||[];STATE.inquilinos=inqs||[];
     STATE.contratos=cts||[];STATE.cobros=cbs||[];STATE.gastos=gts||[];
     STATE.historicoGastos=hist||[];STATE.tiposSupl=suml||[];
-    STATE.siniestros=sins||[];STATE.datosInteres=datos||[];
+    STATE.siniestros=sins||[];STATE.datosInteres=datos||[];STATE.bugs=bugs||[];
     STATE.propietarios=props||[];STATE.banco=banco||[];
     if(!STATE.tiposSupl.length)await insertDefaultSuml();
     if(STATE.currentPisoId&&!STATE.pisos.find(p=>p.id===STATE.currentPisoId))STATE.currentPisoId=null;
@@ -926,7 +941,7 @@ function showPage(page){
       if(target)target.classList.add('active');
     },0);
   }
-  const renders={dashboard:renderDashboard,habitaciones:renderHabs,inquilinos:renderInquilinos,contratos:renderContratos,cobros:renderCobros,gastos:renderGastos,configurar:renderConfigPage,estadisticas:renderEstadisticas,siniestros:renderSiniestros,datosinteres:renderDatosInteres,banco:renderBanco};
+  const renders={dashboard:renderDashboard,habitaciones:renderHabs,inquilinos:renderInquilinos,contratos:renderContratos,cobros:renderCobros,gastos:renderGastos,configurar:renderConfigPage,estadisticas:renderEstadisticas,siniestros:renderSiniestros,datosinteres:renderDatosInteres,banco:renderBanco,bugs:renderBugs};
   updatePageSubtitles();if(renders[page])renders[page]();window.scrollTo(0,0);
 }
 function openModal(id){document.getElementById(id).classList.add('open');}
@@ -1385,10 +1400,12 @@ function renderGastosFilters(){
   tipos.forEach(t=>{const s=getSuml(t);wrap.innerHTML+=`<button class="filter-btn ${gtFilter===t?'active':''}" onclick="filterGastos('${t}',this)">${s.icono} ${t}</button>`;});
 }
 function renderGastosStats(){
-  const total=STATE.gastos.reduce((s,g)=>s+Number(g.importe),0);
-  const pend=STATE.gastos.filter(g=>!g.pagada).reduce((s,g)=>s+Number(g.importe),0);
+  // Solo gastos pendientes de prorrateo (pagada=false)
+  const activos=STATE.gastos.filter(g=>!g.pagada);
+  const total=activos.reduce((s,g)=>s+Number(g.importe),0);
+  const pend=total; // todos los activos son pendientes
   const pag=STATE.gastos.filter(g=>g.pagada).reduce((s,g)=>s+Number(g.importe),0);
-  const pt={};STATE.gastos.forEach(g=>{pt[g.tipo]=(pt[g.tipo]||0)+Number(g.importe);});
+  const pt={};activos.forEach(g=>{pt[g.tipo]=(pt[g.tipo]||0)+Number(g.importe);});
   const mx=Object.entries(pt).sort((a,b)=>b[1]-a[1])[0];
   document.getElementById('gastosStats').innerHTML=`<div class="stat-card"><div class="stat-value stat-accent">€${fmt(total)}</div><div class="stat-label">Total facturas</div></div><div class="stat-card"><div class="stat-value stat-yellow">€${fmt(pend)}</div><div class="stat-label">Pendiente prorrateo</div></div><div class="stat-card"><div class="stat-value stat-green">€${fmt(pag)}</div><div class="stat-label">Ya prorateado</div></div><div class="stat-card"><div class="stat-value">${mx?`${getSuml(mx[0]).icono} ${mx[0]}`:'—'}</div><div class="stat-label">Mayor gasto</div></div>`;
 }
@@ -1548,8 +1565,10 @@ async function toggleCobradoBanco(id,checked){
 }
 function renderGantt(){
   const container=document.getElementById('ganttContainer');if(!container)return;
-  const todas=[...STATE.gastos,...STATE.historicoGastos];const porTipo={};
-  todas.forEach(g=>{if(!g.fecha_inicio||!g.fecha_fin)return;const prev=porTipo[g.tipo];if(!prev||(g.fecha_fin>prev.fecha_fin))porTipo[g.tipo]=g;});
+  // Solo gastos activos (pendientes de prorrateo). El histórico no se muestra.
+  const activos=STATE.gastos.filter(g=>g.fecha_inicio&&g.fecha_fin);
+  const porTipo={};
+  activos.forEach(g=>{const prev=porTipo[g.tipo];if(!prev||(g.fecha_fin>prev.fecha_fin))porTipo[g.tipo]=g;});
   const tipos=Object.keys(porTipo);
   if(!tipos.length){container.innerHTML='<div class="text-muted text-sm">Sin datos de suministros con fechas.</div>';return;}
   let minDate=new Date(porTipo[tipos[0]].fecha_inicio),maxDate=new Date(porTipo[tipos[0]].fecha_fin);
@@ -2401,6 +2420,53 @@ function populatePropietarioSelects(){
     STATE.propietarios.forEach(p=>filt.innerHTML+=`<option value="${p.id}">${p.nombre}</option>`);
     if(cur2)filt.value=cur2;
   }
+}
+
+// ══════════════════════════════════════════════════
+// BUGS / MEJORAS — persistido en Supabase
+// ══════════════════════════════════════════════════
+async function addBug(){
+  const inp=document.getElementById('bugInput');if(!inp)return;
+  const txt=inp.value.trim();if(!txt){toast('Escribe algo primero','error');return;}
+  try{
+    const{data,error}=await sb.from('bugs').insert({user_id:STATE.user.id,texto:txt,tipo:'pendiente'}).select().single();
+    if(error)throw error;
+    STATE.bugs.unshift(data);inp.value='';renderBugs();toast('Anotado');
+  }catch(e){toast(e.message,'error');}
+}
+
+async function toggleBugTipo(id){
+  const item=STATE.bugs.find(b=>b.id===id);if(!item)return;
+  const nuevoTipo=item.tipo==='pendiente'?'resuelto':'pendiente';
+  try{
+    const{data,error}=await sb.from('bugs').update({tipo:nuevoTipo,user_id:STATE.user.id}).eq('id',id).select().single();
+    if(error)throw error;
+    const i=STATE.bugs.findIndex(b=>b.id===id);STATE.bugs[i]=data;
+    bumpSync();renderBugs();
+  }catch(e){toast(e.message,'error');}
+}
+
+async function deleteBug(id){
+  if(!confirm('¿Eliminar esta anotación?'))return;
+  try{
+    await dbDelete('bugs',id);
+    STATE.bugs=STATE.bugs.filter(b=>b.id!==id);renderBugs();toast('Eliminado');
+  }catch(e){toast(e.message,'error');}
+}
+
+function renderBugs(){
+  const el=document.getElementById('bugsList');if(!el)return;
+  const list=STATE.bugs||[];
+  if(!list.length){el.innerHTML=`<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">Sin anotaciones</div><div class="empty-sub">Todo limpio por ahora</div></div>`;return;}
+  el.innerHTML=list.map(b=>`
+    <div class="card" style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;margin-bottom:10px">
+      <span style="font-size:18px;flex-shrink:0;cursor:pointer" onclick="toggleBugTipo('${b.id}')" title="Cambiar estado">${b.tipo==='resuelto'?'✅':'🔴'}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;color:var(--text);white-space:pre-wrap;word-break:break-word;text-decoration:${b.tipo==='resuelto'?'line-through':'none'};opacity:${b.tipo==='resuelto'?'0.5':'1'}">${b.texto}</div>
+        <div class="text-sm text-muted" style="margin-top:5px">${new Date(b.created_at).toLocaleDateString('es')} · <span class="badge badge-${b.tipo==='resuelto'?'pagado':'pendiente'}" style="font-size:10px">${b.tipo==='resuelto'?'Resuelto':'Pendiente'}</span></div>
+      </div>
+      <button class="btn btn-danger btn-sm btn-icon" onclick="deleteBug('${b.id}')" title="Eliminar">🗑</button>
+    </div>`).join('');
 }
 
 // ══════════════════════════════════════════════════
