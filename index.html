@@ -241,6 +241,17 @@ textarea{resize:vertical;min-height:68px;}
   </div>
   <div class="gastos-panel" id="gpanel-historico">
     <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--text2);margin-bottom:14px">📁 Registro completo de gastos archivados. Puedes editar, borrar o reactivar como pendiente.</div>
+    <!-- Filtros histórico -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:14px">
+      <select id="hFiltTipo" onchange="renderHistorico()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;outline:none">
+        <option value="">Todos los tipos</option>
+      </select>
+      <input id="hFiltProveedor" placeholder="🔍 Proveedor…" oninput="renderHistorico()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;outline:none">
+      <input type="date" id="hFiltDesde" onchange="renderHistorico()" title="Inicio cobro desde" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;outline:none">
+      <input type="date" id="hFiltHasta" onchange="renderHistorico()" title="Fin cobro hasta" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;outline:none">
+      <input type="month" id="hFiltArchivado" onchange="renderHistorico()" title="Archivado en mes" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;outline:none">
+      <button class="btn btn-secondary btn-sm" onclick="clearHistoricoFiltros()" style="font-size:12px">✕ Limpiar</button>
+    </div>
     <div class="table-wrap"><table><thead><tr><th>Tipo</th><th>Proveedor</th><th>Inicio cobro</th><th>Fin cobro</th><th>Importe</th><th>N.º Factura</th><th>Motivo</th><th>💳 Banco</th><th>Archivado</th><th>Acciones</th></tr></thead><tbody id="historicoTable"></tbody></table></div>
     <div class="mob-list" id="historicoMob"></div>
   </div>
@@ -444,10 +455,12 @@ textarea{resize:vertical;min-height:68px;}
     <button class="filter-btn" onclick="filterBanco('ingreso',this)">💚 Ingresos</button>
     <button class="filter-btn" onclick="filterBanco('gasto',this)">🔴 Gastos</button>
   </div>
-  <div style="margin-bottom:14px">
-    <select id="bancoFiltProp" onchange="renderBanco()" style="width:100%;max-width:300px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none">
+  <div style="margin-bottom:14px;display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center">
+    <select id="bancoFiltProp" onchange="renderBanco()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none">
       <option value="">Todos los propietarios</option>
     </select>
+    <input id="bancoFiltConcepto" placeholder="🔍 Concepto…" oninput="renderBanco()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none">
+    <input type="month" id="bancoFiltMes" onchange="renderBanco()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none">
   </div>
   <div class="table-wrap"><table>
     <thead><tr><th>Fecha</th><th>Tipo</th><th>Concepto</th><th>Propietario</th><th>Importe</th><th>Origen</th><th>Acciones</th></tr></thead>
@@ -1360,23 +1373,11 @@ async function saveGasto(){
         if(hd)STATE.historicoGastos.unshift(hd);
         // Eliminar de gastos (ya está pagada=true en BD)
         await dbDelete('gastos',row.id);
-        // ── T1: Apunte automático en banco ──
-        try{
-          await crearApunteBanco({
-            tipo:'gasto',
-            importe:row.importe,
-            fecha:row.fecha_fin||row.fecha_inicio||new Date().toISOString().split('T')[0],
-            concepto:row.tipo+(row.proveedor?' — '+row.proveedor:'')+(row.num_factura?' ('+row.num_factura+')':''),
-            notas:row.notas||'No se prorratea',
-            origen:'gasto_directo',
-            origen_id:row.id
-          });
-        }catch(_){}
-        toast('Gasto archivado y registrado en banco');
+        // NO se crea apunte en banco aquí — se crea cuando el usuario marca "Cobrado del banco" en el histórico
+        toast('Gasto archivado. Márcalo como "Cobrado del banco" cuando aparezca el cargo real.');
       } else {
         STATE.gastos.unshift(row);
-        // Apunte automático en banco
-        try{await crearApunteBanco({tipo:'gasto',importe:row.importe,fecha:row.fecha_fin||row.fecha_inicio||new Date().toISOString().split('T')[0],concepto:row.tipo+(row.proveedor?' — '+row.proveedor:''),notas:row.notas||'',origen:'gasto',origen_id:row.id});}catch(_){}
+        // NO se crea apunte en banco — los gastos pendientes de prorrateo no generan apunte
         toast('Factura registrada');
       }
     }
@@ -1418,13 +1419,43 @@ function renderGastosTabla(){
   tbody.innerHTML=gts.map(g=>{const s=getSuml(g.tipo);return `<tr><td><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:${s.color};flex-shrink:0"></span>${s.icono} <strong>${g.tipo}</strong></span></td><td class="text-muted">${g.proveedor||'—'}</td><td class="text-muted">${fmtD(g.fecha_inicio)}</td><td class="text-muted">${fmtD(g.fecha_fin)}</td><td class="font-bold text-yellow">€${fmt(g.importe)}</td><td>${g.pagada?'<span class="badge badge-pagado">Prorateada</span>':'<span class="badge badge-pendiente">Pendiente</span>'}</td><td><div class="flex gap-2"><button class="btn btn-secondary btn-sm" onclick="openModalGasto('${g.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteGasto('${g.id}')">🗑</button></div></td></tr>`;}).join('');
   document.getElementById('gastosMob').innerHTML=gts.map(g=>{const s=getSuml(g.tipo);return `<div class="mob-card"><div class="mob-card-header"><div><div class="mob-card-name">${s.icono} ${g.tipo}${g.proveedor?' · '+g.proveedor:''}</div><div class="mob-card-sub">${fmtD(g.fecha_inicio)} → ${fmtD(g.fecha_fin)}</div></div>${g.pagada?'<span class="badge badge-pagado">✓</span>':'<span class="badge badge-pendiente">Pendiente</span>'}</div><div class="mob-card-rows"><span class="mob-card-pill">💶 <strong>€${fmt(g.importe)}</strong></span>${g.num_factura?`<span class="mob-card-pill">${g.num_factura}</span>`:''}</div><div class="mob-card-actions"><button class="btn btn-secondary btn-sm" onclick="openModalGasto('${g.id}')">✏️ Editar</button><button class="btn btn-danger btn-sm" onclick="deleteGasto('${g.id}')">🗑</button></div></div>`;}).join('');
 }
+function clearHistoricoFiltros(){
+  ['hFiltTipo','hFiltProveedor','hFiltDesde','hFiltHasta','hFiltArchivado'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  renderHistorico();
+}
+
 function renderHistorico(){
   const tbody=document.getElementById('historicoTable');if(!tbody)return;
-  const hist=STATE.historicoGastos;
-  if(!hist.length){tbody.innerHTML=`<tr><td colspan="10"><div class="empty"><div class="empty-icon">🗂</div><div class="empty-title">Historico vacio</div></div></td></tr>`;document.getElementById('historicoMob').innerHTML='';return;}
+
+  // Poblar select de tipos con los que existen en el histórico
+  const selTipo=document.getElementById('hFiltTipo');
+  if(selTipo){
+    const tipos=[...new Set(STATE.historicoGastos.map(g=>g.tipo).filter(Boolean))].sort();
+    const cur=selTipo.value;
+    selTipo.innerHTML='<option value="">Todos los tipos</option>'+tipos.map(t=>`<option value="${t}">${t}</option>`).join('');
+    if(cur)selTipo.value=cur;
+  }
+
+  // Leer filtros
+  const fTipo=document.getElementById('hFiltTipo')?.value||'';
+  const fProv=(document.getElementById('hFiltProveedor')?.value||'').toLowerCase().trim();
+  const fDesde=document.getElementById('hFiltDesde')?.value||'';
+  const fHasta=document.getElementById('hFiltHasta')?.value||'';
+  const fArch=document.getElementById('hFiltArchivado')?.value||''; // YYYY-MM
+
+  let hist=STATE.historicoGastos;
+  if(fTipo) hist=hist.filter(g=>g.tipo===fTipo);
+  if(fProv) hist=hist.filter(g=>(g.proveedor||'').toLowerCase().includes(fProv));
+  if(fDesde) hist=hist.filter(g=>g.fecha_inicio&&g.fecha_inicio>=fDesde);
+  if(fHasta) hist=hist.filter(g=>g.fecha_fin&&g.fecha_fin<=fHasta);
+  if(fArch) hist=hist.filter(g=>g.archivado_at&&g.archivado_at.startsWith(fArch));
+
+  if(!hist.length){
+    tbody.innerHTML=`<tr><td colspan="10"><div class="empty"><div class="empty-icon">🗂</div><div class="empty-title">Sin resultados</div></div></td></tr>`;
+    document.getElementById('historicoMob').innerHTML='';return;
+  }
   tbody.innerHTML=hist.map(g=>{
     const s=getSuml(g.tipo);
-    const arch=g.archivado_at?new Date(g.archivado_at).toLocaleDateString('es'):'—';
     const cobrado=g.cobrado_banco===true||g.cobrado_banco==='true';
     return `<tr>
       <td><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:3px;background:${s.color}"></span>${s.icono} ${g.tipo}</span></td>
@@ -2574,6 +2605,10 @@ function renderBanco(){
   const filtProp=document.getElementById('bancoFiltProp')?.value||'';
   if(filtProp==='_comun') movs=movs.filter(m=>!m.propietario_id);
   else if(filtProp) movs=movs.filter(m=>m.propietario_id===filtProp);
+  const filtMes=document.getElementById('bancoFiltMes')?.value||''; // YYYY-MM
+  if(filtMes) movs=movs.filter(m=>m.fecha&&m.fecha.startsWith(filtMes));
+  const filtConcepto=(document.getElementById('bancoFiltConcepto')?.value||'').toLowerCase().trim();
+  if(filtConcepto) movs=movs.filter(m=>(m.concepto||'').toLowerCase().includes(filtConcepto)||(m.notas||'').toLowerCase().includes(filtConcepto));
 
   // ── Tabla desktop ─────────────────────────────────
   const tbody=document.getElementById('bancoTable');
