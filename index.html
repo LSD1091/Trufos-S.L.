@@ -932,7 +932,7 @@ async function dbSave(table,payload,editId=null){
 async function dbDelete(table,id){const{error}=await sb.from(table).delete().eq('id',id);if(error)throw error;bumpSync();}
 
 // NAV
-function showPage(page){
+async function showPage(page){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item,.bottom-nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
@@ -944,7 +944,6 @@ function showPage(page){
     if(page==='inquilinos'){inqFilter=filterDefaults[page];}
     if(page==='contratos'){ctFilter=filterDefaults[page];}
     if(page==='cobros'){cbFilter=filterDefaults[page];}
-    // Actualizar botones de filtro de esa sección
     setTimeout(()=>{
       const container=document.getElementById('page-'+page);
       if(!container)return;
@@ -953,6 +952,30 @@ function showPage(page){
       const target=btns.find(b=>(b.getAttribute('onclick')||'').includes("'"+filterDefaults[page]+"'"));
       if(target)target.classList.add('active');
     },0);
+  }
+  // Refresco silencioso de los datos de la sección antes de renderizar
+  const uid=STATE.user?.id;
+  if(uid){
+    try{
+      const tableMap={
+        banco:      ()=>sb.from('movimientos_banco').select('*').eq('user_id',uid).order('fecha',{ascending:false}).then(r=>{if(!r.error)STATE.banco=r.data||[];}),
+        cobros:     ()=>sb.from('cobros').select('*').eq('user_id',uid).order('created_at',{ascending:false}).then(r=>{if(!r.error)STATE.cobros=r.data||[];}),
+        gastos:     ()=>Promise.all([
+                      sb.from('gastos').select('*').eq('user_id',uid).order('fecha_fin',{ascending:false}).then(r=>{if(!r.error)STATE.gastos=r.data||[];}),
+                      sb.from('historico_gastos').select('*').eq('user_id',uid).order('archivado_at',{ascending:false}).then(r=>{if(!r.error)STATE.historicoGastos=r.data||[];})
+                    ]),
+        estadisticas:()=>Promise.all([
+                      sb.from('cobros').select('*').eq('user_id',uid).order('created_at',{ascending:false}).then(r=>{if(!r.error)STATE.cobros=r.data||[];}),
+                      sb.from('movimientos_banco').select('*').eq('user_id',uid).order('fecha',{ascending:false}).then(r=>{if(!r.error)STATE.banco=r.data||[];})
+                    ]),
+        dashboard:  ()=>Promise.all([
+                      sb.from('cobros').select('*').eq('user_id',uid).order('created_at',{ascending:false}).then(r=>{if(!r.error)STATE.cobros=r.data||[];}),
+                      sb.from('movimientos_banco').select('*').eq('user_id',uid).order('fecha',{ascending:false}).then(r=>{if(!r.error)STATE.banco=r.data||[];})
+                    ]),
+      };
+      if(tableMap[page]) await tableMap[page]();
+      bumpSync();
+    }catch(_){}
   }
   const renders={dashboard:renderDashboard,habitaciones:renderHabs,inquilinos:renderInquilinos,contratos:renderContratos,cobros:renderCobros,gastos:renderGastos,configurar:renderConfigPage,estadisticas:renderEstadisticas,siniestros:renderSiniestros,datosinteres:renderDatosInteres,banco:renderBanco,bugs:renderBugs};
   updatePageSubtitles();if(renders[page])renders[page]();window.scrollTo(0,0);
@@ -1456,6 +1479,7 @@ function renderHistorico(){
   }
   tbody.innerHTML=hist.map(g=>{
     const s=getSuml(g.tipo);
+    const arch=g.archivado_at?new Date(g.archivado_at).toLocaleDateString('es'):'—';
     const cobrado=g.cobrado_banco===true||g.cobrado_banco==='true';
     return `<tr>
       <td><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:3px;background:${s.color}"></span>${s.icono} ${g.tipo}</span></td>
