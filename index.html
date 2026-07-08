@@ -269,7 +269,7 @@ textarea{resize:vertical;min-height:68px;}
   </div>
   <div class="cfg-panel" id="cfgpanel-suministros">
     <div class="cfg-header"><div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px">Tipos de suministro</div><div class="text-sm text-muted">Categorías usadas en Gastos</div></div><button class="btn btn-primary cfg-btn" onclick="openModalSuministro()">+ Nuevo tipo</button></div>
-    <div class="table-wrap"><table><thead><tr><th>Icono</th><th>Nombre</th><th>Color</th><th>Acciones</th></tr></thead><tbody id="suministrosTable"></tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>Icono</th><th>Nombre</th><th>Color</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody id="suministrosTable"></tbody></table></div>
   </div>
   <div class="cfg-panel" id="cfgpanel-cuenta">
     <div class="cfg-header"><div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px">Mi empresa</div><div class="text-sm text-muted">Nombre que aparece en el panel</div></div></div>
@@ -555,7 +555,7 @@ textarea{resize:vertical;min-height:68px;}
 
 <div class="modal-overlay" id="modalContrato"><div class="modal">
   <div class="modal-title" id="modalContratoTitle">Nuevo contrato</div>
-  <div class="form-row"><div class="form-group"><label>Inquilino</label><select id="ctInquilino"><option value="">-- Selecciona --</option></select></div><div class="form-group"><label>Habitacion</label><select id="ctHabitacion"><option value="">-- Selecciona --</option></select></div></div>
+  <div class="form-row"><div class="form-group"><label>Inquilino</label><select id="ctInquilino" onchange="autocompletarDesdeInquilino('ctInquilino','ctHabitacion')"><option value="">-- Selecciona --</option></select></div><div class="form-group"><label>Habitacion</label><select id="ctHabitacion" onchange="autocompletarDesdeHabitacion('ctHabitacion','ctInquilino')"><option value="">-- Selecciona --</option></select></div></div>
   <div class="form-row"><div class="form-group"><label>Fecha inicio</label><input type="date" id="ctInicio"></div><div class="form-group"><label>Fecha fin (vacio=indefinido)</label><input type="date" id="ctFin"></div></div>
   <div class="form-row"><div class="form-group"><label>Tipo</label><select id="ctTipo"><option value="temporal">Temporal</option><option value="indefinido">Indefinido</option><option value="estudiante">Estudiante</option><option value="empresa">Empresa</option></select></div><div class="form-group"><label>Duracion minima (meses)</label><input type="number" id="ctMinMeses"></div></div>
   <div class="form-row"><div class="form-group"><label>Precio mensual (EUR)</label><input type="number" id="ctPrecio"></div><div class="form-group"><label>Fianza (EUR)</label><input type="number" id="ctFianza"></div></div>
@@ -576,7 +576,7 @@ textarea{resize:vertical;min-height:68px;}
 
 <div class="modal-overlay" id="modalCobro"><div class="modal">
   <div class="modal-title" id="modalCobroTitle">Registrar cobro</div>
-  <div class="form-row"><div class="form-group"><label>Inquilino</label><select id="cbInquilino"><option value="">-- Selecciona --</option></select></div><div class="form-group"><label>Habitacion</label><select id="cbHabitacion"><option value="">-- Selecciona --</option></select></div></div>
+  <div class="form-row"><div class="form-group"><label>Inquilino</label><select id="cbInquilino" onchange="autocompletarDesdeInquilino('cbInquilino','cbHabitacion')"><option value="">-- Selecciona --</option></select></div><div class="form-group"><label>Habitacion</label><select id="cbHabitacion" onchange="autocompletarDesdeHabitacion('cbHabitacion','cbInquilino')"><option value="">-- Selecciona --</option></select></div></div>
   <div class="form-row"><div class="form-group"><label>Concepto</label><select id="cbConcepto"><option>Alquiler</option><option>Fianza</option><option>Luz</option><option>Agua</option><option>Internet</option><option>Penalizacion</option><option>Otro</option></select></div><div class="form-group"><label>Mes</label><input type="month" id="cbMes"></div></div>
   <div class="form-row"><div class="form-group"><label>Importe (EUR)</label><input type="number" id="cbImporte"></div><div class="form-group"><label>Metodo</label><select id="cbMetodo"><option>Transferencia</option><option>Efectivo</option><option>Bizum</option><option>Tarjeta</option></select></div></div>
   <div class="form-row"><div class="form-group"><label>Estado</label><select id="cbEstado"><option value="pendiente">Pendiente</option><option value="pagado">Pagado</option><option value="impagado">Impagado</option></select></div><div class="form-group"><label>Fecha pago</label><input type="date" id="cbFecha"></div></div>
@@ -587,8 +587,11 @@ textarea{resize:vertical;min-height:68px;}
 
 <div class="modal-overlay" id="modalGasto"><div class="modal">
   <div class="modal-title" id="modalGastoTitle">Nueva factura de suministro</div>
-  <div class="form-row"><div class="form-group"><label>Tipo de suministro</label><select id="gtTipo"></select></div><div class="form-group"><label>Proveedor</label><input id="gtProveedor" placeholder="Iberdrola, Endesa..."></div></div>
-  <div class="form-row"><div class="form-group"><label>Fecha inicio cobro</label><input type="date" id="gtFechaInicio"></div><div class="form-group"><label>Fecha fin cobro</label><input type="date" id="gtFechaFin"></div></div>
+  <div class="form-row"><div class="form-group"><label>Tipo de suministro</label><select id="gtTipo" onchange="onGastoTipoChange()"></select></div><div class="form-group"><label>Proveedor</label><input id="gtProveedor" placeholder="Iberdrola, Endesa..."></div></div>
+  <!-- Fechas rango (suministros normales) -->
+  <div class="form-row" id="gtFechasRango"><div class="form-group"><label>Fecha inicio cobro</label><input type="date" id="gtFechaInicio"></div><div class="form-group"><label>Fecha fin cobro</label><input type="date" id="gtFechaFin"></div></div>
+  <!-- Fecha única (suministros con fecha_unica=true) -->
+  <div class="form-group" id="gtFechaUnicaWrap" style="display:none"><label>Fecha de cobro</label><input type="date" id="gtFechaUnica"></div>
   <div class="form-row"><div class="form-group"><label>Importe total (EUR)</label><input type="number" id="gtImporte" step="0.01" placeholder="85.50"></div><div class="form-group"><label>N factura</label><input id="gtNumFactura" placeholder="FAC-2025-001"></div></div>
   <div class="form-group"><label>Pagada por los inquilinos?</label><select id="gtPagada"><option value="false">No - pendiente de prorrateo</option><option value="true">Si</option><option value="noProrratea">No se prorratea</option></select></div>
   <div class="form-group"><label>Notas</label><textarea id="gtNotas"></textarea></div>
@@ -600,6 +603,10 @@ textarea{resize:vertical;min-height:68px;}
   <div class="modal-title" id="modalSuministroTitle">Nuevo tipo de suministro</div>
   <div class="form-row"><div class="form-group"><label>Icono (emoji)</label><input id="smlIcono" placeholder="💡" maxlength="4" style="font-size:22px;text-align:center"></div><div class="form-group"><label>Nombre</label><input id="smlNombre" placeholder="Luz, Agua, Gas..."></div></div>
   <div class="form-group"><label>Color de barra en grafico</label><input type="color" id="smlColor" value="#7c6af7" style="height:40px;padding:4px 8px;cursor:pointer"></div>
+  <div class="form-group" style="display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:8px;padding:12px">
+    <input type="checkbox" id="smlFechaUnica" style="width:auto;accent-color:var(--accent);transform:scale(1.3);cursor:pointer">
+    <div><div style="font-size:13px;font-weight:600">Fecha única</div><div class="text-sm text-muted">Al crear un gasto de este tipo solo se pedirá una fecha de cobro, sin rango inicio/fin</div></div>
+  </div>
   <input type="hidden" id="smlEditId">
   <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modalSuministro')">Cancelar</button><button class="btn btn-primary" onclick="saveSuministro()">Guardar</button></div>
 </div></div>
@@ -1110,13 +1117,14 @@ function renderPisoInfo(){
 // TIPOS SUMINISTRO
 function openModalSuministro(id=null){
   document.getElementById('modalSuministroTitle').textContent=id?'Editar tipo':'Nuevo tipo de suministro';
-  if(id){const s=STATE.tiposSupl.find(x=>x.id===id);document.getElementById('smlIcono').value=s.icono||'📦';document.getElementById('smlNombre').value=s.nombre||'';document.getElementById('smlColor').value=s.color||'#7c6af7';document.getElementById('smlEditId').value=id;}
-  else{['smlIcono','smlNombre'].forEach(f=>document.getElementById(f).value='');document.getElementById('smlColor').value='#7c6af7';document.getElementById('smlEditId').value='';}
+  if(id){const s=STATE.tiposSupl.find(x=>x.id===id);document.getElementById('smlIcono').value=s.icono||'📦';document.getElementById('smlNombre').value=s.nombre||'';document.getElementById('smlColor').value=s.color||'#7c6af7';document.getElementById('smlFechaUnica').checked=!!s.fecha_unica;document.getElementById('smlEditId').value=id;}
+  else{['smlIcono','smlNombre'].forEach(f=>document.getElementById(f).value='');document.getElementById('smlColor').value='#7c6af7';document.getElementById('smlFechaUnica').checked=false;document.getElementById('smlEditId').value='';}
   openModal('modalSuministro');
 }
 async function saveSuministro(){
   const nombre=v('smlNombre').trim();if(!nombre){toast('Nombre obligatorio','error');return;}
-  const payload={nombre,icono:v('smlIcono')||'📦',color:v('smlColor')};const eid=v('smlEditId');
+  const fecha_unica=document.getElementById('smlFechaUnica').checked;
+  const payload={nombre,icono:v('smlIcono')||'📦',color:v('smlColor'),fecha_unica};const eid=v('smlEditId');
   try{
     const row=await dbSave('tipos_suml',payload,eid||null);
     if(eid){const i=STATE.tiposSupl.findIndex(x=>x.id===eid);STATE.tiposSupl[i]=row;toast('Tipo actualizado');}
@@ -1131,8 +1139,8 @@ async function deleteSuministro(id){
 }
 function renderSuministrosTable(){
   const tbody=document.getElementById('suministrosTable');if(!tbody)return;
-  if(!STATE.tiposSupl.length){tbody.innerHTML=`<tr><td colspan="4"><div class="empty"><div class="empty-icon">⚡</div><div class="empty-title">Sin tipos</div></div></td></tr>`;return;}
-  tbody.innerHTML=STATE.tiposSupl.map(s=>`<tr><td style="font-size:20px">${s.icono||'📦'}</td><td><strong>${s.nombre}</strong></td><td><div style="width:28px;height:28px;border-radius:6px;background:${s.color};border:1px solid var(--border)"></div></td><td><div class="flex gap-2"><button class="btn btn-secondary btn-sm" onclick="openModalSuministro('${s.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteSuministro('${s.id}')">🗑</button></div></td></tr>`).join('');
+  if(!STATE.tiposSupl.length){tbody.innerHTML=`<tr><td colspan="5"><div class="empty"><div class="empty-icon">⚡</div><div class="empty-title">Sin tipos</div></div></td></tr>`;return;}
+  tbody.innerHTML=STATE.tiposSupl.map(s=>`<tr><td style="font-size:20px">${s.icono||'📦'}</td><td><strong>${s.nombre}</strong></td><td><div style="width:28px;height:28px;border-radius:6px;background:${s.color};border:1px solid var(--border)"></div></td><td>${s.fecha_unica?'<span class="badge badge-pendiente" style="font-size:10px">📅 Fecha única</span>':'<span class="text-muted text-sm">Rango</span>'}</td><td><div class="flex gap-2"><button class="btn btn-secondary btn-sm" onclick="openModalSuministro('${s.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteSuministro('${s.id}')">🗑</button></div></td></tr>`).join('');
 }
 function populateGastoTipoSelect(){
   const sel=document.getElementById('gtTipo');if(!sel)return;const cur=sel.value;
@@ -1287,6 +1295,23 @@ function renderContratos(){
   document.getElementById('contratosMob').innerHTML=cts.map(ct=>{const inq=STATE.inquilinos.find(x=>x.id===ct.inquilino_id);const h=STATE.habitaciones.find(x=>x.id===ct.habitacion_id);return `<div class="mob-card"><div class="mob-card-header"><div><div class="mob-card-name">${inq?inq.nombre:'—'}</div><div class="mob-card-sub">${h?h.nombre:'—'}</div></div><span class="badge badge-${ct.estado}">${cap(ct.estado)}</span></div><div class="mob-card-rows"><span class="mob-card-pill">💶 <strong>€${ct.precio}/mes</strong></span><span class="mob-card-pill">📅 ${ct.inicio||'—'} → ${ct.fin||'Indefinido'}</span></div><div class="mob-card-actions">${ct.doc_path?`<button class="btn btn-secondary btn-sm" onclick="verDocContrato('${ct.id}')">📎 Ver</button>`:''}<button class="btn btn-secondary btn-sm" onclick="openModalContrato('${ct.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteContrato('${ct.id}')">🗑</button></div></div>`;}).join('');
 }
 
+// T2: Autocompletado inquilino ↔ habitación
+function autocompletarDesdeInquilino(selInqId, selHabId){
+  const inqId=document.getElementById(selInqId)?.value;if(!inqId)return;
+  const inq=STATE.inquilinos.find(i=>i.id===inqId);if(!inq)return;
+  let habId=inq.habitacion_id||null;
+  if(!habId){const ct=STATE.contratos.find(c=>c.inquilino_id===inqId&&c.estado==='vigente');if(ct)habId=ct.habitacion_id;}
+  if(habId){const sel=document.getElementById(selHabId);if(sel&&sel.querySelector(`option[value="${habId}"]`))sel.value=habId;}
+}
+function autocompletarDesdeHabitacion(selHabId, selInqId){
+  const habId=document.getElementById(selHabId)?.value;if(!habId)return;
+  let inqId=null;
+  const inq=STATE.inquilinos.find(i=>i.habitacion_id===habId&&i.estado==='activo');
+  if(inq){inqId=inq.id;}
+  else{const ct=STATE.contratos.find(c=>c.habitacion_id===habId&&c.estado==='vigente');if(ct)inqId=ct.inquilino_id;}
+  if(inqId){const sel=document.getElementById(selInqId);if(sel&&sel.querySelector(`option[value="${inqId}"]`))sel.value=inqId;}
+}
+
 // COBROS
 let cbFilter='pendiente';
 function filterCobros(f,btn){cbFilter=f;document.querySelectorAll('#page-cobros .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCobros();}
@@ -1370,20 +1395,33 @@ function renderCobros(){
 }
 
 // GASTOS
+// T1: Alternar campos de fecha según si el suministro tiene fecha_unica
+function onGastoTipoChange(){
+  const nombre=document.getElementById('gtTipo')?.value;
+  const suml=STATE.tiposSupl.find(s=>s.nombre===nombre);
+  const esUnica=!!suml?.fecha_unica;
+  document.getElementById('gtFechasRango').style.display=esUnica?'none':'';
+  document.getElementById('gtFechaUnicaWrap').style.display=esUnica?'':'none';
+}
 let gtFilter='todos';
 function filterGastos(f,btn){gtFilter=f;document.querySelectorAll('#gastosFilters .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderGastosTabla();}
 function openModalGasto(id=null){
   populateGastoTipoSelect();
   document.getElementById('modalGastoTitle').textContent=id?'Editar factura':'Nueva factura de suministro';
-  if(id){const g=STATE.gastos.find(x=>x.id===id);document.getElementById('gtTipo').value=g.tipo;document.getElementById('gtFechaInicio').value=g.fecha_inicio||'';document.getElementById('gtFechaFin').value=g.fecha_fin||'';document.getElementById('gtImporte').value=g.importe;document.getElementById('gtProveedor').value=g.proveedor||'';document.getElementById('gtNumFactura').value=g.num_factura||'';document.getElementById('gtPagada').value=String(g.pagada||false);document.getElementById('gtNotas').value=g.notas||'';document.getElementById('gtEditId').value=id;}
-  else{['gtImporte','gtProveedor','gtNumFactura','gtNotas','gtFechaInicio','gtFechaFin'].forEach(f=>document.getElementById(f).value='');document.getElementById('gtPagada').value='false';document.getElementById('gtEditId').value='';}
+  if(id){const g=STATE.gastos.find(x=>x.id===id);document.getElementById('gtTipo').value=g.tipo;document.getElementById('gtFechaInicio').value=g.fecha_inicio||'';document.getElementById('gtFechaFin').value=g.fecha_fin||'';document.getElementById('gtFechaUnica').value=g.fecha_fin||g.fecha_inicio||'';document.getElementById('gtImporte').value=g.importe;document.getElementById('gtProveedor').value=g.proveedor||'';document.getElementById('gtNumFactura').value=g.num_factura||'';document.getElementById('gtPagada').value=String(g.pagada||false);document.getElementById('gtNotas').value=g.notas||'';document.getElementById('gtEditId').value=id;}
+  else{['gtImporte','gtProveedor','gtNumFactura','gtNotas','gtFechaInicio','gtFechaFin','gtFechaUnica'].forEach(f=>document.getElementById(f).value='');document.getElementById('gtPagada').value='false';document.getElementById('gtEditId').value='';}
+  onGastoTipoChange();
   openModal('modalGasto');
 }
 async function saveGasto(){
   const imp=parseFloat(v('gtImporte'));if(!imp){toast('Introduce el importe','error');return;}
-  if(!v('gtFechaInicio')||!v('gtFechaFin')){toast('Indica fechas inicio y fin','error');return;}
+  const suml=STATE.tiposSupl.find(s=>s.nombre===v('gtTipo'));
+  const esUnica=!!suml?.fecha_unica;
+  const fechaInicio=esUnica?v('gtFechaUnica'):v('gtFechaInicio');
+  const fechaFin=esUnica?v('gtFechaUnica'):v('gtFechaFin');
+  if(!fechaInicio||!fechaFin){toast('Indica la fecha de cobro','error');return;}
   const noProrratea=v('gtPagada')==='noProrratea';
-  const payload={tipo:v('gtTipo'),fecha_inicio:v('gtFechaInicio'),fecha_fin:v('gtFechaFin'),importe:imp,proveedor:v('gtProveedor')||null,num_factura:v('gtNumFactura')||null,pagada:noProrratea||v('gtPagada')==='true',notas:v('gtNotas')||null};
+  const payload={tipo:v('gtTipo'),fecha_inicio:fechaInicio,fecha_fin:fechaFin,importe:imp,proveedor:v('gtProveedor')||null,num_factura:v('gtNumFactura')||null,pagada:noProrratea||v('gtPagada')==='true',notas:v('gtNotas')||null};
   const eid=v('gtEditId');
   try{
     const row=await dbSave('gastos',payload,eid||null);
@@ -2513,15 +2551,19 @@ function renderBugs(){
   const el=document.getElementById('bugsList');if(!el)return;
   const list=STATE.bugs||[];
   if(!list.length){el.innerHTML=`<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">Sin anotaciones</div><div class="empty-sub">Todo limpio por ahora</div></div>`;return;}
-  el.innerHTML=list.map(b=>`
-    <div class="card" style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;margin-bottom:10px">
-      <span style="font-size:18px;flex-shrink:0;cursor:pointer" onclick="toggleBugTipo('${b.id}')" title="Cambiar estado">${b.tipo==='resuelto'?'✅':'🔴'}</span>
+  el.innerHTML=list.map(b=>{
+    const resuelto=b.tipo==='resuelto';
+    return `<div class="card" style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;margin-bottom:10px;opacity:${resuelto?'0.6':'1'}">
       <div style="flex:1;min-width:0">
-        <div style="font-size:13px;color:var(--text);white-space:pre-wrap;word-break:break-word;text-decoration:${b.tipo==='resuelto'?'line-through':'none'};opacity:${b.tipo==='resuelto'?'0.5':'1'}">${b.texto}</div>
-        <div class="text-sm text-muted" style="margin-top:5px">${new Date(b.created_at).toLocaleDateString('es')} · <span class="badge badge-${b.tipo==='resuelto'?'pagado':'pendiente'}" style="font-size:10px">${b.tipo==='resuelto'?'Resuelto':'Pendiente'}</span></div>
+        <div style="font-size:13px;color:var(--text);white-space:pre-wrap;word-break:break-word;text-decoration:${resuelto?'line-through':'none'}">${b.texto}</div>
+        <div class="text-sm text-muted" style="margin-top:5px">${new Date(b.created_at).toLocaleDateString('es')} · <span class="badge badge-${resuelto?'pagado':'pendiente'}" style="font-size:10px">${resuelto?'✅ Completado':'🔴 Pendiente'}</span></div>
       </div>
-      <button class="btn btn-danger btn-sm btn-icon" onclick="deleteBug('${b.id}')" title="Eliminar">🗑</button>
-    </div>`).join('');
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="btn btn-sm ${resuelto?'btn-secondary':'btn-primary'}" onclick="toggleBugTipo('${b.id}')" style="font-size:11px;padding:5px 10px">${resuelto?'↩ Reabrir':'✅ Completar'}</button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteBug('${b.id}')" title="Eliminar">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ══════════════════════════════════════════════════
