@@ -47,7 +47,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 .btn-danger{background:rgba(247,106,106,.15);color:var(--danger);border:1px solid rgba(247,106,106,.3);}.btn-danger:hover{background:rgba(247,106,106,.25);}
 .btn-sm{padding:6px 12px;font-size:12px;}.btn-icon{padding:7px;}.btn:disabled{opacity:.5;cursor:not-allowed;}
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
-.cards-grid-habs{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;align-items:start;}
+.cards-grid-habs{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;align-items:stretch;}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;transition:border-color .15s;}
 .card:hover{border-color:var(--accent);}
 .card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
@@ -212,7 +212,7 @@ textarea{resize:vertical;min-height:68px;}
 <div class="page" id="page-inquilinos">
   <div class="topbar"><div><div class="page-title">Inquilinos</div><div class="page-sub">Registro de arrendatarios</div><div class="current-piso-name" style="font-size:12px;color:var(--accent);margin-top:2px;font-weight:600"></div></div><button class="btn btn-primary" onclick="openModalInquilino()">+ Nuevo</button></div>
   <div class="filters"><button class="filter-btn active" onclick="filterInquilinos('todos',this)">Todos</button><button class="filter-btn" onclick="filterInquilinos('activo',this)">Activos</button><button class="filter-btn" onclick="filterInquilinos('moroso',this)">Morosos</button><button class="filter-btn" onclick="filterInquilinos('pasado',this)">Pasados</button></div>
-  <div class="table-wrap"><table><thead><tr><th>Nombre</th><th>DNI/NIE</th><th>Habitación</th><th>Teléfono</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="inquilinosTable"></tbody></table></div>
+  <div class="table-wrap"><table><thead><tr><th>Nombre</th><th>DNI/NIE</th><th>Habitación</th><th>Teléfono</th><th>Saldo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="inquilinosTable"></tbody></table></div>
   <div class="mob-list" id="inquilinosMob"></div>
 </div>
 <div class="page" id="page-contratos">
@@ -230,7 +230,7 @@ textarea{resize:vertical;min-height:68px;}
 </div>
 <div class="page" id="page-gastos">
   <div class="topbar"><div><div class="page-title">⚡ Gastos</div><div class="page-sub">Suministros y prorrateo</div><div class="current-piso-name" style="font-size:12px;color:var(--accent);margin-top:2px;font-weight:600"></div></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-secondary" onclick="crearCobrosAlquiler()">🏠 Cobros alquiler</button><button class="btn btn-secondary" onclick="crearCobrosProrateados()">⚡ Cobros suministros</button><button class="btn btn-primary" onclick="openModalGasto()">+ Nueva factura</button></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-secondary" onclick="crearCobrosAlquiler()">🏠 Cobros alquiler</button><button class="btn btn-secondary" onclick="crearCobrosProrateados()">⚡ Cobros suministros</button><button class="btn btn-secondary" onclick="crearGastoTerminoFijo()">🌡️ Término fijo ACS</button><button class="btn btn-primary" onclick="openModalGasto()">+ Nueva factura</button></div>
   </div>
   <div class="gastos-tabs"><button class="gastos-tab active" onclick="switchGastosTab('pendientes',this)">📋 Pendientes</button><button class="gastos-tab" onclick="switchGastosTab('historico',this)">🗂 Histórico</button><button class="gastos-tab" onclick="switchGastosTab('grafico',this)">📊 Estado suministros</button></div>
   <div class="stats-row" id="gastosStats"></div>
@@ -281,6 +281,17 @@ textarea{resize:vertical;min-height:68px;}
           <button class="btn btn-primary" onclick="saveEmpresa()">Guardar</button>
         </div>
         <div class="text-sm text-muted" style="margin-top:8px">Este nombre aparece en el sidebar y sustituye a "Gestión Pisos".</div>
+      </div>
+    </div>
+    <div class="card" style="max-width:440px;margin-top:16px">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:10px">🌡️ Término fijo Agua Caliente</div>
+      <div class="text-sm text-muted" style="margin-bottom:12px">Importe fijo mensual de ACS (Agua Caliente Sanitaria) que se genera como gasto pendiente de prorrateo para todos los inquilinos activos.</div>
+      <div class="form-group" style="margin-bottom:0">
+        <label>Importe mensual (€)</label>
+        <div style="display:flex;gap:10px;margin-top:6px">
+          <input type="number" id="cfgTerminoFijoInput" step="0.01" placeholder="0.00" style="flex:1">
+          <button class="btn btn-primary" onclick="saveTerminoFijo()">Guardar</button>
+        </div>
       </div>
     </div>
     <div style="margin-top:20px;max-width:440px">
@@ -548,6 +559,7 @@ textarea{resize:vertical;min-height:68px;}
   <div class="form-row"><div class="form-group"><label>Telefono</label><input type="tel" id="inqTelefono"></div><div class="form-group"><label>Email</label><input type="email" id="inqEmail"></div></div>
   <div class="form-row"><div class="form-group"><label>Fecha nacimiento</label><input type="date" id="inqNacimiento"></div><div class="form-group"><label>Nacionalidad</label><input id="inqNacionalidad" placeholder="Espanola"></div></div>
   <div class="form-row"><div class="form-group"><label>Habitacion</label><select id="inqHabitacion"><option value="">-- Sin asignar --</option></select></div><div class="form-group"><label>Estado</label><select id="inqEstado"><option value="activo">Activo</option><option value="pasado">Pasado</option><option value="moroso">Moroso</option></select></div></div>
+  <div class="form-row"><div class="form-group"><label>Saldo (€)</label><input type="number" id="inqSaldo" step="0.01" placeholder="0.00"><div class="text-sm text-muted" style="margin-top:4px">Importe libre para anotar deuda, depósito u otro saldo</div></div></div>
   <div class="form-group"><label>Notas</label><textarea id="inqNotas"></textarea></div>
   <input type="hidden" id="inqEditId">
   <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modalInquilino')">Cancelar</button><button class="btn btn-primary" onclick="saveInquilino()">Guardar</button></div>
@@ -563,12 +575,13 @@ textarea{resize:vertical;min-height:68px;}
   <div class="form-group"><label>Clausulas especiales</label><textarea id="ctClausulas"></textarea></div>
   <div class="form-group"><label>Estado</label><select id="ctEstado"><option value="vigente">Vigente</option><option value="finalizado">Finalizado</option></select></div>
   <div class="form-group">
-    <label>Adjuntar contrato (PDF, imagen - max 5 MB)</label>
+    <label>Documentos adjuntos (PDF, imagen — max 5 MB c/u)</label>
     <div id="ctDocArea" style="border:2px dashed var(--border);border-radius:8px;padding:14px;text-align:center;cursor:pointer;transition:border-color .15s" onclick="document.getElementById('ctDocInput').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondrop="handleDocDrop(event)">
-      <input type="file" id="ctDocInput" accept=".pdf,.jpg,.jpeg,.png,.webp" style="display:none" onchange="handleDocSelect(this)">
-      <div id="ctDocLabel" class="text-muted text-sm">Toca aqui o arrastra el archivo<br><span style="font-size:11px">PDF, JPG, PNG - max 5 MB</span></div>
+      <input type="file" id="ctDocInput" accept=".pdf,.jpg,.jpeg,.png,.webp" multiple style="display:none" onchange="handleDocSelect(this)">
+      <div id="ctDocLabel" class="text-muted text-sm">Toca aquí o arrastra los archivos<br><span style="font-size:11px">PDF, JPG, PNG — max 5 MB por archivo</span></div>
     </div>
-    <input type="hidden" id="ctDocEditPath">
+    <div id="ctDocPending" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+    <div id="ctDocExisting" style="margin-top:8px"></div>
   </div>
   <input type="hidden" id="ctEditId">
   <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modalContrato')">Cancelar</button><button class="btn btn-primary" onclick="saveContrato()">Guardar</button></div>
@@ -861,7 +874,7 @@ async function doLogin(){
 }
 async function doLogout(){
   await sb.auth.signOut();
-  STATE={user:null,empresa:'Mi empresa',pisos:[],currentPisoId:null,habitaciones:[],inquilinos:[],contratos:[],cobros:[],gastos:[],historicoGastos:[],tiposSupl:[],siniestros:[],datosInteres:[],propietarios:[],banco:[],bugs:[]};
+  STATE={user:null,empresa:'Mi empresa',pisos:[],currentPisoId:null,habitaciones:[],inquilinos:[],contratos:[],cobros:[],gastos:[],historicoGastos:[],tiposSupl:[],siniestros:[],datosInteres:[],propietarios:[],banco:[],bugs:[],contratoDocs:[]};
   document.getElementById('mainApp').style.display='none';
   document.getElementById('authScreen').style.display='flex';
   document.getElementById('authError').textContent='';
@@ -877,10 +890,11 @@ async function bootApp(){
   document.getElementById('userEmail').textContent=STATE.user?.email||'';
   STATE.currentPisoId=localStorage.getItem('currentPisoId_'+STATE.user.id)||null;
   // Cargar preferencias de empresa desde Supabase
-  const{data:prefs}=await sb.from('user_prefs').select('empresa,current_piso_id').eq('user_id',STATE.user.id).maybeSingle();
+  const{data:prefs}=await sb.from('user_prefs').select('empresa,current_piso_id,termino_fijo_acs').eq('user_id',STATE.user.id).maybeSingle();
   if(prefs){
     if(prefs.empresa) STATE.empresa=prefs.empresa;
     if(prefs.current_piso_id && !STATE.currentPisoId) STATE.currentPisoId=prefs.current_piso_id;
+    STATE.terminoFijoAcs=parseFloat(prefs.termino_fijo_acs)||0;
   }
   applyEmpresaUI();
   await loadAllData();
@@ -892,7 +906,7 @@ async function loadAllData(){
   setSyncStatus('loading','Actualizando…');
   try{
     const uid=STATE.user.id;
-    const[{data:pisos},{data:habs},{data:inqs},{data:cts},{data:cbs},{data:gts},{data:hist},{data:suml},{data:sins},{data:datos},{data:props},{data:banco},{data:bugs}]=await Promise.all([
+    const[{data:pisos},{data:habs},{data:inqs},{data:cts},{data:cbs},{data:gts},{data:hist},{data:suml},{data:sins},{data:datos},{data:props},{data:banco},{data:bugs},{data:ctDocs}]=await Promise.all([
       sb.from('pisos').select('*').eq('user_id',uid).order('created_at'),
       sb.from('habitaciones').select('*').eq('user_id',uid).order('created_at'),
       sb.from('inquilinos').select('*').eq('user_id',uid).order('created_at'),
@@ -906,11 +920,12 @@ async function loadAllData(){
       sb.from('propietarios').select('*').eq('user_id',uid).order('created_at'),
       sb.from('movimientos_banco').select('*').eq('user_id',uid).order('fecha',{ascending:false}),
       sb.from('bugs').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
+      sb.from('contrato_docs').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
     ]);
     STATE.pisos=pisos||[];STATE.habitaciones=habs||[];STATE.inquilinos=inqs||[];
     STATE.contratos=cts||[];STATE.cobros=cbs||[];STATE.gastos=gts||[];
     STATE.historicoGastos=hist||[];STATE.tiposSupl=suml||[];
-    STATE.siniestros=sins||[];STATE.datosInteres=datos||[];STATE.bugs=bugs||[];
+    STATE.siniestros=sins||[];STATE.datosInteres=datos||[];STATE.bugs=bugs||[];STATE.contratoDocs=ctDocs||[];
     STATE.propietarios=props||[];STATE.banco=banco||[];
     if(!STATE.tiposSupl.length)await insertDefaultSuml();
     if(STATE.currentPisoId&&!STATE.pisos.find(p=>p.id===STATE.currentPisoId))STATE.currentPisoId=null;
@@ -997,7 +1012,7 @@ function switchCfgTab(tab,btn){
   document.querySelectorAll('.cfg-panel').forEach(p=>p.classList.remove('active'));
   btn.classList.add('active');document.getElementById('cfgpanel-'+tab).classList.add('active');
   if(tab==='suministros')renderSuministrosTable();if(tab==='inmuebles')renderPisosGrid();
-  if(tab==='cuenta'){const inp=document.getElementById('cfgEmpresaInput');if(inp)inp.value=STATE.empresa||'';renderPropietariosTable();}
+  if(tab==='cuenta'){const inp=document.getElementById('cfgEmpresaInput');if(inp)inp.value=STATE.empresa||'';const tf=document.getElementById('cfgTerminoFijoInput');if(tf)tf.value=STATE.terminoFijoAcs||'';renderPropietariosTable();}
   // tab==='readme' no necesita render dinámico
 }
 
@@ -1177,7 +1192,7 @@ function renderHabs(){
   if(habFilter!=='todas')habs=habs.filter(h=>h.estado===habFilter);
   const grid=document.getElementById('habsGrid');
   if(!habs.length){grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🏠</div><div class="empty-title">No hay habitaciones</div></div>`;return;}
-  grid.innerHTML=habs.map(h=>{const inq=STATE.inquilinos.find(i=>i.habitacion_id===h.id&&i.estado==='activo');return `<div class="card"><div class="card-header"><div><div class="card-title">${h.nombre}</div>${h.metros?`<div class="text-sm text-muted">${h.metros} m2</div>`:''}</div><div class="card-actions"><button class="btn btn-secondary btn-sm btn-icon" onclick="openModalHab('${h.id}')">✏️</button><button class="btn btn-danger btn-sm btn-icon" onclick="deleteHab('${h.id}')">🗑</button></div></div><div style="margin-bottom:10px"><span class="badge badge-${h.estado}">● ${cap(h.estado)}</span></div><div class="room-detail-row"><span class="room-detail-label">Precio</span><span class="room-detail-value text-green">€${h.precio}/mes</span></div><div class="room-detail-row"><span class="room-detail-label">Fianza</span><span class="room-detail-value">€${h.fianza}</span></div>${inq?`<div class="room-detail-row"><span class="room-detail-label">Inquilino</span><span class="room-detail-value">👤 ${inq.nombre}</span></div>`:''} ${h.equipamiento?.length?`<div class="equip-tags" style="margin-top:9px">${h.equipamiento.map(e=>`<span class="equip-tag">${e}</span>`).join('')}</div>`:''} ${h.notas?`<div class="text-sm text-muted" style="margin-top:8px">${h.notas}</div>`:''}</div>`;}).join('');
+  grid.innerHTML=habs.map(h=>{const inq=STATE.inquilinos.find(i=>i.habitacion_id===h.id&&i.estado==='activo');return `<div class="card" style="display:flex;flex-direction:column"><div class="card-header"><div><div class="card-title">${h.nombre}</div>${h.metros?`<div class="text-sm text-muted">${h.metros} m2</div>`:''}</div><div class="card-actions"><button class="btn btn-secondary btn-sm btn-icon" onclick="openModalHab('${h.id}')">✏️</button><button class="btn btn-danger btn-sm btn-icon" onclick="deleteHab('${h.id}')">🗑</button></div></div><div style="margin-bottom:10px"><span class="badge badge-${h.estado}">● ${cap(h.estado)}</span></div><div class="room-detail-row"><span class="room-detail-label">Precio</span><span class="room-detail-value text-green">€${h.precio}/mes</span></div><div class="room-detail-row"><span class="room-detail-label">Fianza</span><span class="room-detail-value">€${h.fianza}</span></div>${inq?`<div class="room-detail-row"><span class="room-detail-label">Inquilino</span><span class="room-detail-value">👤 ${inq.nombre}</span></div>`:''}<div style="flex:1"></div>${h.equipamiento?.length?`<div class="equip-tags" style="margin-top:9px">${h.equipamiento.map(e=>`<span class="equip-tag">${e}</span>`).join('')}</div>`:''} ${h.notas?`<div class="text-sm text-muted" style="margin-top:8px">${h.notas}</div>`:''}</div>`;}).join('');
 }
 
 // INQUILINOS
@@ -1188,13 +1203,13 @@ function openModalInquilino(id=null){
   sel.innerHTML='<option value="">-- Sin asignar --</option>';
   STATE.habitaciones.forEach(h=>sel.innerHTML+=`<option value="${h.id}">${h.nombre}</option>`);
   document.getElementById('modalInquilinoTitle').textContent=id?'Editar inquilino':'Nuevo inquilino';
-  if(id){const q=STATE.inquilinos.find(x=>x.id===id);['nombre','dni','telefono','email','nacionalidad','notas'].forEach(f=>document.getElementById('inq'+f.charAt(0).toUpperCase()+f.slice(1)).value=q[f]||'');document.getElementById('inqNacimiento').value=q.nacimiento||'';document.getElementById('inqHabitacion').value=q.habitacion_id||'';document.getElementById('inqEstado').value=q.estado||'activo';document.getElementById('inqEditId').value=id;}
-  else{['inqNombre','inqDni','inqTelefono','inqEmail','inqNacimiento','inqNacionalidad','inqNotas'].forEach(f=>document.getElementById(f).value='');document.getElementById('inqEstado').value='activo';document.getElementById('inqHabitacion').value='';document.getElementById('inqEditId').value='';}
+  if(id){const q=STATE.inquilinos.find(x=>x.id===id);['nombre','dni','telefono','email','nacionalidad','notas'].forEach(f=>document.getElementById('inq'+f.charAt(0).toUpperCase()+f.slice(1)).value=q[f]||'');document.getElementById('inqNacimiento').value=q.nacimiento||'';document.getElementById('inqHabitacion').value=q.habitacion_id||'';document.getElementById('inqEstado').value=q.estado||'activo';document.getElementById('inqSaldo').value=q.saldo||'';document.getElementById('inqEditId').value=id;}
+  else{['inqNombre','inqDni','inqTelefono','inqEmail','inqNacimiento','inqNacionalidad','inqNotas'].forEach(f=>document.getElementById(f).value='');document.getElementById('inqEstado').value='activo';document.getElementById('inqHabitacion').value='';document.getElementById('inqSaldo').value='';document.getElementById('inqEditId').value='';}
   openModal('modalInquilino');
 }
 async function saveInquilino(){
   const nombre=v('inqNombre').trim();if(!nombre){toast('Nombre obligatorio','error');return;}
-  const payload={nombre,dni:v('inqDni'),telefono:v('inqTelefono'),email:v('inqEmail'),nacimiento:v('inqNacimiento')||null,nacionalidad:v('inqNacionalidad'),habitacion_id:v('inqHabitacion')||null,estado:v('inqEstado'),notas:v('inqNotas')};
+  const payload={nombre,dni:v('inqDni'),telefono:v('inqTelefono'),email:v('inqEmail'),nacimiento:v('inqNacimiento')||null,nacionalidad:v('inqNacionalidad'),habitacion_id:v('inqHabitacion')||null,estado:v('inqEstado'),notas:v('inqNotas'),saldo:parseFloat(v('inqSaldo'))||0};
   const eid=v('inqEditId');
   try{const row=await dbSave('inquilinos',payload,eid||null);if(eid){const i=STATE.inquilinos.findIndex(x=>x.id===eid);STATE.inquilinos[i]=row;toast('Actualizado');}else{STATE.inquilinos.push(row);toast('Inquilino annnadido');}closeModal('modalInquilino');renderInquilinos();}
   catch(e){toast(e.message,'error');}
@@ -1209,22 +1224,24 @@ function renderInquilinos(){
   let inqs=STATE.inquilinos.filter(i=>!i.habitacion_id||habIds.has(i.habitacion_id));
   if(inqFilter!=='todos')inqs=inqs.filter(i=>i.estado===inqFilter);
   const tbody=document.getElementById('inquilinosTable');
-  if(!inqs.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty"><div class="empty-icon">👤</div><div class="empty-title">No hay inquilinos</div></div></td></tr>`;document.getElementById('inquilinosMob').innerHTML='';return;}
-  tbody.innerHTML=inqs.map(q=>{const h=STATE.habitaciones.find(x=>x.id===q.habitacion_id);return `<tr><td><strong>${q.nombre}</strong></td><td class="text-muted">${q.dni||'—'}</td><td>${h?h.nombre:'<span class="text-muted">—</span>'}</td><td>${q.telefono||'—'}</td><td><span class="badge badge-${q.estado}">${cap(q.estado)}</span></td><td><div class="flex gap-2"><button class="btn btn-secondary btn-sm" onclick="openModalInquilino('${q.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteInquilino('${q.id}')">🗑</button></div></td></tr>`;}).join('');
-  document.getElementById('inquilinosMob').innerHTML=inqs.map(q=>{const h=STATE.habitaciones.find(x=>x.id===q.habitacion_id);return `<div class="mob-card"><div class="mob-card-header"><div><div class="mob-card-name">${q.nombre}</div><div class="mob-card-sub">${q.dni||'—'}</div></div><span class="badge badge-${q.estado}">${cap(q.estado)}</span></div><div class="mob-card-rows">${h?`<span class="mob-card-pill">🏠 <strong>${h.nombre}</strong></span>`:''} ${q.telefono?`<span class="mob-card-pill">📞 ${q.telefono}</span>`:''}</div><div class="mob-card-actions"><button class="btn btn-secondary btn-sm" onclick="openModalInquilino('${q.id}')">✏️ Editar</button><button class="btn btn-danger btn-sm" onclick="deleteInquilino('${q.id}')">🗑</button></div></div>`;}).join('');
+  if(!inqs.length){tbody.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="empty-icon">👤</div><div class="empty-title">No hay inquilinos</div></div></td></tr>`;document.getElementById('inquilinosMob').innerHTML='';return;}
+  tbody.innerHTML=inqs.map(q=>{const h=STATE.habitaciones.find(x=>x.id===q.habitacion_id);const saldo=parseFloat(q.saldo)||0;return `<tr><td><strong>${q.nombre}</strong></td><td class="text-muted">${q.dni||'—'}</td><td>${h?h.nombre:'<span class="text-muted">—</span>'}</td><td>${q.telefono||'—'}</td><td><span class="${saldo!==0?(saldo>0?'text-green':'stat-red'):''}" style="font-weight:600">${saldo!==0?'€'+fmt(saldo):'—'}</span></td><td><span class="badge badge-${q.estado}">${cap(q.estado)}</span></td><td><div class="flex gap-2"><button class="btn btn-secondary btn-sm" onclick="openModalInquilino('${q.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteInquilino('${q.id}')">🗑</button></div></td></tr>`;}).join('');
+  document.getElementById('inquilinosMob').innerHTML=inqs.map(q=>{const h=STATE.habitaciones.find(x=>x.id===q.habitacion_id);const saldo=parseFloat(q.saldo)||0;return `<div class="mob-card"><div class="mob-card-header"><div><div class="mob-card-name">${q.nombre}</div><div class="mob-card-sub">${q.dni||'—'}</div></div><span class="badge badge-${q.estado}">${cap(q.estado)}</span></div><div class="mob-card-rows">${h?`<span class="mob-card-pill">🏠 <strong>${h.nombre}</strong></span>`:''} ${q.telefono?`<span class="mob-card-pill">📞 ${q.telefono}</span>`:''} ${saldo!==0?'<span class="mob-card-pill" style="color:'+(saldo>0?'var(--accent3)':'var(--danger)')+'">💶 '+(saldo>0?'+':'')+'€'+fmt(saldo)+'</span>':''}</div><div class="mob-card-actions"><button class="btn btn-secondary btn-sm" onclick="openModalInquilino('${q.id}')">✏️ Editar</button><button class="btn btn-danger btn-sm" onclick="deleteInquilino('${q.id}')">🗑</button></div></div>`;}).join('');
 }
 
 // CONTRATOS
 let ctFilter='vigente';let _ctDocFile=null;
 function filterContratos(f,btn){ctFilter=f;document.querySelectorAll('#page-contratos .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderContratos();}
 function openModalContrato(id=null){
-  _ctDocFile=null;
+  _ctDocFiles=[];
+  renderPendingDocs();
   const si=document.getElementById('ctInquilino'),sh=document.getElementById('ctHabitacion');
   si.innerHTML='<option value="">-- Selecciona --</option>';sh.innerHTML='<option value="">-- Selecciona --</option>';
   STATE.inquilinos.forEach(i=>si.innerHTML+=`<option value="${i.id}">${i.nombre}</option>`);
   STATE.habitaciones.forEach(h=>sh.innerHTML+=`<option value="${h.id}">${h.nombre}</option>`);
   document.getElementById('modalContratoTitle').textContent=id?'Editar contrato':'Nuevo contrato';
-  resetDocArea();
+  document.getElementById('ctDocPending').innerHTML='';
+  renderExistingDocs(id||null);
   if(id){
     const ct=STATE.contratos.find(x=>x.id===id);
     document.getElementById('ctInquilino').value=ct.inquilino_id||'';document.getElementById('ctHabitacion').value=ct.habitacion_id||'';
@@ -1243,40 +1260,94 @@ function openModalContrato(id=null){
   }
   openModal('modalContrato');
 }
-function resetDocArea(){_ctDocFile=null;document.getElementById('ctDocLabel').innerHTML='Toca aqui o arrastra el archivo<br><span style="font-size:11px">PDF, JPG, PNG — max 5 MB</span>';document.getElementById('ctDocArea').style.borderColor='var(--border)';const inp=document.getElementById('ctDocInput');if(inp)inp.value='';}
-function handleDocSelect(input){const f=input.files[0];if(f)setDocFile(f);}
-function handleDocDrop(e){e.preventDefault();document.getElementById('ctDocArea').style.borderColor='var(--border)';const f=e.dataTransfer.files[0];if(f)setDocFile(f);}
-function setDocFile(file){if(file.size>5242880){toast('El archivo supera 5 MB','error');return;}_ctDocFile=file;document.getElementById('ctDocLabel').innerHTML=`<span style="color:var(--accent3)">✅ ${file.name}</span><br><span class="text-sm text-muted">${(file.size/1024).toFixed(0)} KB — <a href="#" onclick="resetDocArea();return false" style="color:var(--danger)">Quitar</a></span>`;document.getElementById('ctDocArea').style.borderColor='var(--accent3)';}
-async function verDocContrato(id){
-  const ct=STATE.contratos.find(x=>x.id===id);if(!ct?.doc_path){toast('Sin documento adjunto','error');return;}
-  const{data,error}=await sb.storage.from('contratos').createSignedUrl(ct.doc_path,600);
+// T1: Multi-file doc system for contratos
+let _ctDocFiles=[]; // archivos pendientes de subir
+
+function resetDocArea(){
+  _ctDocFiles=[];
+  document.getElementById('ctDocLabel').innerHTML='Toca aquí o arrastra los archivos<br><span style="font-size:11px">PDF, JPG, PNG — max 5 MB por archivo</span>';
+  document.getElementById('ctDocArea').style.borderColor='var(--border)';
+  document.getElementById('ctDocPending').innerHTML='';
+  const inp=document.getElementById('ctDocInput');if(inp)inp.value='';
+}
+function handleDocSelect(input){
+  Array.from(input.files).forEach(f=>addPendingFile(f));
+  input.value='';
+}
+function handleDocDrop(e){
+  e.preventDefault();document.getElementById('ctDocArea').style.borderColor='var(--border)';
+  Array.from(e.dataTransfer.files).forEach(f=>addPendingFile(f));
+}
+function addPendingFile(file){
+  if(file.size>5242880){toast(file.name+' supera 5 MB','error');return;}
+  if(_ctDocFiles.find(f=>f.name===file.name))return; // evitar duplicados
+  _ctDocFiles.push(file);
+  renderPendingDocs();
+}
+function removePendingFile(name){_ctDocFiles=_ctDocFiles.filter(f=>f.name!==name);renderPendingDocs();}
+function renderPendingDocs(){
+  const el=document.getElementById('ctDocPending');if(!el)return;
+  el.innerHTML=_ctDocFiles.map(f=>`<span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px">📎 ${f.name} <span style="cursor:pointer;color:var(--danger)" onclick="removePendingFile('${f.name}')">✕</span></span>`).join('');
+}
+async function renderExistingDocs(contratoId){
+  const el=document.getElementById('ctDocExisting');if(!el)return;
+  if(!contratoId){el.innerHTML='';return;}
+  const docs=(STATE.contratoDocs||[]).filter(d=>d.contrato_id===contratoId);
+  if(!docs.length){el.innerHTML='';return;}
+  el.innerHTML=`<div class="text-sm text-muted" style="margin-bottom:6px">Documentos guardados:</div><div style="display:flex;flex-wrap:wrap;gap:6px">${docs.map(d=>`<span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--accent3);border-radius:6px;padding:4px 8px;font-size:11px"><a href="#" onclick="verDoc('${d.id}');return false" style="color:var(--accent3)">📎 ${d.nombre}</a> <span style="cursor:pointer;color:var(--danger)" onclick="deleteDoc('${d.id}')">🗑</span></span>`).join('')}</div>`;
+}
+async function verDoc(docId){
+  const d=(STATE.contratoDocs||[]).find(x=>x.id===docId);if(!d)return;
+  const{data,error}=await sb.storage.from('contratos').createSignedUrl(d.path,600);
   if(error){toast('Error al obtener URL','error');return;}
-  const url=data.signedUrl;
-  // Poblar modal
-  document.getElementById('verDocNombre').textContent=ct.doc_name||'Documento';
-  document.getElementById('verDocIframe').src=url;
-  const btnAbrir=document.getElementById('verDocBtnAbrir');
-  const btnDesc=document.getElementById('verDocBtnDescargar');
-  btnAbrir.href=url;
-  btnDesc.href=url;
-  btnDesc.download=ct.doc_name||'contrato';
+  document.getElementById('verDocNombre').textContent=d.nombre||'Documento';
+  document.getElementById('verDocIframe').src=data.signedUrl;
+  document.getElementById('verDocBtnAbrir').href=data.signedUrl;
+  document.getElementById('verDocBtnDescargar').href=data.signedUrl;
+  document.getElementById('verDocBtnDescargar').download=d.nombre||'documento';
   openModal('modalVerDoc');
+}
+async function deleteDoc(docId){
+  if(!confirm('¿Eliminar este documento?'))return;
+  const d=(STATE.contratoDocs||[]).find(x=>x.id===docId);if(!d)return;
+  try{
+    await sb.storage.from('contratos').remove([d.path]);
+    await sb.from('contrato_docs').delete().eq('id',docId);
+    STATE.contratoDocs=(STATE.contratoDocs||[]).filter(x=>x.id!==docId);
+    bumpSync();
+    const eid=document.getElementById('ctEditId')?.value;
+    renderExistingDocs(eid);toast('Documento eliminado');
+  }catch(e){toast(e.message,'error');}
+}
+// Mantener compatibilidad con verDocContrato antiguo
+async function verDocContrato(id){
+  const docs=(STATE.contratoDocs||[]).filter(d=>d.contrato_id===id);
+  if(!docs.length){toast('Sin documentos adjuntos','error');return;}
+  if(docs.length===1){await verDoc(docs[0].id);return;}
+  // Si hay varios, abrir el primero
+  await verDoc(docs[0].id);
 }
 async function saveContrato(){
   if(!v('ctInquilino')||!v('ctHabitacion')){toast('Selecciona inquilino y habitacion','error');return;}
-  const eid=v('ctEditId');let doc_path=v('ctDocEditPath')||null,doc_name=null;
-  if(_ctDocFile){
-    const uid=STATE.user.id;const ext=_ctDocFile.name.split('.').pop();
-    const path=`${uid}/${eid||'new_'+Date.now()}.${ext}`;
-    const{error:upErr}=await sb.storage.from('contratos').upload(path,_ctDocFile,{upsert:true});
-    if(upErr){toast('Error al subir fichero: '+upErr.message,'error');return;}
-    doc_path=path;doc_name=_ctDocFile.name;
-  } else if(eid){const existing=STATE.contratos.find(x=>x.id===eid);doc_name=existing?.doc_name||null;}
-  const payload={inquilino_id:v('ctInquilino'),habitacion_id:v('ctHabitacion'),inicio:v('ctInicio')||null,fin:v('ctFin')||null,tipo:v('ctTipo'),min_meses:v('ctMinMeses')||null,precio:parseFloat(v('ctPrecio'))||0,fianza:parseFloat(v('ctFianza'))||0,gastos_incluidos:v('ctGastos'),clausulas:v('ctClausulas'),estado:v('ctEstado'),doc_path,doc_name};
+  const eid=v('ctEditId');
+  const payload={inquilino_id:v('ctInquilino'),habitacion_id:v('ctHabitacion'),inicio:v('ctInicio')||null,fin:v('ctFin')||null,tipo:v('ctTipo'),min_meses:v('ctMinMeses')||null,precio:parseFloat(v('ctPrecio'))||0,fianza:parseFloat(v('ctFianza'))||0,gastos_incluidos:v('ctGastos'),clausulas:v('ctClausulas'),estado:v('ctEstado')};
   try{
     const row=await dbSave('contratos',payload,eid||null);
-    if(eid){const i=STATE.contratos.findIndex(x=>x.id===eid);STATE.contratos[i]=row;toast('Actualizado');}else{STATE.contratos.push(row);toast('Contrato creado');}
-    closeModal('modalContrato');renderContratos();
+    if(eid){const i=STATE.contratos.findIndex(x=>x.id===eid);STATE.contratos[i]=row;}else{STATE.contratos.push(row);}
+    // Subir archivos pendientes a contrato_docs
+    if(_ctDocFiles.length){
+      for(const file of _ctDocFiles){
+        const ext=file.name.split('.').pop();
+        const path=`${STATE.user.id}/${row.id}/${Date.now()}_${file.name}`;
+        const{error:upErr}=await sb.storage.from('contratos').upload(path,file,{upsert:true});
+        if(upErr){toast('Error al subir '+file.name+': '+upErr.message,'error');continue;}
+        const{data:doc}=await sb.from('contrato_docs').insert({user_id:STATE.user.id,contrato_id:row.id,path,nombre:file.name}).select().single();
+        if(doc){if(!STATE.contratoDocs)STATE.contratoDocs=[];STATE.contratoDocs.push(doc);}
+      }
+      _ctDocFiles=[];
+    }
+    bumpSync();closeModal('modalContrato');renderContratos();
+    toast(eid?'Actualizado':'Contrato creado');
   }catch(e){toast(e.message,'error');}
 }
 async function deleteContrato(id){
@@ -1291,8 +1362,8 @@ function renderContratos(){
   const alerta=ct=>{const d=ct.fin?Math.ceil((new Date(ct.fin)-new Date())/86400000):null;if(d!==null&&d<=30&&d>0)return`<br><span class="text-sm text-yellow">⚠️ ${d}d</span>`;if(d!==null&&d<=0)return`<br><span class="text-sm text-red">Vencido</span>`;return'';};
   const tbody=document.getElementById('contratosTable');
   if(!cts.length){tbody.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="empty-icon">📄</div><div class="empty-title">No hay contratos</div></div></td></tr>`;document.getElementById('contratosMob').innerHTML='';return;}
-  tbody.innerHTML=cts.map(ct=>{const inq=STATE.inquilinos.find(x=>x.id===ct.inquilino_id);const h=STATE.habitaciones.find(x=>x.id===ct.habitacion_id);return `<tr><td><strong>${inq?inq.nombre:'—'}</strong></td><td>${h?h.nombre:'—'}</td><td class="text-muted">${ct.inicio||'—'}</td><td class="text-muted">${ct.fin||'<span style="color:var(--accent3)">Indefinido</span>'}${alerta(ct)}</td><td class="text-green font-bold">€${ct.precio}/mes</td><td><span class="badge badge-${ct.estado}">${cap(ct.estado)}</span></td><td><div class="flex gap-2">${ct.doc_path?`<button class="btn btn-secondary btn-sm" onclick="verDocContrato('${ct.id}')" title="Ver doc">📎</button>`:''}<button class="btn btn-secondary btn-sm" onclick="openModalContrato('${ct.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteContrato('${ct.id}')">🗑</button></div></td></tr>`;}).join('');
-  document.getElementById('contratosMob').innerHTML=cts.map(ct=>{const inq=STATE.inquilinos.find(x=>x.id===ct.inquilino_id);const h=STATE.habitaciones.find(x=>x.id===ct.habitacion_id);return `<div class="mob-card"><div class="mob-card-header"><div><div class="mob-card-name">${inq?inq.nombre:'—'}</div><div class="mob-card-sub">${h?h.nombre:'—'}</div></div><span class="badge badge-${ct.estado}">${cap(ct.estado)}</span></div><div class="mob-card-rows"><span class="mob-card-pill">💶 <strong>€${ct.precio}/mes</strong></span><span class="mob-card-pill">📅 ${ct.inicio||'—'} → ${ct.fin||'Indefinido'}</span></div><div class="mob-card-actions">${ct.doc_path?`<button class="btn btn-secondary btn-sm" onclick="verDocContrato('${ct.id}')">📎 Ver</button>`:''}<button class="btn btn-secondary btn-sm" onclick="openModalContrato('${ct.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteContrato('${ct.id}')">🗑</button></div></div>`;}).join('');
+  tbody.innerHTML=cts.map(ct=>{const inq=STATE.inquilinos.find(x=>x.id===ct.inquilino_id);const h=STATE.habitaciones.find(x=>x.id===ct.habitacion_id);const ndocs=(STATE.contratoDocs||[]).filter(d=>d.contrato_id===ct.id).length;const dbtn=ndocs?'<button class="btn btn-secondary btn-sm" onclick="verDocContrato(\''+ct.id+'\')" title="'+ndocs+' doc(s)">📎'+(ndocs>1?'<span style="font-size:10px">'+ndocs+'</span>':'')+'</button>':'';return '<tr><td><strong>'+(inq?inq.nombre:'—')+'</strong></td><td>'+(h?h.nombre:'—')+'</td><td class="text-muted">'+(ct.inicio||'—')+'</td><td class="text-muted">'+(ct.fin||'<span style="color:var(--accent3)">Indefinido</span>')+alerta(ct)+'</td><td class="text-green font-bold">€'+ct.precio+'/mes</td><td><span class="badge badge-'+ct.estado+'">'+(cap(ct.estado))+'</span></td><td><div class="flex gap-2">'+dbtn+'<button class="btn btn-secondary btn-sm" onclick="openModalContrato(\''+ct.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteContrato(\''+ct.id+'\')">🗑</button></div></td></tr>';}).join('');
+  document.getElementById('contratosMob').innerHTML=cts.map(ct=>{const inq=STATE.inquilinos.find(x=>x.id===ct.inquilino_id);const h=STATE.habitaciones.find(x=>x.id===ct.habitacion_id);const ndocs=(STATE.contratoDocs||[]).filter(d=>d.contrato_id===ct.id).length;return '<div class="mob-card"><div class="mob-card-header"><div><div class="mob-card-name">'+(inq?inq.nombre:'—')+'</div><div class="mob-card-sub">'+(h?h.nombre:'—')+'</div></div><span class="badge badge-'+ct.estado+'">'+cap(ct.estado)+'</span></div><div class="mob-card-rows"><span class="mob-card-pill">💶 <strong>€'+ct.precio+'/mes</strong></span><span class="mob-card-pill">📅 '+(ct.inicio||'—')+' → '+(ct.fin||'Indefinido')+'</span></div><div class="mob-card-actions">'+(ndocs?'<button class="btn btn-secondary btn-sm" onclick="verDocContrato(\''+ct.id+'\')">📎 '+ndocs+' doc(s)</button>':'')+'<button class="btn btn-secondary btn-sm" onclick="openModalContrato(\''+ct.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteContrato(\''+ct.id+'\')">🗑</button></div></div>';}).join('');
 }
 
 // T2: Autocompletado inquilino ↔ habitación
@@ -1681,6 +1752,29 @@ function renderGantt(){
   svg+='</svg>';container.innerHTML=svg;
 }
 function renderGastos(){renderGastosStats();renderGastosFilters();if(gastosActiveTab==='pendientes')renderGastosTabla();else if(gastosActiveTab==='historico')renderHistorico();else if(gastosActiveTab==='grafico')renderGantt();}
+
+// T2: Término fijo Agua Caliente
+async function saveTerminoFijo(){
+  const inp=document.getElementById('cfgTerminoFijoInput');if(!inp)return;
+  const val=parseFloat(inp.value)||0;
+  try{
+    await sb.from('user_prefs').upsert({user_id:STATE.user.id,termino_fijo_acs:val,empresa:STATE.empresa,current_piso_id:STATE.currentPisoId||null},{onConflict:'user_id'});
+    STATE.terminoFijoAcs=val;bumpSync();toast('Término fijo guardado: €'+fmt(val));
+  }catch(e){toast(e.message,'error');}
+}
+async function crearGastoTerminoFijo(){
+  const imp=STATE.terminoFijoAcs||0;
+  if(!imp){toast('Configura primero el importe en Configuración > Mi empresa','error');return;}
+  const hoy=new Date().toISOString().split('T')[0];
+  const mes=hoy.slice(0,7);
+  if(!confirm(`Crear gasto "Término fijo ACS" por €${fmt(imp)} para ${mes}?`))return;
+  try{
+    const payload={tipo:'Agua',fecha_inicio:hoy,fecha_fin:hoy,importe:imp,proveedor:'Término fijo ACS',num_factura:null,pagada:false,notas:'Generado automáticamente — Término fijo ACS '+mes};
+    const row=await dbSave('gastos',payload);
+    STATE.gastos.unshift(row);renderGastos();
+    toast('Gasto Término fijo ACS creado — pendiente de prorrateo');
+  }catch(e){toast(e.message,'error');}
+}
 
 // COBROS ALQUILER
 async function crearCobrosAlquiler(){
