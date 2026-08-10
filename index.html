@@ -1251,13 +1251,13 @@ function openModalContrato(id=null){
     document.getElementById('ctPrecio').value=ct.precio||'';document.getElementById('ctFianza').value=ct.fianza||'';
     document.getElementById('ctGastos').value=ct.gastos_incluidos||'';document.getElementById('ctClausulas').value=ct.clausulas||'';
     document.getElementById('ctEstado').value=ct.estado||'vigente';document.getElementById('ctEditId').value=id;
-    document.getElementById('ctDocEditPath').value=ct.doc_path||'';
+    document.getElementById('ctEditId').value=id;
     if(ct.doc_name){document.getElementById('ctDocLabel').innerHTML=`<span style="color:var(--accent3)">📎 ${ct.doc_name}</span><br><span class="text-sm text-muted"><a href="#" onclick="verDocContrato('${id}');return false" style="color:var(--accent)">Ver</a> · <a href="#" onclick="resetDocArea();return false" style="color:var(--danger)">Cambiar</a></span>`;document.getElementById('ctDocArea').style.borderColor='var(--accent3)';}
   } else {
     ['ctFin','ctMinMeses','ctPrecio','ctFianza','ctGastos','ctClausulas'].forEach(f=>document.getElementById(f).value='');
     document.getElementById('ctInicio').value=new Date().toISOString().split('T')[0];
     document.getElementById('ctTipo').value='temporal';document.getElementById('ctEstado').value='vigente';
-    document.getElementById('ctEditId').value='';document.getElementById('ctDocEditPath').value='';
+    document.getElementById('ctEditId').value='';
   }
   openModal('modalContrato');
 }
