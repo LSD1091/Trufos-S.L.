@@ -874,7 +874,7 @@ async function doLogin(){
 }
 async function doLogout(){
   await sb.auth.signOut();
-  STATE={user:null,empresa:'Mi empresa',pisos:[],currentPisoId:null,habitaciones:[],inquilinos:[],contratos:[],cobros:[],gastos:[],historicoGastos:[],tiposSupl:[],siniestros:[],datosInteres:[],propietarios:[],banco:[],bugs:[],contratoDocs:[]};
+  STATE={user:null,empresa:'Mi empresa',pisos:[],currentPisoId:null,habitaciones:[],inquilinos:[],contratos:[],cobros:[],gastos:[],historicoGastos:[],tiposSupl:[],siniestros:[],datosInteres:[],propietarios:[],banco:[],bugs:[],contratoDocs:[],terminoFijoAcs:0,ultimaRevisionBanco:''};
   document.getElementById('mainApp').style.display='none';
   document.getElementById('authScreen').style.display='flex';
   document.getElementById('authError').textContent='';
@@ -890,11 +890,12 @@ async function bootApp(){
   document.getElementById('userEmail').textContent=STATE.user?.email||'';
   STATE.currentPisoId=localStorage.getItem('currentPisoId_'+STATE.user.id)||null;
   // Cargar preferencias de empresa desde Supabase
-  const{data:prefs}=await sb.from('user_prefs').select('empresa,current_piso_id,termino_fijo_acs').eq('user_id',STATE.user.id).maybeSingle();
+  const{data:prefs}=await sb.from('user_prefs').select('empresa,current_piso_id,termino_fijo_acs,ultima_revision_banco').eq('user_id',STATE.user.id).maybeSingle();
   if(prefs){
     if(prefs.empresa) STATE.empresa=prefs.empresa;
     if(prefs.current_piso_id && !STATE.currentPisoId) STATE.currentPisoId=prefs.current_piso_id;
     STATE.terminoFijoAcs=parseFloat(prefs.termino_fijo_acs)||0;
+    STATE.ultimaRevisionBanco=prefs.ultima_revision_banco||'';
   }
   applyEmpresaUI();
   await loadAllData();
@@ -2683,6 +2684,14 @@ async function borrarApunteBancoPorOrigen(origen_id){
 // BANCO — CRUD manual
 // ══════════════════════════════════════════════════
 let bancoFilter='todos';
+async function guardarRevisionBanco(fecha){
+  STATE.ultimaRevisionBanco=fecha;
+  try{
+    await sb.from('user_prefs').upsert({user_id:STATE.user.id,ultima_revision_banco:fecha,empresa:STATE.empresa,current_piso_id:STATE.currentPisoId||null},{onConflict:'user_id'});
+    bumpSync();renderBanco();
+  }catch(e){toast(e.message,'error');}
+}
+
 function filterBanco(f,btn){bancoFilter=f;document.querySelectorAll('#page-banco .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderBanco();}
 
 function openModalBanco(id=null){
@@ -2749,10 +2758,18 @@ function renderBanco(){
       STATE.propietarios.forEach(p=>saldoProp[p.id]+=delta/nProp);
     }
   });
+  // Última revisión — fecha guardada en user_prefs
+  const ultimaRevision=STATE.ultimaRevisionBanco||'';
+  const revDisplay=ultimaRevision?new Date(ultimaRevision+'T00:00:00').toLocaleDateString('es',{day:'2-digit',month:'short',year:'numeric'}):'Sin fecha';
   let kpiHtml=`
     <div class="stat-card"><div class="stat-value stat-green">€${fmt(totalIng)}</div><div class="stat-label">Total ingresos</div></div>
     <div class="stat-card"><div class="stat-value stat-red">€${fmt(totalGas)}</div><div class="stat-label">Total gastos</div></div>
-    <div class="stat-card"><div class="stat-value ${saldo>=0?'stat-green':'stat-red'}">€${fmt(saldo)}</div><div class="stat-label">Saldo cuenta</div></div>`;
+    <div class="stat-card"><div class="stat-value ${saldo>=0?'stat-green':'stat-red'}">€${fmt(saldo)}</div><div class="stat-label">Saldo cuenta</div></div>
+    <div class="stat-card" style="cursor:pointer" onclick="document.getElementById('bancoRevisionInput').showPicker?document.getElementById('bancoRevisionInput').showPicker():document.getElementById('bancoRevisionInput').focus()" title="Haz clic para cambiar la fecha">
+      <div class="stat-value" style="font-size:clamp(12px,1.6vw,18px);white-space:nowrap">${revDisplay}</div>
+      <div class="stat-label">Última revisión <span style="font-size:10px;opacity:.6">✏️</span></div>
+      <input type="date" id="bancoRevisionInput" value="${ultimaRevision}" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px" onchange="guardarRevisionBanco(this.value)">
+    </div>`;
   STATE.propietarios.forEach(p=>{
     const s=saldoProp[p.id]||0;
     kpiHtml+=`<div class="stat-card"><div class="stat-value ${s>=0?'stat-accent':'stat-red'}">€${fmt(s)}</div><div class="stat-label">Saldo ${p.nombre}</div></div>`;
