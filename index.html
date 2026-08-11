@@ -578,10 +578,10 @@ textarea{resize:vertical;min-height:68px;}
     <label>Documentos adjuntos (PDF, imagen — max 5 MB c/u)</label>
     <div id="ctDocArea" style="border:2px dashed var(--border);border-radius:8px;padding:14px;text-align:center;cursor:pointer;transition:border-color .15s" onclick="document.getElementById('ctDocInput').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondrop="handleDocDrop(event)">
       <input type="file" id="ctDocInput" accept=".pdf,.jpg,.jpeg,.png,.webp" multiple style="display:none" onchange="handleDocSelect(this)">
-      <div id="ctDocLabel" class="text-muted text-sm">Toca aquí o arrastra los archivos<br><span style="font-size:11px">PDF, JPG, PNG — max 5 MB por archivo</span></div>
+      <div id="ctDocLabel" class="text-muted text-sm">Toca aquí para añadir archivos<br><span style="font-size:11px">PDF, JPG, PNG — max 5 MB por archivo</span></div>
     </div>
     <div id="ctDocPending" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
-    <div id="ctDocExisting" style="margin-top:8px"></div>
+    <div id="ctDocExisting" style="margin-top:10px"></div>
   </div>
   <input type="hidden" id="ctEditId">
   <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modalContrato')">Cancelar</button><button class="btn btn-primary" onclick="saveContrato()">Guardar</button></div>
@@ -1233,7 +1233,7 @@ function renderInquilinos(){
 // CONTRATOS
 let ctFilter='vigente';let _ctDocFile=null;
 function filterContratos(f,btn){ctFilter=f;document.querySelectorAll('#page-contratos .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderContratos();}
-function openModalContrato(id=null){
+async function openModalContrato(id=null){
   _ctDocFiles=[];
   renderPendingDocs();
   const si=document.getElementById('ctInquilino'),sh=document.getElementById('ctHabitacion');
@@ -1241,22 +1241,30 @@ function openModalContrato(id=null){
   STATE.inquilinos.forEach(i=>si.innerHTML+=`<option value="${i.id}">${i.nombre}</option>`);
   STATE.habitaciones.forEach(h=>sh.innerHTML+=`<option value="${h.id}">${h.nombre}</option>`);
   document.getElementById('modalContratoTitle').textContent=id?'Editar contrato':'Nuevo contrato';
+  document.getElementById('ctDocLabel').innerHTML='Toca aquí o arrastra los archivos<br><span style="font-size:11px">PDF, JPG, PNG — max 5 MB por archivo</span>';
+  document.getElementById('ctDocArea').style.borderColor='var(--border)';
   document.getElementById('ctDocPending').innerHTML='';
-  renderExistingDocs(id||null);
+  document.getElementById('ctDocExisting').innerHTML='';
   if(id){
     const ct=STATE.contratos.find(x=>x.id===id);
-    document.getElementById('ctInquilino').value=ct.inquilino_id||'';document.getElementById('ctHabitacion').value=ct.habitacion_id||'';
-    document.getElementById('ctInicio').value=ct.inicio||'';document.getElementById('ctFin').value=ct.fin||'';
-    document.getElementById('ctTipo').value=ct.tipo||'temporal';document.getElementById('ctMinMeses').value=ct.min_meses||'';
-    document.getElementById('ctPrecio').value=ct.precio||'';document.getElementById('ctFianza').value=ct.fianza||'';
-    document.getElementById('ctGastos').value=ct.gastos_incluidos||'';document.getElementById('ctClausulas').value=ct.clausulas||'';
-    document.getElementById('ctEstado').value=ct.estado||'vigente';document.getElementById('ctEditId').value=id;
+    document.getElementById('ctInquilino').value=ct.inquilino_id||'';
+    document.getElementById('ctHabitacion').value=ct.habitacion_id||'';
+    document.getElementById('ctInicio').value=ct.inicio||'';
+    document.getElementById('ctFin').value=ct.fin||'';
+    document.getElementById('ctTipo').value=ct.tipo||'temporal';
+    document.getElementById('ctMinMeses').value=ct.min_meses||'';
+    document.getElementById('ctPrecio').value=ct.precio||'';
+    document.getElementById('ctFianza').value=ct.fianza||'';
+    document.getElementById('ctGastos').value=ct.gastos_incluidos||'';
+    document.getElementById('ctClausulas').value=ct.clausulas||'';
+    document.getElementById('ctEstado').value=ct.estado||'vigente';
     document.getElementById('ctEditId').value=id;
-    if(ct.doc_name){document.getElementById('ctDocLabel').innerHTML=`<span style="color:var(--accent3)">📎 ${ct.doc_name}</span><br><span class="text-sm text-muted"><a href="#" onclick="verDocContrato('${id}');return false" style="color:var(--accent)">Ver</a> · <a href="#" onclick="resetDocArea();return false" style="color:var(--danger)">Cambiar</a></span>`;document.getElementById('ctDocArea').style.borderColor='var(--accent3)';}
+    await renderExistingDocs(id);
   } else {
     ['ctFin','ctMinMeses','ctPrecio','ctFianza','ctGastos','ctClausulas'].forEach(f=>document.getElementById(f).value='');
     document.getElementById('ctInicio').value=new Date().toISOString().split('T')[0];
-    document.getElementById('ctTipo').value='temporal';document.getElementById('ctEstado').value='vigente';
+    document.getElementById('ctTipo').value='temporal';
+    document.getElementById('ctEstado').value='vigente';
     document.getElementById('ctEditId').value='';
   }
   openModal('modalContrato');
@@ -1293,9 +1301,17 @@ function renderPendingDocs(){
 async function renderExistingDocs(contratoId){
   const el=document.getElementById('ctDocExisting');if(!el)return;
   if(!contratoId){el.innerHTML='';return;}
-  const docs=(STATE.contratoDocs||[]).filter(d=>d.contrato_id===contratoId);
-  if(!docs.length){el.innerHTML='';return;}
-  el.innerHTML=`<div class="text-sm text-muted" style="margin-bottom:6px">Documentos guardados:</div><div style="display:flex;flex-wrap:wrap;gap:6px">${docs.map(d=>`<span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--accent3);border-radius:6px;padding:4px 8px;font-size:11px"><a href="#" onclick="verDoc('${d.id}');return false" style="color:var(--accent3)">📎 ${d.nombre}</a> <span style="cursor:pointer;color:var(--danger)" onclick="deleteDoc('${d.id}')">🗑</span></span>`).join('')}</div>`;
+  // Fetch directo desde Supabase para tener siempre datos frescos
+  const{data:docs,error}=await sb.from('contrato_docs').select('*').eq('contrato_id',contratoId).order('created_at');
+  if(error||!docs||!docs.length){el.innerHTML='';return;}
+  // Actualizar STATE también
+  STATE.contratoDocs=(STATE.contratoDocs||[]).filter(d=>d.contrato_id!==contratoId).concat(docs);
+  el.innerHTML='<div class="text-sm text-muted" style="margin-bottom:6px">Documentos guardados:</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+
+    docs.map(d=>'<span style="display:inline-flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--accent3);border-radius:6px;padding:6px 10px;font-size:12px">'+
+      '<a href="#" onclick="event.stopPropagation();verDoc(\''+d.id+'\');return false" style="color:var(--accent3)">📎 '+d.nombre+'</a>'+
+      '<span style="cursor:pointer;color:var(--danger);font-size:14px;line-height:1" onclick="event.stopPropagation();deleteDoc(\''+d.id+'\')">🗑</span>'+
+    '</span>').join('')+
+  '</div>';
 }
 async function verDoc(docId){
   const d=(STATE.contratoDocs||[]).find(x=>x.id===docId);if(!d)return;
@@ -1316,17 +1332,28 @@ async function deleteDoc(docId){
     await sb.from('contrato_docs').delete().eq('id',docId);
     STATE.contratoDocs=(STATE.contratoDocs||[]).filter(x=>x.id!==docId);
     bumpSync();
-    const eid=document.getElementById('ctEditId')?.value;
-    renderExistingDocs(eid);toast('Documento eliminado');
+    await renderExistingDocs(d.contrato_id);
+    toast('Documento eliminado');
   }catch(e){toast(e.message,'error');}
 }
-// Mantener compatibilidad con verDocContrato antiguo
+// Ver documentos desde la lista de contratos
 async function verDocContrato(id){
-  const docs=(STATE.contratoDocs||[]).filter(d=>d.contrato_id===id);
-  if(!docs.length){toast('Sin documentos adjuntos','error');return;}
+  const{data:docs,error}=await sb.from('contrato_docs').select('*').eq('contrato_id',id).order('created_at');
+  if(error||!docs||!docs.length){toast('Sin documentos adjuntos','error');return;}
   if(docs.length===1){await verDoc(docs[0].id);return;}
-  // Si hay varios, abrir el primero
-  await verDoc(docs[0].id);
+  // Si hay varios: mostrar lista en el modal de ver doc
+  const nombres=docs.map((d,i)=>'<button class="btn btn-secondary" style="width:100%;margin-bottom:6px;text-align:left" onclick="verDoc(\''+d.id+'\')">📎 '+d.nombre+'</button>').join('');
+  document.getElementById('verDocNombre').textContent='Selecciona un documento';
+  document.getElementById('verDocIframe').src='about:blank';
+  document.getElementById('verDocBtnAbrir').href='#';
+  document.getElementById('verDocBtnDescargar').href='#';
+  const wrap=document.getElementById('verDocIframeWrap');
+  wrap.innerHTML='<div style="padding:20px">'+nombres+'</div>';
+  openModal('modalVerDoc');
+  // Restaurar iframe al cerrar
+  const modalEl=document.getElementById('modalVerDoc');
+  const restore=()=>{wrap.innerHTML='<iframe id="verDocIframe" style="width:100%;height:100%;border:none" src="about:blank"></iframe>';modalEl.removeEventListener('click',restore);};
+  setTimeout(()=>modalEl.addEventListener('click',restore),300);
 }
 async function saveContrato(){
   if(!v('ctInquilino')||!v('ctHabitacion')){toast('Selecciona inquilino y habitacion','error');return;}
