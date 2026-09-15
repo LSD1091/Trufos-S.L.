@@ -190,6 +190,7 @@ textarea{resize:vertical;min-height:68px;}
     <div class="nav-item" onclick="showPage('siniestros')"><span class="icon">🚨</span><span>Siniestros</span></div>
     <div class="nav-item" onclick="showPage('datosinteres')"><span class="icon">📋</span><span>Datos interés</span></div>
     <div class="nav-item" onclick="showPage('bugs')"><span class="icon">🐛</span><span>Bugs/mejoras</span></div>
+    <div class="nav-item" onclick="showPage('extractor')"><span class="icon">🤖</span><span>IA Extractor</span></div>
   </nav>
   <div class="sidebar-footer">
     <div class="piso-badge" id="sidebarPiso"><div class="piso-name">—</div><div class="piso-addr">Sin inmueble</div></div>
@@ -544,7 +545,106 @@ textarea{resize:vertical;min-height:68px;}
   <div id="bugsList"></div>
 </div>
 </main>
-<nav class="bottom-nav">
+<div class="page" id="page-extractor">
+  <div class="topbar">
+    <div><div class="page-title">🤖 IA Extractor</div><div class="page-sub">Pega una captura del banco o arrastra una factura para extraer datos automáticamente</div></div>
+  </div>
+
+  <!-- Selector de modo -->
+  <div style="display:flex;gap:8px;margin-bottom:20px">
+    <button class="filter-btn active" id="extModoFactura" onclick="setExtractorModo('factura',this)">🧾 Factura / Gasto</button>
+    <button class="filter-btn" id="extModoExtracto" onclick="setExtractorModo('extracto',this)">🏦 Extracto bancario</button>
+  </div>
+
+  <!-- Zona de drop compartida -->
+  <div id="extDropZone" style="border:2px dashed var(--border);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px;background:var(--surface2)"
+    onclick="document.getElementById('extFileInput').click()"
+    ondragover="event.preventDefault();this.style.borderColor='var(--accent)';this.style.background='rgba(124,106,247,.07)'"
+    ondragleave="this.style.borderColor='var(--border)';this.style.background='var(--surface2)'"
+    ondrop="handleExtDrop(event)">
+    <input type="file" id="extFileInput" accept="image/*,.pdf" style="display:none" onchange="handleExtFile(this.files[0])">
+    <div style="font-size:40px;margin-bottom:8px">📎</div>
+    <div style="font-weight:600;font-size:15px;margin-bottom:4px">Arrastra aquí o toca para seleccionar</div>
+    <div class="text-muted text-sm">Imagen (PNG, JPG, WEBP) o PDF — max 10 MB</div>
+  </div>
+
+  <!-- Pegar desde portapapeles -->
+  <button class="btn btn-secondary" style="width:100%;margin-bottom:20px" onclick="pegarPortapapeles()">📋 Pegar imagen del portapapeles (Ctrl+V)</button>
+
+  <!-- Previsualización imagen -->
+  <div id="extPreview" style="display:none;margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <img id="extPreviewImg" style="max-height:180px;max-width:100%;border-radius:8px;border:1px solid var(--border)" src="">
+      <div style="flex:1">
+        <div id="extPreviewNombre" class="text-sm" style="font-weight:600;margin-bottom:4px"></div>
+        <div id="extPreviewSize" class="text-muted text-sm"></div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="limpiarExtractor()">✕ Quitar</button>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="width:100%" onclick="ejecutarExtraccion()" id="extBtnAnalizar">🔍 Analizar con IA</button>
+  </div>
+
+  <!-- Estado / progreso -->
+  <div id="extStatus" style="display:none;text-align:center;padding:24px">
+    <div style="font-size:28px;margin-bottom:8px" id="extStatusIcon">⏳</div>
+    <div id="extStatusMsg" style="font-weight:600"></div>
+    <div id="extStatusSub" class="text-muted text-sm" style="margin-top:4px"></div>
+  </div>
+
+  <!-- Resultado: MODO FACTURA -->
+  <div id="extResultFactura" style="display:none">
+    <div class="card" style="margin-bottom:14px;padding:16px">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:12px">📋 Datos extraídos — revisa y confirma</div>
+      <div class="form-row">
+        <div class="form-group"><label>Tipo de suministro</label><select id="extGTipo"></select></div>
+        <div class="form-group"><label>Proveedor</label><input id="extGProveedor"></div>
+      </div>
+      <div class="form-row" id="extGFechasRango">
+        <div class="form-group"><label>Fecha inicio cobro</label><input type="date" id="extGFechaInicio"></div>
+        <div class="form-group"><label>Fecha fin cobro</label><input type="date" id="extGFechaFin"></div>
+      </div>
+      <div class="form-group" id="extGFechaUnicaWrap" style="display:none"><label>Fecha de cobro</label><input type="date" id="extGFechaUnica"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Importe (€)</label><input type="number" step="0.01" id="extGImporte"></div>
+        <div class="form-group"><label>N.º Factura</label><input id="extGNumFactura"></div>
+      </div>
+      <div class="form-group"><label>Estado</label>
+        <select id="extGPagada">
+          <option value="false">Pendiente de prorrateo</option>
+          <option value="true">Pagada</option>
+          <option value="noProrratea">No se prorratea</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Notas</label><textarea id="extGNotas" rows="2"></textarea></div>
+      <div id="extGConfianza" class="text-sm text-muted" style="margin-bottom:10px"></div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" onclick="limpiarExtractor()">Cancelar</button>
+        <button class="btn btn-primary" style="flex:1" onclick="crearGastoDesdeExtraccion()">✅ Crear factura</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resultado: MODO EXTRACTO BANCARIO -->
+  <div id="extResultBanco" style="display:none">
+    <div class="card" style="padding:16px;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px">🏦 Movimientos detectados — marca los que quieres crear</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="extSeleccionarTodos(true)">Todos</button>
+          <button class="btn btn-secondary btn-sm" onclick="extSeleccionarTodos(false)">Ninguno</button>
+        </div>
+      </div>
+      <div id="extMovsTabla" style="overflow-x:auto"></div>
+      <div id="extBancoConfianza" class="text-sm text-muted" style="margin:10px 0"></div>
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <button class="btn btn-secondary" onclick="limpiarExtractor()">Cancelar</button>
+        <button class="btn btn-primary" style="flex:1" onclick="crearMovimientosDesdeExtraccion()">✅ Crear seleccionados</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
   <button class="bottom-nav-item active" id="bn-dashboard" onclick="showPage('dashboard')"><span class="bn-icon">📊</span><span>Inicio</span></button>
   <button class="bottom-nav-item" id="bn-habitaciones" onclick="showPage('habitaciones')"><span class="bn-icon">🏠</span><span>Hab.</span></button>
   <button class="bottom-nav-item" id="bn-inquilinos" onclick="showPage('inquilinos')"><span class="bn-icon">👤</span><span>Inquilinos</span></button>
@@ -556,6 +656,7 @@ textarea{resize:vertical;min-height:68px;}
   <button class="bottom-nav-item" id="bn-siniestros" onclick="showPage('siniestros')"><span class="bn-icon">🚨</span><span>Siniest.</span></button>
   <button class="bottom-nav-item" id="bn-datosinteres" onclick="showPage('datosinteres')"><span class="bn-icon">📋</span><span>Datos</span></button>
   <button class="bottom-nav-item" id="bn-bugs" onclick="showPage('bugs')"><span class="bn-icon">🐛</span><span>Bugs</span></button>
+  <button class="bottom-nav-item" id="bn-extractor" onclick="showPage('extractor')"><span class="bn-icon">🤖</span><span>IA</span></button>
 </nav>
 </div>
 <!-- MODALES -->
@@ -1026,7 +1127,7 @@ async function showPage(page){
       bumpSync();
     }catch(_){}
   }
-  const renders={dashboard:renderDashboard,habitaciones:renderHabs,inquilinos:renderInquilinos,contratos:renderContratos,cobros:renderCobros,gastos:renderGastos,configurar:renderConfigPage,estadisticas:renderEstadisticas,siniestros:renderSiniestros,datosinteres:renderDatosInteres,banco:renderBanco,bugs:renderBugs};
+  const renders={dashboard:renderDashboard,habitaciones:renderHabs,inquilinos:renderInquilinos,contratos:renderContratos,cobros:renderCobros,gastos:renderGastos,configurar:renderConfigPage,estadisticas:renderEstadisticas,siniestros:renderSiniestros,datosinteres:renderDatosInteres,banco:renderBanco,bugs:renderBugs,extractor:renderExtractor};
   updatePageSubtitles();if(renders[page])renders[page]();window.scrollTo(0,0);
 }
 function openModal(id){document.getElementById(id).classList.add('open');}
@@ -2958,6 +3059,447 @@ function renderBanco(){
     </div>`;
   }).join('');
 }
+
+// ══════════════════════════════════════════════════════════════
+// IA EXTRACTOR
+// ══════════════════════════════════════════════════════════════
+let extModo='factura';      // 'factura' | 'extracto'
+let extImageBase64=null;    // base64 de la imagen actual
+let extImageType='image/jpeg';
+let extMovsData=[];         // movimientos extraídos (modo extracto)
+
+function renderExtractor(){
+  // Poblar el select de tipos de suministro
+  const sel=document.getElementById('extGTipo');
+  if(sel){
+    sel.innerHTML=STATE.tiposSupl.map(s=>`<option value="${s.nombre}">${s.icono} ${s.nombre}</option>`).join('');
+    sel.onchange=()=>extOnTipoChange();
+  }
+}
+
+function setExtractorModo(modo,btn){
+  extModo=modo;
+  document.querySelectorAll('#page-extractor .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  limpiarExtractor();
+}
+
+function handleExtDrop(e){
+  e.preventDefault();
+  const dz=document.getElementById('extDropZone');
+  dz.style.borderColor='var(--border)';dz.style.background='var(--surface2)';
+  const file=e.dataTransfer.files[0];
+  if(file)handleExtFile(file);
+}
+
+async function handleExtFile(file){
+  if(!file)return;
+  if(file.size>10*1024*1024){toast('El archivo supera 10 MB','error');return;}
+  const allowed=['image/png','image/jpeg','image/webp','image/gif','application/pdf'];
+  if(!allowed.includes(file.type)){toast('Formato no soportado. Usa PNG, JPG, WEBP o PDF','error');return;}
+
+  if(file.type==='application/pdf'){
+    await procesarPDF(file);
+  } else {
+    await procesarImagen(file);
+  }
+}
+
+async function procesarImagen(file){
+  return new Promise((resolve)=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const b64=e.target.result.split(',')[1];
+      extImageBase64=b64;
+      extImageType=file.type;
+      mostrarPreview(e.target.result,file.name,file.size);
+      resolve();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function procesarPDF(file){
+  // Renderizar primera página del PDF como imagen usando PDF.js CDN
+  mostrarEstado('⏳','Procesando PDF…','Renderizando primera página');
+  try{
+    const arrayBuffer=await file.arrayBuffer();
+    // Cargar PDF.js si no está disponible
+    if(!window.pdfjsLib){
+      await new Promise((res,rej)=>{
+        const s=document.createElement('script');
+        s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+        s.onload=res;s.onerror=rej;document.head.appendChild(s);
+      });
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+    const pdf=await window.pdfjsLib.getDocument({data:arrayBuffer}).promise;
+    const page=await pdf.getPage(1);
+    const viewport=page.getViewport({scale:2.0}); // scale 2 = buena resolución para OCR
+    const canvas=document.createElement('canvas');
+    canvas.width=viewport.width;canvas.height=viewport.height;
+    const ctx=canvas.getContext('2d');
+    await page.render({canvasContext:ctx,viewport}).promise;
+    const dataUrl=canvas.toDataURL('image/png');
+    extImageBase64=dataUrl.split(',')[1];
+    extImageType='image/png';
+    ocultarEstado();
+    mostrarPreview(dataUrl,file.name+' (pág. 1)',file.size);
+  }catch(err){
+    ocultarEstado();
+    toast('Error al procesar PDF: '+err.message,'error');
+  }
+}
+
+async function pegarPortapapeles(){
+  try{
+    const items=await navigator.clipboard.read();
+    for(const item of items){
+      const imgType=item.types.find(t=>t.startsWith('image/'));
+      if(imgType){
+        const blob=await item.getType(imgType);
+        await procesarImagen(new File([blob],'portapapeles.png',{type:imgType}));
+        return;
+      }
+    }
+    toast('No hay imagen en el portapapeles','error');
+  }catch(e){
+    // Fallback: escuchar paste event
+    toast('Usa Ctrl+V directamente sobre la página','error');
+  }
+}
+
+// Escuchar Ctrl+V en toda la página cuando estamos en extractor
+document.addEventListener('paste',async(e)=>{
+  if(document.getElementById('page-extractor')?.classList.contains('active')){
+    const items=e.clipboardData?.items||[];
+    for(const item of items){
+      if(item.type.startsWith('image/')){
+        const blob=item.getAsFile();
+        await procesarImagen(blob);
+        return;
+      }
+    }
+  }
+});
+
+function mostrarPreview(dataUrl,nombre,size){
+  document.getElementById('extDropZone').style.display='none';
+  document.getElementById('extPreview').style.display='';
+  document.getElementById('extPreviewImg').src=dataUrl;
+  document.getElementById('extPreviewNombre').textContent=nombre;
+  document.getElementById('extPreviewSize').textContent=Math.round(size/1024)+' KB';
+  document.getElementById('extResultFactura').style.display='none';
+  document.getElementById('extResultBanco').style.display='none';
+  document.getElementById('extStatus').style.display='none';
+}
+
+function mostrarEstado(icon,msg,sub=''){
+  document.getElementById('extStatus').style.display='';
+  document.getElementById('extStatusIcon').textContent=icon;
+  document.getElementById('extStatusMsg').textContent=msg;
+  document.getElementById('extStatusSub').textContent=sub;
+  document.getElementById('extPreview').style.display='none';
+  document.getElementById('extResultFactura').style.display='none';
+  document.getElementById('extResultBanco').style.display='none';
+}
+
+function ocultarEstado(){
+  document.getElementById('extStatus').style.display='none';
+}
+
+function limpiarExtractor(){
+  extImageBase64=null;extMovsData=[];
+  document.getElementById('extDropZone').style.display='';
+  document.getElementById('extPreview').style.display='none';
+  document.getElementById('extStatus').style.display='none';
+  document.getElementById('extResultFactura').style.display='none';
+  document.getElementById('extResultBanco').style.display='none';
+  document.getElementById('extFileInput').value='';
+  document.getElementById('extPreviewImg').src='';
+}
+
+function extOnTipoChange(){
+  const nombre=document.getElementById('extGTipo')?.value;
+  const suml=STATE.tiposSupl.find(s=>s.nombre===nombre);
+  const esUnica=!!suml?.fecha_unica;
+  document.getElementById('extGFechasRango').style.display=esUnica?'none':'';
+  document.getElementById('extGFechaUnicaWrap').style.display=esUnica?'':'none';
+}
+
+async function ejecutarExtraccion(){
+  if(!extImageBase64){toast('Primero selecciona una imagen','error');return;}
+  document.getElementById('extBtnAnalizar').disabled=true;
+  mostrarEstado('🔍','Analizando con IA…','Esto puede tardar unos segundos');
+
+  try{
+    if(extModo==='factura'){
+      await extraerFactura();
+    } else {
+      await extraerExtracto();
+    }
+  }catch(err){
+    mostrarEstado('❌','Error en la extracción',err.message);
+    document.getElementById('extBtnAnalizar').disabled=false;
+  }
+}
+
+// ── MODO FACTURA ────────────────────────────────────────────────
+async function extraerFactura(){
+  const tiposNombres=STATE.tiposSupl.map(s=>s.nombre).join(', ');
+  const hoy=new Date().toISOString().split('T')[0];
+  const prompt=`Eres un asistente que extrae datos de facturas de suministros (luz, agua, gas, internet, comunidad, etc.) para una app de gestión de pisos de alquiler.
+
+Analiza la imagen y extrae los siguientes datos en JSON puro (sin markdown, sin explicaciones):
+{
+  "tipo": "nombre del suministro — DEBE ser uno de: ${tiposNombres}. Si no encaja, usa el más cercano",
+  "proveedor": "nombre de la empresa (Iberdrola, Endesa, Canal de Isabel II, etc.)",
+  "fecha_inicio": "YYYY-MM-DD o null — período inicio de facturación",
+  "fecha_fin": "YYYY-MM-DD o null — período fin de facturación (fecha de la factura si no hay período)",
+  "importe": número decimal con el importe TOTAL a pagar (IVA incluido),
+  "num_factura": "número de factura o referencia o null",
+  "notas": "cualquier dato relevante adicional (potencia contratada, número de cuenta, etc.) o null",
+  "confianza": "alta|media|baja — tu nivel de seguridad en la extracción",
+  "motivo_confianza": "explicación breve de por qué la confianza es ese nivel"
+}
+
+Hoy es ${hoy}. Si no puedes determinar un campo, ponlo a null. SOLO JSON, nada más.`;
+
+  const resp=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-6',
+      max_tokens:1000,
+      messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:extImageType,data:extImageBase64}},
+        {type:'text',text:prompt}
+      ]}]
+    })
+  });
+
+  if(!resp.ok){
+    const err=await resp.json().catch(()=>({}));
+    throw new Error(err.error?.message||'Error API: '+resp.status);
+  }
+
+  const data=await resp.json();
+  const rawText=data.content?.find(b=>b.type==='text')?.text||'';
+
+  let parsed;
+  try{
+    const clean=rawText.replace(/```json|```/g,'').trim();
+    parsed=JSON.parse(clean);
+  }catch{
+    throw new Error('La IA no devolvió JSON válido. Intenta con otra imagen más clara.');
+  }
+
+  // Poblar formulario
+  const sel=document.getElementById('extGTipo');
+  if(sel&&parsed.tipo){sel.value=parsed.tipo;extOnTipoChange();}
+  document.getElementById('extGProveedor').value=parsed.proveedor||'';
+  document.getElementById('extGFechaInicio').value=parsed.fecha_inicio||'';
+  document.getElementById('extGFechaFin').value=parsed.fecha_fin||'';
+  document.getElementById('extGFechaUnica').value=parsed.fecha_fin||parsed.fecha_inicio||'';
+  document.getElementById('extGImporte').value=parsed.importe||'';
+  document.getElementById('extGNumFactura').value=parsed.num_factura||'';
+  document.getElementById('extGNotas').value=parsed.notas||'';
+  document.getElementById('extGPagada').value='false';
+
+  const conf=parsed.confianza||'media';
+  const confColor=conf==='alta'?'var(--accent3)':conf==='media'?'var(--accent2)':'var(--danger)';
+  document.getElementById('extGConfianza').innerHTML=
+    `<span style="color:${confColor};font-weight:600">Confianza ${conf}</span>${parsed.motivo_confianza?' — '+parsed.motivo_confianza:''}`;
+
+  ocultarEstado();
+  document.getElementById('extPreview').style.display='none';
+  document.getElementById('extResultFactura').style.display='';
+  document.getElementById('extBtnAnalizar').disabled=false;
+}
+
+async function crearGastoDesdeExtraccion(){
+  const imp=parseFloat(document.getElementById('extGImporte').value);
+  if(!imp){toast('Importe inválido','error');return;}
+  const suml=STATE.tiposSupl.find(s=>s.nombre===document.getElementById('extGTipo').value);
+  const esUnica=!!suml?.fecha_unica;
+  const fechaInicio=esUnica?document.getElementById('extGFechaUnica').value:document.getElementById('extGFechaInicio').value;
+  const fechaFin=esUnica?document.getElementById('extGFechaUnica').value:document.getElementById('extGFechaFin').value;
+  if(!fechaInicio||!fechaFin){toast('Indica la fecha de cobro','error');return;}
+  const noProrratea=document.getElementById('extGPagada').value==='noProrratea';
+  const payload={
+    tipo:document.getElementById('extGTipo').value,
+    fecha_inicio:fechaInicio,fecha_fin:fechaFin,importe:imp,
+    proveedor:document.getElementById('extGProveedor').value||null,
+    num_factura:document.getElementById('extGNumFactura').value||null,
+    pagada:noProrratea||document.getElementById('extGPagada').value==='true',
+    notas:document.getElementById('extGNotas').value||null
+  };
+  try{
+    const row=await dbSave('gastos',payload);
+    if(noProrratea){
+      const hRow={user_id:STATE.user.id,gasto_id_origen:row.id,tipo:row.tipo,fecha_inicio:row.fecha_inicio,fecha_fin:row.fecha_fin,importe:row.importe,proveedor:row.proveedor,num_factura:row.num_factura,notas:row.notas,motivo:'No se prorratea'};
+      const{data:hd}=await sb.from('historico_gastos').insert(hRow).select().single();
+      if(hd)STATE.historicoGastos.unshift(hd);
+      await dbDelete('gastos',row.id);
+    } else {
+      STATE.gastos.unshift(row);
+    }
+    limpiarExtractor();
+    toast('✅ Factura creada correctamente');
+    showPage('gastos');
+  }catch(e){toast(e.message,'error');}
+}
+
+// ── MODO EXTRACTO BANCARIO ──────────────────────────────────────
+async function extraerExtracto(){
+  const hoy=new Date().toISOString().split('T')[0];
+  const propietarios=STATE.propietarios.map(p=>p.nombre).join(', ')||'sin propietarios';
+
+  const prompt=`Eres un asistente que extrae movimientos bancarios de capturas de pantalla o documentos de extractos bancarios para una app de gestión de pisos de alquiler.
+
+Analiza la imagen y extrae TODOS los movimientos que veas (ignorando saldos, publicidad, menús de navegación).
+
+Devuelve JSON puro (sin markdown, sin explicaciones):
+{
+  "movimientos": [
+    {
+      "fecha": "YYYY-MM-DD",
+      "tipo": "ingreso o gasto",
+      "concepto": "descripción limpia del movimiento (sin códigos internos del banco)",
+      "importe": número positivo en euros,
+      "notas": "referencia o info adicional útil, o null"
+    }
+  ],
+  "confianza": "alta|media|baja",
+  "motivo_confianza": "explicación breve",
+  "aviso": "algún aviso relevante (movimientos dudosos, campos que no se leen bien, etc.) o null"
+}
+
+Propietarios disponibles en la app: ${propietarios}.
+Hoy es ${hoy}.
+SOLO JSON, nada más.`;
+
+  const resp=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-6',
+      max_tokens:2000,
+      messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:extImageType,data:extImageBase64}},
+        {type:'text',text:prompt}
+      ]}]
+    })
+  });
+
+  if(!resp.ok){
+    const err=await resp.json().catch(()=>({}));
+    throw new Error(err.error?.message||'Error API: '+resp.status);
+  }
+
+  const data=await resp.json();
+  const rawText=data.content?.find(b=>b.type==='text')?.text||'';
+
+  let parsed;
+  try{
+    const clean=rawText.replace(/```json|```/g,'').trim();
+    parsed=JSON.parse(clean);
+  }catch{
+    throw new Error('La IA no devolvió JSON válido. Intenta con otra imagen más clara.');
+  }
+
+  const movs=parsed.movimientos||[];
+  if(!movs.length){
+    mostrarEstado('⚠️','No se detectaron movimientos','Prueba con una captura más clara o recorta solo la tabla de movimientos');
+    return;
+  }
+
+  // Guardar con selección inicial = todos marcados
+  extMovsData=movs.map((m,i)=>({...m,seleccionado:true,idx:i,propietario_id:''}));
+
+  renderTablaExtracto(extMovsData);
+
+  const conf=parsed.confianza||'media';
+  const confColor=conf==='alta'?'var(--accent3)':conf==='media'?'var(--accent2)':'var(--danger)';
+  let infoHtml=`<span style="color:${confColor};font-weight:600">Confianza ${conf}</span> — ${movs.length} movimientos detectados`;
+  if(parsed.aviso)infoHtml+=`<br><span style="color:var(--accent2)">⚠️ ${parsed.aviso}</span>`;
+  document.getElementById('extBancoConfianza').innerHTML=infoHtml;
+
+  ocultarEstado();
+  document.getElementById('extPreview').style.display='none';
+  document.getElementById('extResultBanco').style.display='';
+  document.getElementById('extBtnAnalizar').disabled=false;
+}
+
+function renderTablaExtracto(movs){
+  const propOpts='<option value="">Ambos</option>'+STATE.propietarios.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join('');
+  const html=`<table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr style="border-bottom:1px solid var(--border)">
+      <th style="padding:6px;text-align:center;width:32px">✓</th>
+      <th style="padding:6px;text-align:left">Fecha</th>
+      <th style="padding:6px;text-align:left">Tipo</th>
+      <th style="padding:6px;text-align:left;min-width:160px">Concepto</th>
+      <th style="padding:6px;text-align:right">Importe</th>
+      <th style="padding:6px;text-align:left;min-width:120px">Propietario</th>
+      <th style="padding:6px;text-align:left;min-width:140px">Notas</th>
+    </tr></thead>
+    <tbody>${movs.map((m,i)=>`<tr style="border-bottom:1px solid var(--border);opacity:${m.seleccionado?'1':'0.4'}">
+      <td style="padding:6px;text-align:center"><input type="checkbox" ${m.seleccionado?'checked':''} style="width:auto;accent-color:var(--accent)" onchange="extToggleRow(${i},this.checked)"></td>
+      <td style="padding:6px;white-space:nowrap"><input type="date" value="${m.fecha||''}" style="background:transparent;border:none;color:var(--text);font-size:12px;outline:none;width:130px" onchange="extMovsData[${i}].fecha=this.value"></td>
+      <td style="padding:6px"><select style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;padding:3px" onchange="extMovsData[${i}].tipo=this.value"><option value="ingreso" ${m.tipo==='ingreso'?'selected':''}>💚 Ingreso</option><option value="gasto" ${m.tipo==='gasto'?'selected':''}>🔴 Gasto</option></select></td>
+      <td style="padding:6px"><input value="${(m.concepto||'').replace(/"/g,'&quot;')}" style="background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);font-size:12px;outline:none;width:100%" onchange="extMovsData[${i}].concepto=this.value"></td>
+      <td style="padding:6px;text-align:right;white-space:nowrap"><input type="number" step="0.01" value="${m.importe||''}" style="background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);font-size:12px;outline:none;width:80px;text-align:right" onchange="extMovsData[${i}].importe=parseFloat(this.value)"></td>
+      <td style="padding:6px"><select style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;padding:3px;max-width:140px" onchange="extMovsData[${i}].propietario_id=this.value">${propOpts}</select></td>
+      <td style="padding:6px"><input value="${(m.notas||'').replace(/"/g,'&quot;')}" style="background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);font-size:12px;outline:none;width:100%" onchange="extMovsData[${i}].notas=this.value"></td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+  document.getElementById('extMovsTabla').innerHTML=html;
+}
+
+function extToggleRow(idx,checked){
+  extMovsData[idx].seleccionado=checked;
+  // Actualizar opacidad de la fila
+  const rows=document.getElementById('extMovsTabla').querySelectorAll('tbody tr');
+  if(rows[idx])rows[idx].style.opacity=checked?'1':'0.4';
+}
+
+function extSeleccionarTodos(val){
+  extMovsData.forEach((m,i)=>{m.seleccionado=val;});
+  renderTablaExtracto(extMovsData);
+}
+
+async function crearMovimientosDesdeExtraccion(){
+  const seleccionados=extMovsData.filter(m=>m.seleccionado);
+  if(!seleccionados.length){toast('Selecciona al menos un movimiento','error');return;}
+  let ok=0,err=0;
+  for(const m of seleccionados){
+    if(!m.fecha||!m.importe){err++;continue;}
+    try{
+      await crearApunteBanco({
+        tipo:m.tipo||'gasto',
+        importe:Math.abs(m.importe),
+        fecha:m.fecha,
+        concepto:m.concepto||'Sin concepto',
+        notas:m.notas||'',
+        origen:'extractor_ia',
+        origen_id:null,
+        propietario_id:m.propietario_id||null
+      });
+      ok++;
+    }catch{err++;}
+  }
+  if(ok>0){
+    const{data}=await sb.from('movimientos_banco').select('*').eq('user_id',STATE.user.id).order('fecha',{ascending:false});
+    if(data)STATE.banco=data;
+    bumpSync();
+    limpiarExtractor();
+    toast(`✅ ${ok} movimiento(s) creados${err?' — '+err+' errores':''}`);
+    showPage('banco');
+  } else {
+    toast('No se pudo crear ningún movimiento','error');
+  }
+}
+
 
 </script>
 </body>
