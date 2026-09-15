@@ -71,10 +71,10 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 .stat-value{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;line-height:1.1;}
 .stat-label{color:var(--text2);font-size:12px;margin-top:4px;}
 .sortable{cursor:pointer;user-select:none;white-space:nowrap}.sortable:hover{color:var(--accent)}.sort-icon{font-size:10px;opacity:.4;margin-left:2px}.sort-icon.asc,.sort-icon.desc{opacity:1;color:var(--accent)}
-.banco-kpis .stat-card{padding:15px 17px;}
-.banco-kpis .stat-value{font-size:clamp(15px,1.8vw,22px);white-space:nowrap;}
-@media(max-width:768px){.banco-kpis{grid-template-columns:1fr 1fr;}.banco-kpis .stat-value{font-size:clamp(13px,4.5vw,20px);}}
-.stat-accent{color:var(--accent);}.stat-green{color:var(--accent3);}.stat-yellow{color:var(--accent2);}.stat-red{color:var(--danger);}
+.banco-kpis{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;}
+.banco-kpis .stat-card{flex:0 0 auto;min-width:130px;max-width:190px;padding:10px 13px;}
+.banco-kpis .stat-value{font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Syne',sans-serif;line-height:1.2;}
+@media(max-width:768px){.banco-kpis .stat-card{min-width:120px;max-width:calc(50% - 5px);}.banco-kpis .stat-value{font-size:13px;}}
 .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
 table{width:100%;border-collapse:collapse;}
 thead{background:var(--surface2);}
@@ -504,8 +504,8 @@ textarea{resize:vertical;min-height:68px;}
     <button class="btn btn-primary" onclick="openModalSiniestro()">+ Nuevo siniestro</button>
   </div>
   <div class="filters">
-    <button class="filter-btn active" onclick="filterSiniestros('todos',this)">Todos</button>
-    <button class="filter-btn" onclick="filterSiniestros('abierto',this)">Abiertos</button>
+    <button class="filter-btn" onclick="filterSiniestros('todos',this)">Todos</button>
+    <button class="filter-btn active" onclick="filterSiniestros('abierto',this)">Abiertos</button>
     <button class="filter-btn" onclick="filterSiniestros('en_gestion',this)">En gestión</button>
     <button class="filter-btn" onclick="filterSiniestros('resuelto',this)">Resueltos</button>
   </div>
@@ -529,8 +529,8 @@ textarea{resize:vertical;min-height:68px;}
     <div><div class="page-title">🐛 Bugs / Mejoras</div><div class="page-sub">Anota problemas detectados o funcionalidades pendientes</div></div>
   </div>
   <div style="display:flex;gap:8px;margin-bottom:14px">
-    <button class="btn filter-btn active" id="bugFiltAll"   onclick="setBugFiltro('todos',this)">Todos</button>
-    <button class="btn filter-btn"        id="bugFiltPend"  onclick="setBugFiltro('pendiente',this)">🔴 Pendientes</button>
+    <button class="btn filter-btn"        id="bugFiltAll"   onclick="setBugFiltro('todos',this)">Todos</button>
+    <button class="btn filter-btn active" id="bugFiltPend"  onclick="setBugFiltro('pendiente',this)">🔴 Pendientes</button>
     <button class="btn filter-btn"        id="bugFiltDone"  onclick="setBugFiltro('resuelto',this)">✅ Completados</button>
   </div>
   <div style="display:flex;gap:10px;margin-bottom:18px;align-items:flex-start">
@@ -2362,7 +2362,7 @@ const SIN_ESTADOS = {
   resuelto:{label:'Resuelto',badge:'badge-pagado'},
 };
 
-let sinFilter='todos';
+let sinFilter='abierto';
 function filterSiniestros(f,btn){sinFilter=f;document.querySelectorAll('#page-siniestros .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderSiniestros();}
 
 function openModalSiniestro(id=null){
@@ -2713,7 +2713,7 @@ async function deleteBug(id){
   }catch(e){toast(e.message,'error');}
 }
 
-let bugFiltro='todos';
+let bugFiltro='pendiente';
 function setBugFiltro(f,btn){
   bugFiltro=f;
   document.querySelectorAll('#page-bugs .filter-btn').forEach(b=>b.classList.remove('active'));
@@ -2777,14 +2777,14 @@ function copiarMovimientoBanco(id){
   const m=STATE.banco.find(x=>x.id===id);if(!m)return;
   const hoy=new Date().toISOString().split('T')[0];
   document.getElementById('modalBancoTitle').textContent='Nuevo movimiento (copia)';
-  document.getElementById('bkTipo').value=m.tipo;
-  document.getElementById('bkFecha').value=hoy; // fecha actual, no la original
-  document.getElementById('bkImporte').value=m.importe;
-  document.getElementById('bkConcepto').value=m.concepto;
-  document.getElementById('bkNotas').value=m.notas||'';
-  const propSel=document.getElementById('bkPropietario');
+  document.getElementById('bancoTipo').value=m.tipo;
+  document.getElementById('bancoFecha').value=hoy;
+  document.getElementById('bancoImporte').value=m.importe;
+  document.getElementById('bancoConcepto').value=m.concepto;
+  document.getElementById('bancoNotas').value=m.notas||'';
+  const propSel=document.getElementById('bancoPropietario');
   if(propSel)propSel.value=m.propietario_id||'';
-  document.getElementById('bkEditId').value=''; // sin id = nuevo registro
+  document.getElementById('bancoEditId').value='';
   openModal('modalBanco');
 }
 function openModalBanco(id=null){
@@ -2855,12 +2855,10 @@ function renderBanco(){
   const ultimaRevision=STATE.ultimaRevisionBanco||'';
   const revDisplay=ultimaRevision?new Date(ultimaRevision+'T00:00:00').toLocaleDateString('es',{day:'2-digit',month:'short',year:'numeric'}):'Sin fecha';
   let kpiHtml=`
-    <div class="stat-card"><div class="stat-value stat-green">€${fmt(totalIng)}</div><div class="stat-label">Total ingresos</div></div>
-    <div class="stat-card"><div class="stat-value stat-red">€${fmt(totalGas)}</div><div class="stat-label">Total gastos</div></div>
     <div class="stat-card"><div class="stat-value ${saldo>=0?'stat-green':'stat-red'}">€${fmt(saldo)}</div><div class="stat-label">Saldo cuenta</div></div>
-    <div class="stat-card" style="cursor:pointer" onclick="document.getElementById('bancoRevisionInput').showPicker?document.getElementById('bancoRevisionInput').showPicker():document.getElementById('bancoRevisionInput').focus()" title="Haz clic para cambiar la fecha">
-      <div class="stat-value" style="font-size:clamp(12px,1.6vw,18px);white-space:nowrap">${revDisplay}</div>
-      <div class="stat-label">Última revisión <span style="font-size:10px;opacity:.6">✏️</span></div>
+    <div class="stat-card" style="cursor:pointer;position:relative" onclick="document.getElementById('bancoRevisionInput').showPicker?document.getElementById('bancoRevisionInput').showPicker():document.getElementById('bancoRevisionInput').focus()" title="Haz clic para cambiar la fecha">
+      <div class="stat-value">${revDisplay}</div>
+      <div class="stat-label">Última revisión ✏️</div>
       <input type="date" id="bancoRevisionInput" value="${ultimaRevision}" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px" onchange="guardarRevisionBanco(this.value)">
     </div>`;
   STATE.propietarios.forEach(p=>{
