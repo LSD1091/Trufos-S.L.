@@ -70,7 +70,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:15px 17px;min-width:0;}
 .stat-value{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;line-height:1.1;}
 .stat-label{color:var(--text2);font-size:12px;margin-top:4px;}
-.banco-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:22px;}
+.sortable{cursor:pointer;user-select:none;white-space:nowrap}.sortable:hover{color:var(--accent)}.sort-icon{font-size:10px;opacity:.4;margin-left:2px}.sort-icon.asc,.sort-icon.desc{opacity:1;color:var(--accent)}
 .banco-kpis .stat-card{padding:15px 17px;}
 .banco-kpis .stat-value{font-size:clamp(15px,1.8vw,22px);white-space:nowrap;}
 @media(max-width:768px){.banco-kpis{grid-template-columns:1fr 1fr;}.banco-kpis .stat-value{font-size:clamp(13px,4.5vw,20px);}}
@@ -225,7 +225,24 @@ textarea{resize:vertical;min-height:68px;}
   <div class="topbar"><div><div class="page-title">Cobros</div><div class="page-sub">Facturación y pagos</div><div class="current-piso-name" style="font-size:12px;color:var(--accent);margin-top:2px;font-weight:600"></div></div><button class="btn btn-primary" onclick="openModalCobro()">+ Registrar</button></div>
   <div class="stats-row" id="cobrosStats"></div>
   <div class="filters"><button class="filter-btn active" onclick="filterCobros('todos',this)">Todos</button><button class="filter-btn" onclick="filterCobros('pendiente',this)">Pendientes</button><button class="filter-btn" onclick="filterCobros('pagado',this)">Pagados</button><button class="filter-btn" onclick="filterCobros('impagado',this)">Impagados</button></div>
-  <div class="table-wrap"><table><thead><tr><th>Inquilino</th><th>Habitación</th><th>Concepto</th><th>Mes</th><th>Importe</th><th>Método</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="cobrosTable"></tbody></table></div>
+  <div id="cobFiltrosPagados" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:12px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:center">
+      <input id="cbFiltInq" placeholder="🔍 Inquilino…" oninput="renderCobros()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-size:12px;outline:none">
+      <input type="month" id="cbFiltMes" onchange="renderCobros()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-size:12px;outline:none">
+      <input id="cbFiltConc" placeholder="🔍 Concepto…" oninput="renderCobros()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-size:12px;outline:none">
+      <button class="btn btn-secondary btn-sm" onclick="['cbFiltInq','cbFiltMes','cbFiltConc'].forEach(id=>{document.getElementById(id).value=''});renderCobros()">✕</button>
+    </div>
+  </div>
+  <div class="table-wrap"><table><thead><tr>
+    <th class="sortable" onclick="sortCobros('nombre')">Inquilino <span class="sort-icon" id="sort-nombre">↕</span></th>
+    <th class="sortable" onclick="sortCobros('habitacion')">Habitación <span class="sort-icon" id="sort-habitacion">↕</span></th>
+    <th>Concepto</th>
+    <th class="sortable" onclick="sortCobros('mes')">Mes <span class="sort-icon" id="sort-mes">↕</span></th>
+    <th class="sortable" onclick="sortCobros('importe')">Importe <span class="sort-icon" id="sort-importe">↕</span></th>
+    <th>Método</th>
+    <th class="sortable" onclick="sortCobros('estado')">Estado <span class="sort-icon" id="sort-estado">↕</span></th>
+    <th>Acciones</th>
+  </tr></thead><tbody id="cobrosTable"></tbody></table></div>
   <div class="mob-list" id="cobrosMob"></div>
 </div>
 <div class="page" id="page-gastos">
@@ -510,6 +527,11 @@ textarea{resize:vertical;min-height:68px;}
 <div class="page" id="page-bugs">
   <div class="topbar">
     <div><div class="page-title">🐛 Bugs / Mejoras</div><div class="page-sub">Anota problemas detectados o funcionalidades pendientes</div></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:14px">
+    <button class="btn filter-btn active" id="bugFiltAll"   onclick="setBugFiltro('todos',this)">Todos</button>
+    <button class="btn filter-btn"        id="bugFiltPend"  onclick="setBugFiltro('pendiente',this)">🔴 Pendientes</button>
+    <button class="btn filter-btn"        id="bugFiltDone"  onclick="setBugFiltro('resuelto',this)">✅ Completados</button>
   </div>
   <div style="display:flex;gap:10px;margin-bottom:18px;align-items:flex-start">
     <textarea id="bugInput" placeholder="Describe el bug o mejora…" rows="2" style="flex:1;resize:vertical;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:10px 12px;font-size:13px;font-family:'DM Sans',sans-serif"></textarea>
@@ -1413,7 +1435,18 @@ function autocompletarDesdeHabitacion(selHabId, selInqId){
 
 // COBROS
 let cbFilter='pendiente';
+let cbSortStack=[];
 function filterCobros(f,btn){cbFilter=f;document.querySelectorAll('#page-cobros .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCobros();}
+function sortCobros(key){
+  const idx=cbSortStack.findIndex(s=>s.key===key);
+  if(idx>=0){if(cbSortStack[idx].dir===1)cbSortStack[idx].dir=-1;else cbSortStack.splice(idx,1);}else{cbSortStack.push({key,dir:1});}
+  ['nombre','habitacion','mes','importe','estado'].forEach(k=>{const el=document.getElementById('sort-'+k);if(!el)return;const s=cbSortStack.find(x=>x.key===k);el.className='sort-icon'+(s?(s.dir===1?' asc':' desc'):'');el.textContent=s?(s.dir===1?'\u2191':'\u2193'):'\u2195';});
+  renderCobros();
+}
+function applyCobrosSort(arr){
+  if(!cbSortStack.length)return arr;
+  return [...arr].sort((a,b)=>{for(const {key,dir} of cbSortStack){let va='',vb='';if(key==='nombre'){va=(STATE.inquilinos.find(i=>i.id===a.inquilino_id)?.nombre||'').toLowerCase();vb=(STATE.inquilinos.find(i=>i.id===b.inquilino_id)?.nombre||'').toLowerCase();}else if(key==='habitacion'){va=(STATE.habitaciones.find(h=>h.id===a.habitacion_id)?.nombre||'').toLowerCase();vb=(STATE.habitaciones.find(h=>h.id===b.habitacion_id)?.nombre||'').toLowerCase();}else if(key==='mes'){va=a.mes||'';vb=b.mes||'';}else if(key==='importe'){va=Number(a.importe);vb=Number(b.importe);}else if(key==='estado'){va=a.estado||'';vb=b.estado||'';}if(va<vb)return -1*dir;if(va>vb)return 1*dir;}return 0;});
+}
 function openModalCobro(id=null){
   const si=document.getElementById('cbInquilino'),sh=document.getElementById('cbHabitacion');
   si.innerHTML='<option value="">-- Selecciona --</option>';sh.innerHTML='<option value="">-- Selecciona --</option>';
@@ -1487,10 +1520,21 @@ function renderCobros(){
   const habIds=new Set(STATE.habitaciones.filter(h=>!STATE.currentPisoId||h.piso_id===STATE.currentPisoId).map(h=>h.id));
   let cbs=STATE.cobros.filter(c=>!c.habitacion_id||habIds.has(c.habitacion_id));
   if(cbFilter!=='todos')cbs=cbs.filter(c=>c.estado===cbFilter);
+  const fp=document.getElementById('cobFiltrosPagados');
+  if(fp)fp.style.display=cbFilter==='pagado'?'':'none';
+  if(cbFilter==='pagado'){
+    const fInq=(document.getElementById('cbFiltInq')?.value||'').toLowerCase().trim();
+    const fMes=document.getElementById('cbFiltMes')?.value||'';
+    const fConc=(document.getElementById('cbFiltConc')?.value||'').toLowerCase().trim();
+    if(fInq)cbs=cbs.filter(c=>(STATE.inquilinos.find(i=>i.id===c.inquilino_id)?.nombre||'').toLowerCase().includes(fInq));
+    if(fMes)cbs=cbs.filter(c=>(c.mes||'').startsWith(fMes));
+    if(fConc)cbs=cbs.filter(c=>(c.concepto||'').toLowerCase().includes(fConc));
+  }
+  cbs=applyCobrosSort(cbs);
   const tbody=document.getElementById('cobrosTable');
   if(!cbs.length){tbody.innerHTML=`<tr><td colspan="8"><div class="empty"><div class="empty-icon">💸</div><div class="empty-title">No hay cobros</div></div></td></tr>`;document.getElementById('cobrosMob').innerHTML='';return;}
-  tbody.innerHTML=cbs.map(cb=>{const inq=STATE.inquilinos.find(x=>x.id===cb.inquilino_id);const h=STATE.habitaciones.find(x=>x.id===cb.habitacion_id);return `<tr><td><strong>${inq?inq.nombre:'—'}</strong></td><td class="text-muted">${h?h.nombre:'—'}</td><td>${cb.concepto}</td><td class="text-muted">${cb.mes||'—'}</td><td class="font-bold">€${cb.importe}</td><td class="text-muted">${cb.metodo}</td><td><span class="badge badge-${cb.estado}">${cap(cb.estado)}</span></td><td><div class="flex gap-2">${cb.estado!=='pagado'?`<button class="btn btn-secondary btn-sm" onclick="marcarPagado('${cb.id}')">✅</button>`:''}<button class="btn btn-secondary btn-sm" onclick="openModalCobro('${cb.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteCobro('${cb.id}')">🗑</button></div></td></tr>`;}).join('');
-  document.getElementById('cobrosMob').innerHTML=cbs.map(cb=>{const inq=STATE.inquilinos.find(x=>x.id===cb.inquilino_id);const h=STATE.habitaciones.find(x=>x.id===cb.habitacion_id);return `<div class="mob-card"><div class="mob-card-header"><div><div class="mob-card-name">${inq?inq.nombre:'—'}</div><div class="mob-card-sub">${cb.concepto} · ${cb.mes||'—'}</div></div><span class="badge badge-${cb.estado}">${cap(cb.estado)}</span></div><div class="mob-card-rows"><span class="mob-card-pill">💶 <strong>€${cb.importe}</strong></span>${h?`<span class="mob-card-pill">🏠 ${h.nombre}</span>`:''}<span class="mob-card-pill">${cb.metodo}</span></div><div class="mob-card-actions">${cb.estado!=='pagado'?`<button class="btn btn-secondary btn-sm" onclick="marcarPagado('${cb.id}')">✅ Pagado</button>`:''}<button class="btn btn-secondary btn-sm" onclick="openModalCobro('${cb.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteCobro('${cb.id}')">🗑</button></div></div>`;}).join('');
+  tbody.innerHTML=cbs.map(cb=>{const inq=STATE.inquilinos.find(x=>x.id===cb.inquilino_id);const h=STATE.habitaciones.find(x=>x.id===cb.habitacion_id);return '<tr><td><strong>'+(inq?inq.nombre:'—')+'</strong></td><td class="text-muted">'+(h?h.nombre:'—')+'</td><td>'+cb.concepto+'</td><td class="text-muted">'+(cb.mes||'—')+'</td><td class="font-bold">€'+cb.importe+'</td><td class="text-muted">'+cb.metodo+'</td><td><span class="badge badge-'+cb.estado+'">'+(cap(cb.estado))+'</span></td><td><div class="flex gap-2">'+(cb.estado!=='pagado'?'<button class="btn btn-secondary btn-sm" onclick="marcarPagado(\''+cb.id+'\')">✅</button>':'')+'<button class="btn btn-secondary btn-sm" onclick="openModalCobro(\''+cb.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteCobro(\''+cb.id+'\')">🗑</button></div></td></tr>';}).join('');
+  document.getElementById('cobrosMob').innerHTML=cbs.map(cb=>{const inq=STATE.inquilinos.find(x=>x.id===cb.inquilino_id);const h=STATE.habitaciones.find(x=>x.id===cb.habitacion_id);return '<div class="mob-card"><div class="mob-card-header"><div><div class="mob-card-name">'+(inq?inq.nombre:'—')+'</div><div class="mob-card-sub">'+cb.concepto+' · '+(cb.mes||'—')+'</div></div><span class="badge badge-'+cb.estado+'">'+(cap(cb.estado))+'</span></div><div class="mob-card-rows"><span class="mob-card-pill">💶 <strong>€'+cb.importe+'</strong></span>'+(h?'<span class="mob-card-pill">🏠 '+h.nombre+'</span>':'')+'<span class="mob-card-pill">'+cb.metodo+'</span></div><div class="mob-card-actions">'+(cb.estado!=='pagado'?'<button class="btn btn-secondary btn-sm" onclick="marcarPagado(\''+cb.id+'\')">✅ Pagado</button>':'')+'<button class="btn btn-secondary btn-sm" onclick="openModalCobro(\''+cb.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteCobro(\''+cb.id+'\')">🗑</button></div></div>';}).join('');
 }
 
 // GASTOS
@@ -2669,10 +2713,18 @@ async function deleteBug(id){
   }catch(e){toast(e.message,'error');}
 }
 
+let bugFiltro='todos';
+function setBugFiltro(f,btn){
+  bugFiltro=f;
+  document.querySelectorAll('#page-bugs .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderBugs();
+}
 function renderBugs(){
   const el=document.getElementById('bugsList');if(!el)return;
-  const list=STATE.bugs||[];
-  if(!list.length){el.innerHTML=`<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">Sin anotaciones</div><div class="empty-sub">Todo limpio por ahora</div></div>`;return;}
+  let list=STATE.bugs||[];
+  if(bugFiltro!=='todos') list=list.filter(b=>b.tipo===bugFiltro);
+  if(!list.length){el.innerHTML=`<div class="empty"><div class="empty-icon">${bugFiltro==='resuelto'?'✅':'🐛'}</div><div class="empty-title">Sin ${bugFiltro==='resuelto'?'completados':bugFiltro==='pendiente'?'pendientes':'anotaciones'}</div></div>`;return;}
   el.innerHTML=list.map(b=>{
     const resuelto=b.tipo==='resuelto';
     return `<div class="card" style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;margin-bottom:10px;opacity:${resuelto?'0.6':'1'}">
@@ -2721,6 +2773,20 @@ async function guardarRevisionBanco(fecha){
 
 function filterBanco(f,btn){bancoFilter=f;document.querySelectorAll('#page-banco .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderBanco();}
 
+function copiarMovimientoBanco(id){
+  const m=STATE.banco.find(x=>x.id===id);if(!m)return;
+  const hoy=new Date().toISOString().split('T')[0];
+  document.getElementById('modalBancoTitle').textContent='Nuevo movimiento (copia)';
+  document.getElementById('bkTipo').value=m.tipo;
+  document.getElementById('bkFecha').value=hoy; // fecha actual, no la original
+  document.getElementById('bkImporte').value=m.importe;
+  document.getElementById('bkConcepto').value=m.concepto;
+  document.getElementById('bkNotas').value=m.notas||'';
+  const propSel=document.getElementById('bkPropietario');
+  if(propSel)propSel.value=m.propietario_id||'';
+  document.getElementById('bkEditId').value=''; // sin id = nuevo registro
+  openModal('modalBanco');
+}
 function openModalBanco(id=null){
   populatePropietarioSelects();
   document.getElementById('modalBancoTitle').textContent=id?'Editar movimiento':'Nuevo movimiento';
@@ -2832,6 +2898,7 @@ function renderBanco(){
       <td class="${m.tipo==='ingreso'?'text-green':'text-red'} font-bold">${m.tipo==='ingreso'?'+':'-'}€${fmt(m.importe)}</td>
       <td class="text-muted text-sm">${esAutomatic?'<span class="badge badge-pendiente" style="font-size:10px">Auto</span>':'Manual'}</td>
       <td><div class="flex gap-2">
+        <button class="btn btn-secondary btn-sm" onclick="copiarMovimientoBanco('${m.id}')" title="Copiar">📋</button>
         <button class="btn btn-secondary btn-sm" onclick="openModalBanco('${m.id}')">✏️</button>
         <button class="btn btn-danger btn-sm" onclick="deleteMovimientoBanco('${m.id}')">🗑</button>
       </div></td>
@@ -2848,6 +2915,7 @@ function renderBanco(){
       </div>
       ${m.notas?`<div class="text-sm text-muted" style="margin-bottom:8px">${m.notas}</div>`:''}
       <div class="mob-card-actions">
+        <button class="btn btn-secondary btn-sm" onclick="copiarMovimientoBanco('${m.id}')">📋 Copiar</button>
         <button class="btn btn-secondary btn-sm" onclick="openModalBanco('${m.id}')">✏️ Editar</button>
         <button class="btn btn-danger btn-sm" onclick="deleteMovimientoBanco('${m.id}')">🗑</button>
       </div>
