@@ -154,6 +154,7 @@ textarea{resize:vertical;min-height:68px;}
 .mt-2{margin-top:8px;}.mb-3{margin-bottom:12px;}.font-bold{font-weight:700;}
 .text-accent{color:var(--accent);}.text-green{color:var(--accent3);}.text-yellow{color:var(--accent2);}.text-red{color:var(--danger);}.text-muted{color:var(--text2);}.text-sm{font-size:12px;}
 </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 <div id="loadingOverlay"><div class="spinner"></div><div class="loading-text">Conectando…</div></div>
@@ -250,7 +251,7 @@ textarea{resize:vertical;min-height:68px;}
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-secondary" onclick="crearCobrosAlquiler()">🏠 Cobros alquiler</button><button class="btn btn-secondary" onclick="crearCobrosProrateados()">⚡ Cobros suministros</button><button class="btn btn-secondary" onclick="crearGastoTerminoFijo()">🌡️ Término fijo ACS</button><button class="btn btn-primary" onclick="openModalGasto()">+ Nueva factura</button></div>
   </div>
   <div class="gastos-tabs"><button class="gastos-tab active" onclick="switchGastosTab('pendientes',this)">📋 Pendientes</button><button class="gastos-tab" onclick="switchGastosTab('historico',this)">🗂 Histórico</button><button class="gastos-tab" onclick="switchGastosTab('grafico',this)">📊 Estado suministros</button></div>
-  <div class="stats-row" id="gastosStats"></div>
+  <div id="gastosStats" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px"></div>
   <div class="gastos-panel active" id="gpanel-pendientes">
     <div class="filters" id="gastosFilters"><button class="filter-btn active" onclick="filterGastos('todos',this)">Todos</button></div>
     <div class="table-wrap"><table><thead><tr><th>Tipo</th><th>Proveedor</th><th>Inicio cobro</th><th>Fin cobro</th><th>Importe</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="gastosTable"></tbody></table></div>
@@ -473,7 +474,10 @@ textarea{resize:vertical;min-height:68px;}
 <div class="page" id="page-banco">
   <div class="topbar">
     <div><div class="page-title">🏦 Banco</div><div class="page-sub">Movimientos e ingresos</div></div>
-    <button class="btn btn-primary" onclick="openModalBanco()">+ Movimiento manual</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary" onclick="exportarBancoExcel()" title="Descargar selección actual como Excel">📥 Excel</button>
+      <button class="btn btn-primary" onclick="openModalBanco()">+ Movimiento manual</button>
+    </div>
   </div>
   <!-- KPI cards -->
   <div id="bancoKpis" class="banco-kpis" style="margin-bottom:20px"></div>
@@ -1605,14 +1609,14 @@ function renderGastosFilters(){
   tipos.forEach(t=>{const s=getSuml(t);wrap.innerHTML+=`<button class="filter-btn ${gtFilter===t?'active':''}" onclick="filterGastos('${t}',this)">${s.icono} ${t}</button>`;});
 }
 function renderGastosStats(){
-  // Solo gastos pendientes de prorrateo (pagada=false)
   const activos=STATE.gastos.filter(g=>!g.pagada);
   const total=activos.reduce((s,g)=>s+Number(g.importe),0);
-  const pend=total; // todos los activos son pendientes
-  const pag=STATE.gastos.filter(g=>g.pagada).reduce((s,g)=>s+Number(g.importe),0);
-  const pt={};activos.forEach(g=>{pt[g.tipo]=(pt[g.tipo]||0)+Number(g.importe);});
-  const mx=Object.entries(pt).sort((a,b)=>b[1]-a[1])[0];
-  document.getElementById('gastosStats').innerHTML=`<div class="stat-card"><div class="stat-value stat-accent">€${fmt(total)}</div><div class="stat-label">Total facturas</div></div><div class="stat-card"><div class="stat-value stat-yellow">€${fmt(pend)}</div><div class="stat-label">Pendiente prorrateo</div></div><div class="stat-card"><div class="stat-value stat-green">€${fmt(pag)}</div><div class="stat-label">Ya prorateado</div></div><div class="stat-card"><div class="stat-value">${mx?`${getSuml(mx[0]).icono} ${mx[0]}`:'—'}</div><div class="stat-label">Mayor gasto</div></div>`;
+  const cardStyle='flex:0 0 auto;min-width:130px;max-width:190px;padding:10px 13px;';
+  const valStyle='font-family:\'Syne\',sans-serif;font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;';
+  const lblStyle='font-size:11px;color:var(--text2);margin-top:3px;';
+  document.getElementById('gastosStats').innerHTML=
+    `<div class="stat-card" style="${cardStyle}"><div class="stat-value stat-accent" style="${valStyle}">€${fmt(total)}</div><div class="stat-label" style="${lblStyle}">Total facturas</div></div>`+
+    `<div class="stat-card" style="${cardStyle}"><div class="stat-value stat-yellow" style="${valStyle}">${activos.length}</div><div class="stat-label" style="${lblStyle}">Pendientes prorrateo</div></div>`;
 }
 function renderGastosTabla(){
   // Solo pendientes de prorrateo (pagada=false)
@@ -1662,6 +1666,7 @@ function renderHistorico(){
     const s=getSuml(g.tipo);
     const arch=g.archivado_at?new Date(g.archivado_at).toLocaleDateString('es'):'—';
     const cobrado=g.cobrado_banco===true||g.cobrado_banco==='true';
+    const esTermFijo=g.proveedor==='Término fijo ACS';
     return `<tr>
       <td><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:3px;background:${s.color}"></span>${s.icono} ${g.tipo}</span></td>
       <td class="text-muted">${g.proveedor||'—'}</td>
@@ -1671,8 +1676,8 @@ function renderHistorico(){
       <td class="text-muted">${g.num_factura||'—'}</td>
       <td class="text-muted">${g.motivo||'—'}</td>
       <td style="text-align:center">
-        <input type="checkbox" ${cobrado?'checked':''} style="width:auto;accent-color:var(--accent);cursor:pointer;transform:scale(1.3)"
-          onchange="toggleCobradoBanco('${g.id}',this.checked)" title="Marcar como cobrado del banco">
+        ${esTermFijo?'<span class="text-muted text-sm" title="El término fijo ACS no genera apunte en banco">—</span>':`<input type="checkbox" ${cobrado?'checked':''} style="width:auto;accent-color:var(--accent);cursor:pointer;transform:scale(1.3)"
+          onchange="toggleCobradoBanco('${g.id}',this.checked)" title="Marcar como cobrado del banco">`}
       </td>
       <td class="text-muted text-sm">${arch}</td>
       <td><div class="flex gap-2">
@@ -1685,25 +1690,11 @@ function renderHistorico(){
   document.getElementById('historicoMob').innerHTML=hist.map(g=>{
     const s=getSuml(g.tipo);
     const cobrado=g.cobrado_banco===true||g.cobrado_banco==='true';
-    return `<div class="mob-card">
-      <div class="mob-card-header">
-        <div><div class="mob-card-name">${s.icono} ${g.tipo}${g.proveedor?' · '+g.proveedor:''}</div><div class="mob-card-sub">${fmtD(g.fecha_inicio)} → ${fmtD(g.fecha_fin)}</div></div>
-        <span class="badge badge-pagado">✓</span>
-      </div>
-      <div class="mob-card-rows">
-        <span class="mob-card-pill">💶 <strong>€${fmt(g.importe)}</strong></span>
-        ${g.num_factura?`<span class="mob-card-pill">${g.num_factura}</span>`:''}
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-        <input type="checkbox" ${cobrado?'checked':''} style="width:auto;accent-color:var(--accent);cursor:pointer" onchange="toggleCobradoBanco('${g.id}',this.checked)">
-        <span class="text-sm text-muted">Cobrado del banco</span>
-      </div>
-      <div class="mob-card-actions">
-        <button class="btn btn-secondary btn-sm" onclick="openModalHistoricoGasto('${g.id}')">✏️ Editar</button>
-        <button class="btn btn-secondary btn-sm" style="color:var(--accent2)" onclick="reactivarGasto('${g.id}')">♻️ Reactivar</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteHistoricoGasto('${g.id}')">🗑</button>
-      </div>
-    </div>`;
+    const esTermFijo=g.proveedor==='Término fijo ACS';
+    return '<div class="mob-card"><div class="mob-card-header"><div><div class="mob-card-name">'+s.icono+' '+g.tipo+(g.proveedor?' · '+g.proveedor:'')+'</div><div class="mob-card-sub">'+fmtD(g.fecha_inicio)+' → '+fmtD(g.fecha_fin)+'</div></div><span class="badge badge-pagado">✓</span></div>'
+      +'<div class="mob-card-rows"><span class="mob-card-pill">💶 <strong>€'+fmt(g.importe)+'</strong></span>'+(g.num_factura?'<span class="mob-card-pill">'+g.num_factura+'</span>':'')+'</div>'
+      +(!esTermFijo?'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><input type="checkbox" '+(cobrado?'checked':'')+' style="width:auto;accent-color:var(--accent);cursor:pointer" onchange="toggleCobradoBanco(\''+g.id+'\',this.checked)"><span class="text-sm text-muted">Cobrado del banco</span></div>':'')
+      +'<div class="mob-card-actions"><button class="btn btn-secondary btn-sm" onclick="openModalHistoricoGasto(\''+g.id+'\')">✏️ Editar</button><button class="btn btn-secondary btn-sm" style="color:var(--accent2)" onclick="reactivarGasto(\''+g.id+'\')">&#9851; Reactivar</button><button class="btn btn-danger btn-sm" onclick="deleteHistoricoGasto(\''+g.id+'\')">🗑</button></div></div>';
   }).join('');
 }
 
@@ -2769,6 +2760,53 @@ async function guardarRevisionBanco(fecha){
     await sb.from('user_prefs').upsert({user_id:STATE.user.id,ultima_revision_banco:fecha,empresa:STATE.empresa,current_piso_id:STATE.currentPisoId||null},{onConflict:'user_id'});
     bumpSync();renderBanco();
   }catch(e){toast(e.message,'error');}
+}
+
+function exportarBancoExcel(){
+  // Recoger los movimientos actualmente filtrados (misma lógica que renderBanco)
+  let movs=[...STATE.banco];
+  const bf=typeof bancoFilter!=='undefined'?bancoFilter:'todos';
+  if(bf!=='todos')movs=movs.filter(m=>m.tipo===bf);
+  const filtProp=document.getElementById('bancoFiltProp')?.value||'';
+  if(filtProp==='_comun')movs=movs.filter(m=>!m.propietario_id);
+  else if(filtProp)movs=movs.filter(m=>m.propietario_id===filtProp);
+  const filtMes=document.getElementById('bancoFiltMes')?.value||'';
+  if(filtMes)movs=movs.filter(m=>m.fecha&&m.fecha.startsWith(filtMes));
+  const filtConcepto=(document.getElementById('bancoFiltConcepto')?.value||'').toLowerCase().trim();
+  if(filtConcepto)movs=movs.filter(m=>(m.concepto||'').toLowerCase().includes(filtConcepto)||(m.notas||'').toLowerCase().includes(filtConcepto));
+
+  if(!movs.length){toast('No hay movimientos para exportar','error');return;}
+
+  // Construir filas
+  const rows=movs.map(m=>{
+    const prop=STATE.propietarios.find(p=>p.id===m.propietario_id);
+    return {
+      'Fecha':m.fecha||'',
+      'Tipo':m.tipo==='ingreso'?'Ingreso':'Gasto',
+      'Concepto':m.concepto||'',
+      'Notas':m.notas||'',
+      'Propietario':prop?prop.nombre:'Ambos',
+      'Importe':m.tipo==='ingreso'?Number(m.importe):-Number(m.importe),
+      'Origen':m.origen||'manual'
+    };
+  });
+
+  // Usar SheetJS si disponible, si no CSV
+  if(typeof XLSX!=='undefined'){
+    const ws=XLSX.utils.json_to_sheet(rows);
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Banco');
+    const mes=document.getElementById('bancoFiltMes')?.value||new Date().toISOString().slice(0,7);
+    XLSX.writeFile(wb,'banco_'+mes+'.xlsx');
+  } else {
+    // Fallback CSV
+    const header=Object.keys(rows[0]);
+    const csv=[header.join(','),...rows.map(r=>header.map(h=>'"'+(r[h]+'').replace(/"/g,'""')+'"').join(','))].join('\n');
+    const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+    const mes=document.getElementById('bancoFiltMes')?.value||new Date().toISOString().slice(0,7);
+    a.download='banco_'+mes+'.csv';a.click();
+  }
+  toast('Descargando…');
 }
 
 function filterBanco(f,btn){bancoFilter=f;document.querySelectorAll('#page-banco .filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderBanco();}
