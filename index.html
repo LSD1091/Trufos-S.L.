@@ -74,7 +74,6 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 .banco-kpis{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;}
 .banco-kpis .stat-card{flex:0 0 auto;min-width:130px;max-width:190px;padding:10px 13px;}
 .banco-kpis .stat-value{font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Syne',sans-serif;line-height:1.2;}
-@media(max-width:768px){.banco-kpis .stat-card{min-width:120px;max-width:calc(50% - 5px);}.banco-kpis .stat-value{font-size:13px;}}
 .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
 table{width:100%;border-collapse:collapse;}
 thead{background:var(--surface2);}
@@ -89,7 +88,7 @@ tr:hover td{background:rgba(124,106,247,.04);}
 .mob-card-rows{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
 .mob-card-pill{background:var(--surface2);border-radius:6px;padding:4px 10px;font-size:12px;color:var(--text2);}
 .mob-card-pill strong{color:var(--text);}
-.mob-card-actions{display:flex;gap:8px;flex-wrap:wrap;}.mob-card-actions .btn{flex:0 0 auto;width:auto!important;}
+.topbar-actions{display:flex;gap:8px;flex-wrap:wrap;}.mob-card-actions{display:flex;gap:8px;flex-wrap:wrap;}.mob-card-actions .btn{flex:0 0 auto;width:auto!important;}
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(4px);z-index:1000;align-items:flex-start;justify-content:center;padding:20px 12px 80px;overflow-y:auto;}
 .modal-overlay.open{display:flex;}
 .modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px;width:100%;max-width:500px;animation:slideUp .2s ease;margin:auto 0;}
@@ -148,7 +147,7 @@ textarea{resize:vertical;min-height:68px;}
 .bottom-nav-item .bn-icon{font-size:16px;line-height:1.1;}
 .bottom-nav-item.active{color:var(--accent);}
 @media(min-width:769px){.sidebar{display:flex;}.main{margin-left:220px;}.bottom-nav{display:none!important;}.table-wrap{display:block;}.mob-list{display:none!important;}}
-@media(max-width:768px){.sidebar{display:none!important;}.main{margin-left:0;padding:12px 12px 76px;}.bottom-nav{display:flex;}.table-wrap{display:none!important;}.mob-list{display:block!important;}.topbar{flex-direction:column;gap:8px;margin-bottom:16px;}.topbar>div:last-child{width:100%;display:flex;flex-wrap:wrap;gap:6px;}.topbar>div:last-child .btn{flex:1;min-width:120px;justify-content:center;}.topbar>.btn{width:100%;justify-content:center;}.page-title{font-size:19px;}.cards-grid{grid-template-columns:1fr;}.cards-grid-habs{grid-template-columns:1fr;}.stats-row{grid-template-columns:1fr 1fr;gap:8px;}.stat-card{padding:10px 11px;}.stat-value{font-size:14px;}.form-row{grid-template-columns:1fr;}.modal{padding:16px 13px;}.modal-footer{justify-content:stretch;}.modal-footer .btn{flex:1;justify-content:center;}.cfg-header{flex-direction:row!important;}.cfg-btn{width:auto!important;}}
+@media(max-width:768px){.sidebar{display:none!important;}.main{margin-left:0;padding:12px 12px 76px;}.bottom-nav{display:flex;}.table-wrap{display:none!important;}.mob-list{display:block!important;}.topbar{flex-direction:column;gap:8px;margin-bottom:16px;}.topbar>.btn{width:100%;justify-content:center;}.topbar-actions{width:100%;display:flex;flex-wrap:wrap;gap:6px;}.topbar-actions .btn{flex:1;min-width:130px;justify-content:center;}.page-title{font-size:19px;}.cards-grid{grid-template-columns:1fr;}.cards-grid-habs{grid-template-columns:1fr;}.stats-row{grid-template-columns:1fr 1fr;gap:8px;}.stat-card{padding:10px 11px;}.stat-value{font-size:14px;}.form-row{grid-template-columns:1fr;}.modal{padding:16px 13px;}.modal-footer{justify-content:stretch;}.modal-footer .btn{flex:1;justify-content:center;}.cfg-header{flex-direction:row!important;}.cfg-btn{width:auto!important;}.banco-kpis .stat-card{min-width:120px;max-width:calc(50% - 5px);}.banco-kpis .stat-value{font-size:13px;}}
 .divider{height:1px;background:var(--border);margin:18px 0;}
 .flex{display:flex;}.gap-2{gap:8px;}.items-center{align-items:center;}.justify-between{justify-content:space-between;}
 .mt-2{margin-top:8px;}.mb-3{margin-bottom:12px;}.font-bold{font-weight:700;}
@@ -249,7 +248,7 @@ textarea{resize:vertical;min-height:68px;}
 </div>
 <div class="page" id="page-gastos">
   <div class="topbar"><div><div class="page-title">⚡ Gastos</div><div class="page-sub">Suministros y prorrateo</div><div class="current-piso-name" style="font-size:12px;color:var(--accent);margin-top:2px;font-weight:600"></div></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-secondary" onclick="crearCobrosAlquiler()">🏠 Cobros alquiler</button><button class="btn btn-secondary" onclick="crearCobrosProrateados()">⚡ Cobros suministros</button><button class="btn btn-secondary" onclick="crearGastoTerminoFijo()">🌡️ Término fijo ACS</button><button class="btn btn-primary" onclick="openModalGasto()">+ Nueva factura</button></div>
+    <div class="topbar-actions"><button class="btn btn-secondary" onclick="crearCobrosAlquiler()">🏠 Cobros alquiler</button><button class="btn btn-secondary" onclick="crearCobrosProrateados()">⚡ Cobros suministros</button><button class="btn btn-secondary" onclick="crearGastoTerminoFijo()">🌡️ Término fijo ACS</button><button class="btn btn-primary" onclick="openModalGasto()">+ Nueva factura</button></div>
   </div>
   <div class="gastos-tabs"><button class="gastos-tab active" onclick="switchGastosTab('pendientes',this)">📋 Pendientes</button><button class="gastos-tab" onclick="switchGastosTab('historico',this)">🗂 Histórico</button><button class="gastos-tab" onclick="switchGastosTab('grafico',this)">📊 Estado suministros</button></div>
   <div id="gastosStats" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px"></div>
@@ -475,7 +474,7 @@ textarea{resize:vertical;min-height:68px;}
 <div class="page" id="page-banco">
   <div class="topbar">
     <div><div class="page-title">🏦 Banco</div><div class="page-sub">Movimientos e ingresos</div></div>
-    <div style="display:flex;gap:8px">
+    <div class="topbar-actions">
       <button class="btn btn-secondary" onclick="exportarBancoExcel()" title="Descargar selección actual como Excel">📥 Excel</button>
       <button class="btn btn-primary" onclick="openModalBanco()">+ Movimiento manual</button>
     </div>
