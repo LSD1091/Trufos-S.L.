@@ -182,7 +182,7 @@ textarea{resize:vertical;min-height:68px;}
     <div class="nav-item" onclick="showPage('inquilinos')"><span class="icon">👤</span><span>Inquilinos</span></div>
     <div class="nav-item" onclick="showPage('contratos')"><span class="icon">📄</span><span>Contratos</span></div>
     <div class="nav-item" onclick="showPage('cobros')"><span class="icon">💸</span><span>Cobros</span></div>
-    <div class="nav-item" onclick="showPage('gastos')"><span class="icon">⚡</span><span>Gastos</span></div>
+    <div class="nav-item" onclick="showPage('gastos')"><span class="icon">⚡</span><span>Facturas</span></div>
     <div class="nav-item" onclick="showPage('banco')"><span class="icon">🏦</span><span>Banco</span></div>
     <div class="nav-item" onclick="showPage('estadisticas')"><span class="icon">📈</span><span>Estadísticas</span></div>
     <div class="nav-label">Inmueble</div>
@@ -247,7 +247,7 @@ textarea{resize:vertical;min-height:68px;}
   <div class="mob-list" id="cobrosMob"></div>
 </div>
 <div class="page" id="page-gastos">
-  <div class="topbar"><div><div class="page-title">⚡ Gastos</div><div class="page-sub">Suministros y prorrateo</div><div class="current-piso-name" style="font-size:12px;color:var(--accent);margin-top:2px;font-weight:600"></div></div>
+  <div class="topbar"><div><div class="page-title">⚡ Facturas</div><div class="page-sub">Suministros y prorrateo</div><div class="current-piso-name" style="font-size:12px;color:var(--accent);margin-top:2px;font-weight:600"></div></div>
     <div class="topbar-actions"><button class="btn btn-secondary" onclick="crearCobrosAlquiler()">🏠 Cobros alquiler</button><button class="btn btn-secondary" onclick="crearCobrosProrateados()">⚡ Cobros suministros</button><button class="btn btn-secondary" onclick="crearGastoTerminoFijo()">🌡️ Término fijo ACS</button><button class="btn btn-primary" onclick="openModalGasto()">+ Nueva factura</button></div>
   </div>
   <div class="gastos-tabs"><button class="gastos-tab active" onclick="switchGastosTab('pendientes',this)">📋 Pendientes</button><button class="gastos-tab" onclick="switchGastosTab('historico',this)">🗂 Histórico</button><button class="gastos-tab" onclick="switchGastosTab('grafico',this)">📊 Estado suministros</button></div>
@@ -649,7 +649,7 @@ textarea{resize:vertical;min-height:68px;}
   <button class="bottom-nav-item" id="bn-inquilinos" onclick="showPage('inquilinos')"><span class="bn-icon">👤</span><span>Inquilinos</span></button>
   <button class="bottom-nav-item" id="bn-contratos" onclick="showPage('contratos')"><span class="bn-icon">📄</span><span>Contratos</span></button>
   <button class="bottom-nav-item" id="bn-cobros" onclick="showPage('cobros')"><span class="bn-icon">💸</span><span>Cobros</span></button>
-  <button class="bottom-nav-item" id="bn-gastos" onclick="showPage('gastos')"><span class="bn-icon">⚡</span><span>Gastos</span></button>
+  <button class="bottom-nav-item" id="bn-gastos" onclick="showPage('gastos')"><span class="bn-icon">⚡</span><span>Facturas</span></button>
   <button class="bottom-nav-item" id="bn-banco" onclick="showPage('banco')"><span class="bn-icon">🏦</span><span>Banco</span></button>
   <button class="bottom-nav-item" id="bn-estadisticas" onclick="showPage('estadisticas')"><span class="bn-icon">📈</span><span>Stats</span></button>
   <button class="bottom-nav-item" id="bn-siniestros" onclick="showPage('siniestros')"><span class="bn-icon">🚨</span><span>Siniest.</span></button>
@@ -725,7 +725,7 @@ textarea{resize:vertical;min-height:68px;}
 </div></div>
 
 <div class="modal-overlay" id="modalGasto"><div class="modal">
-  <div class="modal-title" id="modalGastoTitle">Nueva factura de suministro</div>
+  <div class="modal-title" id="modalGastoTitle">Nueva factura</div>
   <div class="form-row"><div class="form-group"><label>Tipo de suministro</label><select id="gtTipo" onchange="onGastoTipoChange()"></select></div><div class="form-group"><label>Proveedor</label><input id="gtProveedor" placeholder="Iberdrola, Endesa..."></div></div>
   <!-- Fechas rango (suministros normales) -->
   <div class="form-row" id="gtFechasRango"><div class="form-group"><label>Fecha inicio cobro</label><input type="date" id="gtFechaInicio"></div><div class="form-group"><label>Fecha fin cobro</label><input type="date" id="gtFechaFin"></div></div>
@@ -1350,6 +1350,8 @@ function renderInquilinos(){
   const habIds=new Set(STATE.habitaciones.filter(h=>!STATE.currentPisoId||h.piso_id===STATE.currentPisoId).map(h=>h.id));
   let inqs=STATE.inquilinos.filter(i=>!i.habitacion_id||habIds.has(i.habitacion_id));
   if(inqFilter!=='todos')inqs=inqs.filter(i=>i.estado===inqFilter);
+  // T4: ordenar por nombre de habitación ascendente
+  inqs=inqs.slice().sort((a,b)=>{const ha=STATE.habitaciones.find(x=>x.id===a.habitacion_id)?.nombre||'zzz';const hb=STATE.habitaciones.find(x=>x.id===b.habitacion_id)?.nombre||'zzz';return ha.localeCompare(hb,'es',{numeric:true});});
   const tbody=document.getElementById('inquilinosTable');
   if(!inqs.length){tbody.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="empty-icon">👤</div><div class="empty-title">No hay inquilinos</div></div></td></tr>`;document.getElementById('inquilinosMob').innerHTML='';return;}
   tbody.innerHTML=inqs.map(q=>{const h=STATE.habitaciones.find(x=>x.id===q.habitacion_id);const saldo=parseFloat(q.saldo)||0;return `<tr><td><strong>${q.nombre}</strong></td><td class="text-muted">${q.dni||'—'}</td><td>${h?h.nombre:'<span class="text-muted">—</span>'}</td><td>${q.telefono||'—'}</td><td><span class="${saldo!==0?(saldo>0?'text-green':'stat-red'):''}" style="font-weight:600">${saldo!==0?'€'+fmt(saldo):'—'}</span></td><td><span class="badge badge-${q.estado}">${cap(q.estado)}</span></td><td><div class="flex gap-2"><button class="btn btn-secondary btn-sm" onclick="openModalInquilino('${q.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteInquilino('${q.id}')">🗑</button></div></td></tr>`;}).join('');
@@ -1513,6 +1515,8 @@ function renderContratos(){
   const habIds=new Set(STATE.habitaciones.filter(h=>!STATE.currentPisoId||h.piso_id===STATE.currentPisoId).map(h=>h.id));
   let cts=STATE.contratos.filter(c=>!c.habitacion_id||habIds.has(c.habitacion_id));
   if(ctFilter!=='todos')cts=cts.filter(c=>c.estado===ctFilter);
+  // T4: ordenar por nombre de habitación ascendente
+  cts=cts.slice().sort((a,b)=>{const ha=STATE.habitaciones.find(x=>x.id===a.habitacion_id)?.nombre||'zzz';const hb=STATE.habitaciones.find(x=>x.id===b.habitacion_id)?.nombre||'zzz';return ha.localeCompare(hb,'es',{numeric:true});});
   const alerta=ct=>{const d=ct.fin?Math.ceil((new Date(ct.fin)-new Date())/86400000):null;if(d!==null&&d<=30&&d>0)return`<br><span class="text-sm text-yellow">⚠️ ${d}d</span>`;if(d!==null&&d<=0)return`<br><span class="text-sm text-red">Vencido</span>`;return'';};
   const tbody=document.getElementById('contratosTable');
   if(!cts.length){tbody.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="empty-icon">📄</div><div class="empty-title">No hay contratos</div></div></td></tr>`;document.getElementById('contratosMob').innerHTML='';return;}
@@ -1620,7 +1624,12 @@ function renderCobros(){
   const ti=STATE.cobros.filter(c=>c.estado==='pagado').reduce((s,c)=>s+c.importe,0);
   const pe=STATE.cobros.filter(c=>c.estado==='pendiente').reduce((s,c)=>s+c.importe,0);
   const im=STATE.cobros.filter(c=>c.estado==='impagado').reduce((s,c)=>s+c.importe,0);
-  document.getElementById('cobrosStats').innerHTML=`<div class="stat-card"><div class="stat-value stat-green">€${fmt(ti)}</div><div class="stat-label">Total cobrado</div></div><div class="stat-card"><div class="stat-value stat-yellow">€${fmt(pe)}</div><div class="stat-label">Pendiente</div></div><div class="stat-card"><div class="stat-value stat-red">€${fmt(im)}</div><div class="stat-label">Impagado</div></div><div class="stat-card"><div class="stat-value stat-accent">${STATE.cobros.length}</div><div class="stat-label">Registros</div></div>`;
+  document.getElementById('cobrosStats').style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;';
+  document.getElementById('cobrosStats').innerHTML=
+    `<div class="stat-card" style="flex:1;min-width:110px"><div class="stat-value stat-green">€${fmt(ti)}</div><div class="stat-label">Total cobrado</div></div>`+
+    `<div class="stat-card" style="flex:1;min-width:110px"><div class="stat-value stat-yellow">€${fmt(pe)}</div><div class="stat-label">Pendiente</div></div>`+
+    `<div class="stat-card" style="flex:1;min-width:110px"><div class="stat-value stat-red">€${fmt(im)}</div><div class="stat-label">Impagado</div></div>`+
+    `<div class="stat-card" style="flex:1;min-width:80px"><div class="stat-value stat-accent">${STATE.cobros.length}</div><div class="stat-label">Registros</div></div>`;
   const habIds=new Set(STATE.habitaciones.filter(h=>!STATE.currentPisoId||h.piso_id===STATE.currentPisoId).map(h=>h.id));
   let cbs=STATE.cobros.filter(c=>!c.habitacion_id||habIds.has(c.habitacion_id));
   if(cbFilter!=='todos')cbs=cbs.filter(c=>c.estado===cbFilter);
@@ -1977,10 +1986,39 @@ function renderDashboard(){
   const mesH=new Date().toISOString().slice(0,7);const ing=STATE.cobros.filter(c=>c.estado==='pagado'&&c.mes===mesH).reduce((s,c)=>s+Number(c.importe),0);
   const pend=STATE.cobros.filter(c=>c.estado==='pendiente').length;const gasto=STATE.gastos.filter(g=>!g.pagada).reduce((s,g)=>s+Number(g.importe),0);
   const fmtK=n=>{const v=Number(n||0);if(Math.abs(v)>=10000)return (v/1000).toFixed(1).replace('.',',')+'k';return fmt(v);};
-  document.getElementById('dashboardStats').innerHTML='<div class="stat-card"><div class="stat-value stat-accent">'+th+'</div><div class="stat-label">Habitaciones</div></div>'+'<div class="stat-card"><div class="stat-value stat-yellow">'+oc+' <span style="font-size:11px;color:var(--text2)">'+pct+'%</span></div><div class="stat-label">Ocupadas</div></div>'+'<div class="stat-card"><div class="stat-value stat-green">'+li+'</div><div class="stat-label">Libres</div></div>'+'<div class="stat-card"><div class="stat-value">'+ia+'</div><div class="stat-label">Inquilinos activos</div></div>'+'<div class="stat-card"><div class="stat-value stat-green">€'+fmtK(ing)+'</div><div class="stat-label">Cobrado mes</div></div>'+'<div class="stat-card"><div class="stat-value stat-red">€'+fmtK(gasto)+'</div><div class="stat-label">Facturas pend.</div></div>'+'<div class="stat-card"><div class="stat-value '+(ing-gasto>=0?'stat-green':'stat-red')+'">€'+fmtK(ing-gasto)+'</div><div class="stat-label">Beneficio neto</div></div>'+(mo>0?'<div class="stat-card"><div class="stat-value stat-red">'+mo+'</div><div class="stat-label">Morosos</div></div>':'')+(pend>0?'<div class="stat-card"><div class="stat-value stat-yellow">'+pend+'</div><div class="stat-label">Cobros pend.</div></div>':'');
+  // T3: stats row as flex instead of grid so cards don't constrain each other
+  document.getElementById('dashboardStats').style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;';
+  document.getElementById('dashboardStats').innerHTML=
+    '<div class="stat-card" style="flex:1;min-width:90px"><div class="stat-value stat-accent">'+th+'</div><div class="stat-label">Habitaciones</div></div>'+
+    '<div class="stat-card" style="flex:1;min-width:90px"><div class="stat-value stat-yellow">'+oc+' <span style="font-size:11px;color:var(--text2)">'+pct+'%</span></div><div class="stat-label">Ocupadas</div></div>'+
+    '<div class="stat-card" style="flex:1;min-width:90px"><div class="stat-value stat-green">'+li+'</div><div class="stat-label">Libres</div></div>'+
+    '<div class="stat-card" style="flex:1;min-width:90px"><div class="stat-value">'+ia+'</div><div class="stat-label">Inquilinos activos</div></div>'+
+    '<div class="stat-card" style="flex:1;min-width:110px"><div class="stat-value stat-green">€'+fmtK(ing)+'</div><div class="stat-label">Cobrado mes</div></div>'+
+    '<div class="stat-card" style="flex:1;min-width:110px"><div class="stat-value stat-red">€'+fmtK(gasto)+'</div><div class="stat-label">Facturas pend.</div></div>'+
+    '<div class="stat-card" style="flex:1;min-width:110px"><div class="stat-value '+(ing-gasto>=0?'stat-green':'stat-red')+'">€'+fmtK(ing-gasto)+'</div><div class="stat-label">Beneficio neto</div></div>'+
+    (mo>0?'<div class="stat-card" style="flex:1;min-width:90px"><div class="stat-value stat-red">'+mo+'</div><div class="stat-label">Morosos</div></div>':'')+
+    (pend>0?'<div class="stat-card" style="flex:1;min-width:90px"><div class="stat-value stat-yellow">'+pend+'</div><div class="stat-label">Cobros pend.</div></div>':'');
+
   const grid=document.getElementById('dashboardHabs');const habsPiso=STATE.habitaciones.filter(h=>!STATE.currentPisoId||h.piso_id===STATE.currentPisoId);const pisoActivo=getCurrentPiso();
   if(!habsPiso.length){grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:40px 20px"><div style="font-size:40px;margin-bottom:10px">🏠</div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700">${pisoActivo?pisoActivo.nombre:'Sin inmueble'}</div>${pisoActivo&&pisoActivo.direccion?`<div style="font-size:13px;color:var(--text2);margin-top:4px">${pisoActivo.direccion}</div>`:''}</div>`;return;}
-  grid.innerHTML=habsPiso.map(h=>{const inq=STATE.inquilinos.find(i=>i.habitacion_id===h.id&&i.estado==='activo');const uc=STATE.cobros.find(c=>c.habitacion_id===h.id);return `<div class="card" style="cursor:pointer" onclick="showPage('habitaciones')"><div class="card-header"><div class="card-title">${h.nombre}</div><span class="badge badge-${h.estado}">● ${cap(h.estado)}</span></div><div class="room-detail-row"><span class="room-detail-label">Renta</span><span class="room-detail-value text-green">€${h.precio}/mes</span></div>${inq?`<div class="room-detail-row"><span class="room-detail-label">Inquilino</span><span class="room-detail-value">👤 ${inq.nombre}</span></div>`:''} ${uc?`<div class="room-detail-row"><span class="room-detail-label">Ultimo cobro</span><span class="room-detail-value"><span class="badge badge-${uc.estado}" style="font-size:10px">${uc.estado}</span></span></div>`:''}</div>`;}).join('');
+  grid.innerHTML=habsPiso.map(h=>{
+    const inq=STATE.inquilinos.find(i=>i.habitacion_id===h.id&&i.estado==='activo');
+    const uc=STATE.cobros.find(c=>c.habitacion_id===h.id);
+    // T2: pending cobros for this habitacion
+    const cobPend=STATE.cobros.filter(c=>c.habitacion_id===h.id&&c.estado==='pendiente');
+    const pendHtml=cobPend.length?'<div style="margin-top:10px;padding:8px 10px;background:rgba(247,196,106,.08);border:1px solid rgba(247,196,106,.2);border-radius:8px">'
+      +'<div style="font-size:10px;font-weight:600;color:var(--accent2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">⏳ Pendiente de pago</div>'
+      +cobPend.map(c=>'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:var(--text2)">'+c.concepto+(c.mes?' · '+c.mes:'')+'</span><span style="font-weight:600;color:var(--accent2)">€'+fmt(c.importe)+'</span></div>').join('')
+      +'</div>':'';
+    return `<div class="card" style="cursor:pointer;display:flex;flex-direction:column" onclick="showPage('habitaciones')">
+      <div class="card-header"><div class="card-title">${h.nombre}</div><span class="badge badge-${h.estado}">● ${cap(h.estado)}</span></div>
+      <div class="room-detail-row"><span class="room-detail-label">Renta</span><span class="room-detail-value text-green">€${h.precio}/mes</span></div>
+      ${inq?`<div class="room-detail-row" style="align-items:flex-start;gap:8px"><span class="room-detail-label" style="flex-shrink:0;padding-top:1px">Inquilino</span><span class="room-detail-value" style="text-align:right;word-break:break-word">👤 ${inq.nombre}</span></div>`:''}
+      ${uc?`<div class="room-detail-row"><span class="room-detail-label">Último cobro</span><span class="room-detail-value"><span class="badge badge-${uc.estado}" style="font-size:10px">${uc.estado}</span></span></div>`:''}
+      <div style="flex:1"></div>
+      ${pendHtml}
+    </div>`;
+  }).join('');
 }
 
 // INIT
