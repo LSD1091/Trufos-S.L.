@@ -151,6 +151,9 @@ textarea{resize:vertical;min-height:68px;}
 .divider{height:1px;background:var(--border);margin:18px 0;}
 .flex{display:flex;}.gap-2{gap:8px;}.items-center{align-items:center;}.justify-between{justify-content:space-between;}
 .mt-2{margin-top:8px;}.mb-3{margin-bottom:12px;}.font-bold{font-weight:700;}
+.stat-accent{color:var(--accent);}.stat-green{color:var(--accent3);}.stat-yellow{color:var(--accent2);}.stat-red{color:var(--danger);}
+/* Tablas pequeñas sin versión en tarjetas: se mantienen visibles en móvil con scroll horizontal */
+@media(max-width:768px){.table-wrap.keep-mobile{display:block!important;overflow-x:auto;}}
 .text-accent{color:var(--accent);}.text-green{color:var(--accent3);}.text-yellow{color:var(--accent2);}.text-red{color:var(--danger);}.text-muted{color:var(--text2);}.text-sm{font-size:12px;}
 </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -287,7 +290,7 @@ textarea{resize:vertical;min-height:68px;}
   </div>
   <div class="cfg-panel" id="cfgpanel-suministros">
     <div class="cfg-header"><div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px">Tipos de suministro</div><div class="text-sm text-muted">Categorías usadas en Gastos</div></div><button class="btn btn-primary cfg-btn" onclick="openModalSuministro()">+ Nuevo tipo</button></div>
-    <div class="table-wrap"><table><thead><tr><th>Icono</th><th>Nombre</th><th>Color</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody id="suministrosTable"></tbody></table></div>
+    <div class="table-wrap keep-mobile"><table><thead><tr><th>Icono</th><th>Nombre</th><th>Color</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody id="suministrosTable"></tbody></table></div>
   </div>
   <div class="cfg-panel" id="cfgpanel-cuenta">
     <div class="cfg-header"><div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px">Mi empresa</div><div class="text-sm text-muted">Nombre que aparece en el panel</div></div></div>
@@ -320,7 +323,7 @@ textarea{resize:vertical;min-height:68px;}
         </div>
         <button class="btn btn-primary btn-sm" onclick="openModalPropietario()">+ Añadir</button>
       </div>
-      <div class="table-wrap"><table>
+      <div class="table-wrap keep-mobile"><table>
         <thead><tr><th>Nombre</th><th>Email</th><th></th></tr></thead>
         <tbody id="propietariosTable"></tbody>
       </table></div>
@@ -409,18 +412,6 @@ textarea{resize:vertical;min-height:68px;}
         <div style="font-size:13px">Puedes registrar varios propietarios en <em>Mi empresa → Propietarios</em>. Al crear movimientos en Banco puedes asignar un propietario concreto o dejarlo en «Ambos/Común» para que se reparta automáticamente.</div>
       </div>
     </div>
-  </div>
-
-  <!-- PANEL PROPIETARIOS -->
-  <div class="cfg-panel" id="cfgpanel-propietarios">
-    <div class="cfg-header">
-      <div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px">Propietarios</div><div class="text-sm text-muted">Personas con participación en el inmueble</div></div>
-      <button class="btn btn-primary cfg-btn" onclick="openModalPropietario()">+ Añadir</button>
-    </div>
-    <div class="table-wrap"><table>
-      <thead><tr><th>Nombre</th><th>Email</th><th>Acciones</th></tr></thead>
-      <tbody id="propietariosTable"></tbody>
-    </table></div>
   </div>
 </div>
 
@@ -543,7 +534,6 @@ textarea{resize:vertical;min-height:68px;}
   </div>
   <div id="bugsList"></div>
 </div>
-</main>
 <div class="page" id="page-extractor">
   <div class="topbar">
     <div><div class="page-title">🤖 IA Extractor</div><div class="page-sub">Pega una captura del banco o arrastra una factura para extraer datos automáticamente</div></div>
@@ -642,6 +632,7 @@ textarea{resize:vertical;min-height:68px;}
     </div>
   </div>
 </div>
+</main>
 
 <nav class="bottom-nav">
   <button class="bottom-nav-item active" id="bn-dashboard" onclick="showPage('dashboard')"><span class="bn-icon">📊</span><span>Inicio</span></button>
@@ -897,6 +888,7 @@ textarea{resize:vertical;min-height:68px;}
       <button class="btn btn-secondary btn-sm" onclick="closeModal('modalVerDoc')">✕ Cerrar</button>
     </div>
     <!-- Iframe para PDF en desktop, oculto en móvil si no soporta -->
+    <div id="verDocLista" style="display:none;margin-bottom:12px"></div>
     <div id="verDocIframeWrap" style="width:100%;height:65vh;min-height:300px;border-radius:8px;overflow:hidden;background:var(--surface2);margin-bottom:12px">
       <iframe id="verDocIframe" style="width:100%;height:100%;border:none" src="about:blank"></iframe>
     </div>
@@ -958,6 +950,11 @@ const SUML_DEFAULTS = [
   {nombre:'Comunidad',icono:'🏢',color:'#a8a8c8'},{nombre:'Otros',icono:'📦',color:'#6af7b8'}
 ];
 
+// Escapa texto antes de meterlo en innerHTML (evita inyección de código desde los datos)
+const esc = s  => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// Fecha y mes en hora local (toISOString usa UTC y de madrugada devuelve el día anterior)
+const hoyLocal = (d=new Date()) => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const mesLocal = (d=new Date()) => hoyLocal(d).slice(0,7);
 const v   = id => document.getElementById(id)?.value ?? '';
 const cap = s  => s ? s.charAt(0).toUpperCase()+s.slice(1) : '';
 const fmt = n  => Number(n||0).toLocaleString('es',{minimumFractionDigits:0,maximumFractionDigits:2});
@@ -1032,38 +1029,42 @@ async function loadAllData(){
   if(!STATE.user)return;
   setSyncStatus('loading','Actualizando…');
   try{
-    const uid=STATE.user.id;
-    const[{data:pisos},{data:habs},{data:inqs},{data:cts},{data:cbs},{data:gts},{data:hist},{data:suml},{data:sins},{data:datos},{data:props},{data:banco},{data:bugs},{data:ctDocs}]=await Promise.all([
-      sb.from('pisos').select('*').eq('user_id',uid).order('created_at'),
-      sb.from('habitaciones').select('*').eq('user_id',uid).order('created_at'),
-      sb.from('inquilinos').select('*').eq('user_id',uid).order('created_at'),
-      sb.from('contratos').select('*').eq('user_id',uid).order('created_at'),
-      sb.from('cobros').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
-      sb.from('gastos').select('*').eq('user_id',uid).order('fecha_fin',{ascending:false}),
-      sb.from('historico_gastos').select('*').eq('user_id',uid).order('archivado_at',{ascending:false}),
-      sb.from('tipos_suml').select('*').eq('user_id',uid).order('created_at'),
-      sb.from('siniestros').select('*').eq('user_id',uid).order('fecha',{ascending:false}),
-      sb.from('datos_interes').select('*').eq('user_id',uid).order('created_at'),
-      sb.from('propietarios').select('*').eq('user_id',uid).order('created_at'),
-      sb.from('movimientos_banco').select('*').eq('user_id',uid).order('fecha',{ascending:false}),
-      sb.from('bugs').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
-      sb.from('contrato_docs').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
-    ]);
-    STATE.pisos=pisos||[];STATE.habitaciones=habs||[];STATE.inquilinos=inqs||[];
-    STATE.contratos=cts||[];STATE.cobros=cbs||[];STATE.gastos=gts||[];
-    STATE.historicoGastos=hist||[];STATE.tiposSupl=suml||[];
-    STATE.siniestros=sins||[];STATE.datosInteres=datos||[];STATE.bugs=bugs||[];STATE.contratoDocs=ctDocs||[];
-    STATE.propietarios=props||[];STATE.banco=banco||[];
+    // Si alguna tabla falla, se lanza el error y no se pisa nada de lo que ya hay en pantalla
+    const [pisos,habs,inqs,cts,cbs,gts,hist,suml,sins,datos,props,banco,bugs,ctDocs]=await Promise.all(
+      Object.keys(TABLAS).map(k=>cargarTabla(k))
+    );
+    STATE.pisos=pisos;STATE.habitaciones=habs;STATE.inquilinos=inqs;
+    STATE.contratos=cts;STATE.cobros=cbs;STATE.gastos=gts;
+    STATE.historicoGastos=hist;STATE.tiposSupl=suml;
+    STATE.siniestros=sins;STATE.datosInteres=datos;STATE.bugs=bugs;STATE.contratoDocs=ctDocs;
+    STATE.propietarios=props;STATE.banco=banco;
     if(!STATE.tiposSupl.length)await insertDefaultSuml();
     if(STATE.currentPisoId&&!STATE.pisos.find(p=>p.id===STATE.currentPisoId))STATE.currentPisoId=null;
     if(!STATE.currentPisoId&&STATE.pisos.length)STATE.currentPisoId=STATE.pisos[0].id;
     setSyncStatus('ok','OK '+new Date().toLocaleTimeString('es'));
     updateSidebarPiso();updatePageSubtitles();
     const active=document.querySelector('.page.active');
-    if(active){const page=active.id.replace('page-','');
-    const renders={dashboard:renderDashboard,habitaciones:renderHabs,inquilinos:renderInquilinos,contratos:renderContratos,cobros:renderCobros,gastos:renderGastos,configurar:renderConfigPage};
-    if(renders[page])renders[page]();}
-  }catch(e){setSyncStatus('err','Error: '+e.message);toast('Error al cargar datos','error');console.error(e);}
+    if(active){const r=PAGE_RENDERS[active.id.replace('page-','')];if(r)r();}
+  }catch(e){setSyncStatus('err','Error: '+e.message);toast('Error al cargar datos — no se ha cambiado nada','error');console.error(e);}
+}
+// Tabla de Supabase → [columna de orden, ascendente, filtro extra]
+const TABLAS={
+  pisos:['created_at',true], habitaciones:['created_at',true], inquilinos:['created_at',true], contratos:['created_at',true],
+  cobros:['created_at',false], gastos:['fecha_fin',false,q=>q.eq('pagada',false)], historico_gastos:['archivado_at',false],
+  tipos_suml:['created_at',true], siniestros:['fecha',false], datos_interes:['created_at',true], propietarios:['created_at',true],
+  movimientos_banco:['fecha',false], bugs:['created_at',false], contrato_docs:['created_at',false],
+};
+// Carga todas las filas del usuario paginando de 1000 en 1000 (Supabase corta en 1000 por petición)
+async function cargarTabla(tabla){
+  const [col,asc,extra]=TABLAS[tabla];const out=[];const PAGE=1000;
+  for(let from=0;;from+=PAGE){
+    let q=sb.from(tabla).select('*').eq('user_id',STATE.user.id);
+    if(extra)q=extra(q);
+    const{data,error}=await q.order(col,{ascending:asc}).order('id').range(from,from+PAGE-1);
+    if(error)throw new Error(tabla+': '+error.message);
+    out.push(...data);
+    if(data.length<PAGE)return out;
+  }
 }
 async function insertDefaultSuml(){
   const uid=STATE.user.id;
@@ -1103,32 +1104,18 @@ async function showPage(page){
     },0);
   }
   // Refresco silencioso de los datos de la sección antes de renderizar
-  const uid=STATE.user?.id;
-  if(uid){
+  const refrescar={banco:['movimientos_banco'],cobros:['cobros'],gastos:['gastos','historico_gastos'],estadisticas:['cobros','movimientos_banco'],dashboard:['cobros','movimientos_banco']};
+  const destino={movimientos_banco:'banco',cobros:'cobros',gastos:'gastos',historico_gastos:'historicoGastos'};
+  if(STATE.user&&refrescar[page]){
     try{
-      const tableMap={
-        banco:      ()=>sb.from('movimientos_banco').select('*').eq('user_id',uid).order('fecha',{ascending:false}).then(r=>{if(!r.error)STATE.banco=r.data||[];}),
-        cobros:     ()=>sb.from('cobros').select('*').eq('user_id',uid).order('created_at',{ascending:false}).then(r=>{if(!r.error)STATE.cobros=r.data||[];}),
-        gastos:     ()=>Promise.all([
-                      sb.from('gastos').select('*').eq('user_id',uid).order('fecha_fin',{ascending:false}).then(r=>{if(!r.error)STATE.gastos=r.data||[];}),
-                      sb.from('historico_gastos').select('*').eq('user_id',uid).order('archivado_at',{ascending:false}).then(r=>{if(!r.error)STATE.historicoGastos=r.data||[];})
-                    ]),
-        estadisticas:()=>Promise.all([
-                      sb.from('cobros').select('*').eq('user_id',uid).order('created_at',{ascending:false}).then(r=>{if(!r.error)STATE.cobros=r.data||[];}),
-                      sb.from('movimientos_banco').select('*').eq('user_id',uid).order('fecha',{ascending:false}).then(r=>{if(!r.error)STATE.banco=r.data||[];})
-                    ]),
-        dashboard:  ()=>Promise.all([
-                      sb.from('cobros').select('*').eq('user_id',uid).order('created_at',{ascending:false}).then(r=>{if(!r.error)STATE.cobros=r.data||[];}),
-                      sb.from('movimientos_banco').select('*').eq('user_id',uid).order('fecha',{ascending:false}).then(r=>{if(!r.error)STATE.banco=r.data||[];})
-                    ]),
-      };
-      if(tableMap[page]) await tableMap[page]();
+      const res=await Promise.all(refrescar[page].map(t=>cargarTabla(t)));
+      refrescar[page].forEach((t,i)=>STATE[destino[t]]=res[i]);
       bumpSync();
-    }catch(_){}
+    }catch(e){setSyncStatus('err','Error al refrescar: '+e.message);}
   }
-  const renders={dashboard:renderDashboard,habitaciones:renderHabs,inquilinos:renderInquilinos,contratos:renderContratos,cobros:renderCobros,gastos:renderGastos,configurar:renderConfigPage,estadisticas:renderEstadisticas,siniestros:renderSiniestros,datosinteres:renderDatosInteres,banco:renderBanco,bugs:renderBugs,extractor:renderExtractor};
-  updatePageSubtitles();if(renders[page])renders[page]();window.scrollTo(0,0);
+  updatePageSubtitles();if(PAGE_RENDERS[page])PAGE_RENDERS[page]();window.scrollTo(0,0);
 }
+const PAGE_RENDERS={dashboard:()=>renderDashboard(),habitaciones:()=>renderHabs(),inquilinos:()=>renderInquilinos(),contratos:()=>renderContratos(),cobros:()=>renderCobros(),gastos:()=>renderGastos(),configurar:()=>renderConfigPage(),estadisticas:()=>renderEstadisticas(),siniestros:()=>renderSiniestros(),datosinteres:()=>renderDatosInteres(),banco:()=>renderBanco(),bugs:()=>renderBugs(),extractor:()=>renderExtractor()};
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
@@ -1158,7 +1145,7 @@ function getCurrentPiso(){return STATE.pisos.find(p=>p.id===STATE.currentPisoId)
 function updateSidebarPiso(){
   const p=getCurrentPiso();
   document.getElementById('sidebarPiso').innerHTML=p
-    ?`<div class="piso-name">${p.nombre}</div><div class="piso-addr">${p.direccion?p.direccion.split(',')[0]:'Sin direccion'}</div>`
+    ?`<div class="piso-name">${esc(p.nombre)}</div><div class="piso-addr">${p.direccion?esc(p.direccion.split(',')[0]):'Sin dirección'}</div>`
     :`<div class="piso-name">—</div><div class="piso-addr">Sin inmueble</div>`;
 }
 function updatePageSubtitles(){const p=getCurrentPiso();const nombre=p?p.nombre:'Sin inmueble';document.querySelectorAll('.current-piso-name').forEach(el=>el.textContent=nombre);}
@@ -1213,8 +1200,8 @@ function applyEmpresaUI(){
   if(lt){
     const parts=name.split(' ');
     lt.innerHTML=parts.length>1
-      ? parts.slice(0,-1).join(' ')+' <span>'+parts[parts.length-1]+'</span>'
-      : '<span>'+name+'</span>';
+      ? esc(parts.slice(0,-1).join(' '))+' <span>'+esc(parts[parts.length-1])+'</span>'
+      : '<span>'+esc(name)+'</span>';
   }
 }
 async function saveEmpresa(){
@@ -1237,11 +1224,11 @@ function renderPisosGrid(){
     const isActive=STATE.currentPisoId===p.id;
     const borde=isActive?'border-color:var(--accent);background:rgba(124,106,247,.06)':'';
     html+=`<div class="card" style="margin-bottom:14px;${borde}">
-      <div class="card-header"><div style="flex:1;min-width:0"><div class="card-title">${p.nombre}</div><div class="text-sm text-muted">${p.direccion||'Sin direccion'}</div></div>${isActive?'<span class="badge badge-activo">Activo</span>':''}</div>
+      <div class="card-header"><div style="flex:1;min-width:0"><div class="card-title">${esc(p.nombre)}</div><div class="text-sm text-muted">${esc(p.direccion||'Sin direccion')}</div></div>${isActive?'<span class="badge badge-activo">Activo</span>':''}</div>
       <div class="room-detail-row"><span class="room-detail-label">Habitaciones</span><span class="room-detail-value">${numHabs}</span></div>
       <div class="room-detail-row"><span class="room-detail-label">Inquilinos activos</span><span class="room-detail-value">${numInqs}</span></div>
       ${p.metros?`<div class="room-detail-row"><span class="room-detail-label">Metros</span><span class="room-detail-value">${p.metros} m2</span></div>`:''}
-      ${p.catastral?`<div class="room-detail-row"><span class="room-detail-label">Catastral</span><span class="room-detail-value text-muted">${p.catastral}</span></div>`:''}
+      ${p.catastral?`<div class="room-detail-row"><span class="room-detail-label">Catastral</span><span class="room-detail-value text-muted">${esc(p.catastral)}</span></div>`:''}
       <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--border)">
         ${!isActive?`<button class="btn btn-primary btn-sm" onclick="seleccionarPiso('${p.id}')">Operar este</button>`:'<span style="font-size:12px;color:var(--accent3);line-height:30px">Activo</span>'}
         <button class="btn btn-secondary btn-sm" onclick="openModalEditarPiso('${p.id}')">Editar</button>
@@ -1253,7 +1240,7 @@ function renderPisosGrid(){
 function renderPisoInfo(){
   const p=getCurrentPiso();const el=document.getElementById('pisoInfo');if(!el)return;
   if(!p){el.innerHTML='<span class="text-muted text-sm">Sin inmueble. Ve a Configurar para annadir uno.</span>';return;}
-  el.innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:14px"><div><div class="text-sm text-muted">Nombre</div><div style="font-weight:600">${p.nombre}</div></div><div style="flex:2;min-width:160px"><div class="text-sm text-muted">Direccion</div><div>${p.direccion||'—'}</div></div><div><div class="text-sm text-muted">Catastral</div><div>${p.catastral||'—'}</div></div><div><div class="text-sm text-muted">Metros</div><div>${p.metros?p.metros+' m2':'—'}</div></div></div>`;
+  el.innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:14px"><div><div class="text-sm text-muted">Nombre</div><div style="font-weight:600">${esc(p.nombre)}</div></div><div style="flex:2;min-width:160px"><div class="text-sm text-muted">Direccion</div><div>${esc(p.direccion||'—')}</div></div><div><div class="text-sm text-muted">Catastral</div><div>${esc(p.catastral||'—')}</div></div><div><div class="text-sm text-muted">Metros</div><div>${p.metros?p.metros+' m2':'—'}</div></div></div>`;
 }
 
 // TIPOS SUMINISTRO
@@ -1282,11 +1269,11 @@ async function deleteSuministro(id){
 function renderSuministrosTable(){
   const tbody=document.getElementById('suministrosTable');if(!tbody)return;
   if(!STATE.tiposSupl.length){tbody.innerHTML=`<tr><td colspan="5"><div class="empty"><div class="empty-icon">⚡</div><div class="empty-title">Sin tipos</div></div></td></tr>`;return;}
-  tbody.innerHTML=STATE.tiposSupl.map(s=>`<tr><td style="font-size:20px">${s.icono||'📦'}</td><td><strong>${s.nombre}</strong></td><td><div style="width:28px;height:28px;border-radius:6px;background:${s.color};border:1px solid var(--border)"></div></td><td>${s.fecha_unica?'<span class="badge badge-pendiente" style="font-size:10px">📅 Fecha única</span>':'<span class="text-muted text-sm">Rango</span>'}</td><td><div class="flex gap-2"><button class="btn btn-secondary btn-sm" onclick="openModalSuministro('${s.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteSuministro('${s.id}')">🗑</button></div></td></tr>`).join('');
+  tbody.innerHTML=STATE.tiposSupl.map(s=>`<tr><td style="font-size:20px">${esc(s.icono||'📦')}</td><td><strong>${esc(s.nombre)}</strong></td><td><div style="width:28px;height:28px;border-radius:6px;background:${esc(s.color)};border:1px solid var(--border)"></div></td><td>${s.fecha_unica?'<span class="badge badge-pendiente" style="font-size:10px">📅 Fecha única</span>':'<span class="text-muted text-sm">Rango</span>'}</td><td><div class="flex gap-2"><button class="btn btn-secondary btn-sm" onclick="openModalSuministro('${s.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteSuministro('${s.id}')">🗑</button></div></td></tr>`).join('');
 }
 function populateGastoTipoSelect(){
   const sel=document.getElementById('gtTipo');if(!sel)return;const cur=sel.value;
-  sel.innerHTML=STATE.tiposSupl.map(s=>`<option value="${s.nombre}">${s.icono} ${s.nombre}</option>`).join('');
+  sel.innerHTML=STATE.tiposSupl.map(s=>`<option value="${esc(s.nombre)}">${esc(s.icono)} ${esc(s.nombre)}</option>`).join('');
   if(cur)sel.value=cur;
 }
 
@@ -1319,7 +1306,7 @@ function renderHabs(){
   if(habFilter!=='todas')habs=habs.filter(h=>h.estado===habFilter);
   const grid=document.getElementById('habsGrid');
   if(!habs.length){grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🏠</div><div class="empty-title">No hay habitaciones</div></div>`;return;}
-  grid.innerHTML=habs.map(h=>{const inq=STATE.inquilinos.find(i=>i.habitacion_id===h.id&&i.estado==='activo');return `<div class="card" style="display:flex;flex-direction:column"><div class="card-header"><div><div class="card-title">${h.nombre}</div>${h.metros?`<div class="text-sm text-muted">${h.metros} m2</div>`:''}</div><div class="card-actions"><button class="btn btn-secondary btn-sm btn-icon" onclick="openModalHab('${h.id}')">✏️</button><button class="btn btn-danger btn-sm btn-icon" onclick="deleteHab('${h.id}')">🗑</button></div></div><div style="margin-bottom:10px"><span class="badge badge-${h.estado}">● ${cap(h.estado)}</span></div><div class="room-detail-row"><span class="room-detail-label">Precio</span><span class="room-detail-value text-green">€${h.precio}/mes</span></div><div class="room-detail-row"><span class="room-detail-label">Fianza</span><span class="room-detail-value">€${h.fianza}</span></div>${inq?`<div class="room-detail-row"><span class="room-detail-label">Inquilino</span><span class="room-detail-value">👤 ${inq.nombre}</span></div>`:''}<div style="flex:1"></div>${h.equipamiento?.length?`<div class="equip-tags" style="margin-top:9px">${h.equipamiento.map(e=>`<span class="equip-tag">${e}</span>`).join('')}</div>`:''} ${h.notas?`<div class="text-sm text-muted" style="margin-top:8px">${h.notas}</div>`:''}</div>`;}).join('');
+  grid.innerHTML=habs.map(h=>{const inq=STATE.inquilinos.find(i=>i.habitacion_id===h.id&&i.estado==='activo');return `<div class="card" style="display:flex;flex-direction:column"><div class="card-header"><div><div class="card-title">${esc(h.nombre)}</div>${h.metros?`<div class="text-sm text-muted">${h.metros} m2</div>`:''}</div><div class="card-actions"><button class="btn btn-secondary btn-sm btn-icon" onclick="openModalHab('${h.id}')">✏️</button><button class="btn btn-danger btn-sm btn-icon" onclick="deleteHab('${h.id}')">🗑</button></div></div><div style="margin-bottom:10px"><span class="badge badge-${h.estado}">● ${cap(h.estado)}</span></div><div class="room-detail-row"><span class="room-detail-label">Precio</span><span class="room-detail-value text-green">€${h.precio}/mes</span></div><div class="room-detail-row"><span class="room-detail-label">Fianza</span><span class="room-detail-value">€${h.fianza}</span></div>${inq?`<div class="room-detail-row"><span class="room-detail-label">Inquilino</span><span class="room-detail-value">👤 ${esc(inq.nombre)}</span></div>`:''}<div style="flex:1"></div>${h.equipamiento?.length?`<div class="equip-tags" style="margin-top:9px">${h.equipamiento.map(e=>`<span class="equip-tag">${esc(e)}</span>`).join('')}</div>`:''} ${h.notas?`<div class="text-sm text-muted" style="margin-top:8px">${esc(h.notas)}</div>`:''}</div>`;}).join('');
 }
 
 // INQUILINOS
@@ -1328,7 +1315,7 @@ function filterInquilinos(f,btn){inqFilter=f;document.querySelectorAll('#page-in
 function openModalInquilino(id=null){
   const sel=document.getElementById('inqHabitacion');
   sel.innerHTML='<option value="">-- Sin asignar --</option>';
-  STATE.habitaciones.forEach(h=>sel.innerHTML+=`<option value="${h.id}">${h.nombre}</option>`);
+  STATE.habitaciones.forEach(h=>sel.innerHTML+=`<option value="${h.id}">${esc(h.nombre)}</option>`);
   document.getElementById('modalInquilinoTitle').textContent=id?'Editar inquilino':'Nuevo inquilino';
   if(id){const q=STATE.inquilinos.find(x=>x.id===id);['nombre','dni','telefono','email','nacionalidad','notas'].forEach(f=>document.getElementById('inq'+f.charAt(0).toUpperCase()+f.slice(1)).value=q[f]||'');document.getElementById('inqNacimiento').value=q.nacimiento||'';document.getElementById('inqHabitacion').value=q.habitacion_id||'';document.getElementById('inqEstado').value=q.estado||'activo';document.getElementById('inqSaldo').value=q.saldo||'';document.getElementById('inqEditId').value=id;}
   else{['inqNombre','inqDni','inqTelefono','inqEmail','inqNacimiento','inqNacionalidad','inqNotas'].forEach(f=>document.getElementById(f).value='');document.getElementById('inqEstado').value='activo';document.getElementById('inqHabitacion').value='';document.getElementById('inqSaldo').value='';document.getElementById('inqEditId').value='';}
@@ -1354,8 +1341,8 @@ function renderInquilinos(){
   inqs=inqs.slice().sort((a,b)=>{const ha=STATE.habitaciones.find(x=>x.id===a.habitacion_id)?.nombre||'zzz';const hb=STATE.habitaciones.find(x=>x.id===b.habitacion_id)?.nombre||'zzz';return ha.localeCompare(hb,'es',{numeric:true});});
   const tbody=document.getElementById('inquilinosTable');
   if(!inqs.length){tbody.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="empty-icon">👤</div><div class="empty-title">No hay inquilinos</div></div></td></tr>`;document.getElementById('inquilinosMob').innerHTML='';return;}
-  tbody.innerHTML=inqs.map(q=>{const h=STATE.habitaciones.find(x=>x.id===q.habitacion_id);const saldo=parseFloat(q.saldo)||0;return `<tr><td><strong>${q.nombre}</strong></td><td class="text-muted">${q.dni||'—'}</td><td>${h?h.nombre:'<span class="text-muted">—</span>'}</td><td>${q.telefono||'—'}</td><td><span class="${saldo!==0?(saldo>0?'text-green':'stat-red'):''}" style="font-weight:600">${saldo!==0?'€'+fmt(saldo):'—'}</span></td><td><span class="badge badge-${q.estado}">${cap(q.estado)}</span></td><td><div class="flex gap-2"><button class="btn btn-secondary btn-sm" onclick="openModalInquilino('${q.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteInquilino('${q.id}')">🗑</button></div></td></tr>`;}).join('');
-  document.getElementById('inquilinosMob').innerHTML=inqs.map(q=>{const h=STATE.habitaciones.find(x=>x.id===q.habitacion_id);const saldo=parseFloat(q.saldo)||0;return `<div class="mob-card"><div class="mob-card-header"><div><div class="mob-card-name">${q.nombre}</div><div class="mob-card-sub">${q.dni||'—'}</div></div><span class="badge badge-${q.estado}">${cap(q.estado)}</span></div><div class="mob-card-rows">${h?`<span class="mob-card-pill">🏠 <strong>${h.nombre}</strong></span>`:''} ${q.telefono?`<span class="mob-card-pill">📞 ${q.telefono}</span>`:''} ${saldo!==0?'<span class="mob-card-pill" style="color:'+(saldo>0?'var(--accent3)':'var(--danger)')+'">💶 '+(saldo>0?'+':'')+'€'+fmt(saldo)+'</span>':''}</div><div class="mob-card-actions"><button class="btn btn-secondary btn-sm" onclick="openModalInquilino('${q.id}')">✏️ Editar</button><button class="btn btn-danger btn-sm" onclick="deleteInquilino('${q.id}')">🗑</button></div></div>`;}).join('');
+  tbody.innerHTML=inqs.map(q=>{const h=STATE.habitaciones.find(x=>x.id===q.habitacion_id);const saldo=parseFloat(q.saldo)||0;return `<tr><td><strong>${esc(q.nombre)}</strong></td><td class="text-muted">${esc(q.dni||'—')}</td><td>${h?esc(h.nombre):'<span class="text-muted">—</span>'}</td><td>${esc(q.telefono||'—')}</td><td><span class="${saldo!==0?(saldo>0?'text-green':'stat-red'):''}" style="font-weight:600">${saldo!==0?'€'+fmt(saldo):'—'}</span></td><td><span class="badge badge-${q.estado}">${cap(q.estado)}</span></td><td><div class="flex gap-2"><button class="btn btn-secondary btn-sm" onclick="openModalInquilino('${q.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteInquilino('${q.id}')">🗑</button></div></td></tr>`;}).join('');
+  document.getElementById('inquilinosMob').innerHTML=inqs.map(q=>{const h=STATE.habitaciones.find(x=>x.id===q.habitacion_id);const saldo=parseFloat(q.saldo)||0;return `<div class="mob-card"><div class="mob-card-header"><div><div class="mob-card-name">${esc(q.nombre)}</div><div class="mob-card-sub">${esc(q.dni||'—')}</div></div><span class="badge badge-${q.estado}">${cap(q.estado)}</span></div><div class="mob-card-rows">${h?`<span class="mob-card-pill">🏠 <strong>${esc(h.nombre)}</strong></span>`:''} ${q.telefono?`<span class="mob-card-pill">📞 ${esc(q.telefono)}</span>`:''} ${saldo!==0?'<span class="mob-card-pill" style="color:'+(saldo>0?'var(--accent3)':'var(--danger)')+'">💶 '+(saldo>0?'+':'')+'€'+fmt(saldo)+'</span>':''}</div><div class="mob-card-actions"><button class="btn btn-secondary btn-sm" onclick="openModalInquilino('${q.id}')">✏️ Editar</button><button class="btn btn-danger btn-sm" onclick="deleteInquilino('${q.id}')">🗑</button></div></div>`;}).join('');
 }
 
 // CONTRATOS
@@ -1366,8 +1353,8 @@ async function openModalContrato(id=null){
   renderPendingDocs();
   const si=document.getElementById('ctInquilino'),sh=document.getElementById('ctHabitacion');
   si.innerHTML='<option value="">-- Selecciona --</option>';sh.innerHTML='<option value="">-- Selecciona --</option>';
-  STATE.inquilinos.forEach(i=>si.innerHTML+=`<option value="${i.id}">${i.nombre}</option>`);
-  STATE.habitaciones.forEach(h=>sh.innerHTML+=`<option value="${h.id}">${h.nombre}</option>`);
+  STATE.inquilinos.forEach(i=>si.innerHTML+=`<option value="${i.id}">${esc(i.nombre)}</option>`);
+  STATE.habitaciones.forEach(h=>sh.innerHTML+=`<option value="${h.id}">${esc(h.nombre)}</option>`);
   document.getElementById('modalContratoTitle').textContent=id?'Editar contrato':'Nuevo contrato';
   document.getElementById('ctDocLabel').innerHTML='Toca aquí o arrastra los archivos<br><span style="font-size:11px">PDF, JPG, PNG — max 5 MB por archivo</span>';
   document.getElementById('ctDocArea').style.borderColor='var(--border)';
@@ -1390,7 +1377,7 @@ async function openModalContrato(id=null){
     await renderExistingDocs(id);
   } else {
     ['ctFin','ctMinMeses','ctPrecio','ctFianza','ctGastos','ctClausulas'].forEach(f=>document.getElementById(f).value='');
-    document.getElementById('ctInicio').value=new Date().toISOString().split('T')[0];
+    document.getElementById('ctInicio').value=hoyLocal();
     document.getElementById('ctTipo').value='temporal';
     document.getElementById('ctEstado').value='vigente';
     document.getElementById('ctEditId').value='';
@@ -1421,10 +1408,10 @@ function addPendingFile(file){
   _ctDocFiles.push(file);
   renderPendingDocs();
 }
-function removePendingFile(name){_ctDocFiles=_ctDocFiles.filter(f=>f.name!==name);renderPendingDocs();}
+function removePendingFile(idx){_ctDocFiles.splice(idx,1);renderPendingDocs();}
 function renderPendingDocs(){
   const el=document.getElementById('ctDocPending');if(!el)return;
-  el.innerHTML=_ctDocFiles.map(f=>`<span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px">📎 ${f.name} <span style="cursor:pointer;color:var(--danger)" onclick="removePendingFile('${f.name}')">✕</span></span>`).join('');
+  el.innerHTML=_ctDocFiles.map((f,i)=>`<span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px">📎 ${esc(f.name)} <span style="cursor:pointer;color:var(--danger)" onclick="removePendingFile(${i})">✕</span></span>`).join('');
 }
 async function renderExistingDocs(contratoId){
   const el=document.getElementById('ctDocExisting');if(!el)return;
@@ -1436,7 +1423,7 @@ async function renderExistingDocs(contratoId){
   STATE.contratoDocs=(STATE.contratoDocs||[]).filter(d=>d.contrato_id!==contratoId).concat(docs);
   el.innerHTML='<div class="text-sm text-muted" style="margin-bottom:6px">Documentos guardados:</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+
     docs.map(d=>'<span style="display:inline-flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--accent3);border-radius:6px;padding:6px 10px;font-size:12px">'+
-      '<a href="#" onclick="event.stopPropagation();verDoc(\''+d.id+'\');return false" style="color:var(--accent3)">📎 '+d.nombre+'</a>'+
+      '<a href="#" onclick="event.stopPropagation();verDoc(\''+d.id+'\');return false" style="color:var(--accent3)">📎 '+esc(d.nombre)+'</a>'+
       '<span style="cursor:pointer;color:var(--danger);font-size:14px;line-height:1" onclick="event.stopPropagation();deleteDoc(\''+d.id+'\')">🗑</span>'+
     '</span>').join('')+
   '</div>';
@@ -1446,6 +1433,8 @@ async function verDoc(docId){
   const{data,error}=await sb.storage.from('contratos').createSignedUrl(d.path,600);
   if(error){toast('Error al obtener URL','error');return;}
   document.getElementById('verDocNombre').textContent=d.nombre||'Documento';
+  document.getElementById('verDocLista').style.display='none';
+  document.getElementById('verDocIframeWrap').style.display='';
   document.getElementById('verDocIframe').src=data.signedUrl;
   document.getElementById('verDocBtnAbrir').href=data.signedUrl;
   document.getElementById('verDocBtnDescargar').href=data.signedUrl;
@@ -1453,11 +1442,12 @@ async function verDoc(docId){
   openModal('modalVerDoc');
 }
 async function deleteDoc(docId){
-  if(!confirm('¿Eliminar este documento?'))return;
+  if(!confirm('¿Quitar este documento del contrato?'))return;
   const d=(STATE.contratoDocs||[]).find(x=>x.id===docId);if(!d)return;
   try{
-    await sb.storage.from('contratos').remove([d.path]);
-    await sb.from('contrato_docs').delete().eq('id',docId);
+    // El archivo se conserva en el almacenamiento para poder recuperarlo; solo se quita el vínculo (queda en la papelera)
+    const{error}=await sb.from('contrato_docs').delete().eq('id',docId);
+    if(error)throw error;
     STATE.contratoDocs=(STATE.contratoDocs||[]).filter(x=>x.id!==docId);
     bumpSync();
     await renderExistingDocs(d.contrato_id);
@@ -1470,18 +1460,16 @@ async function verDocContrato(id){
   if(error||!docs||!docs.length){toast('Sin documentos adjuntos','error');return;}
   if(docs.length===1){await verDoc(docs[0].id);return;}
   // Si hay varios: mostrar lista en el modal de ver doc
-  const nombres=docs.map((d,i)=>'<button class="btn btn-secondary" style="width:100%;margin-bottom:6px;text-align:left" onclick="verDoc(\''+d.id+'\')">📎 '+d.nombre+'</button>').join('');
+  STATE.contratoDocs=(STATE.contratoDocs||[]).filter(d=>d.contrato_id!==id).concat(docs);
+  const lista=document.getElementById('verDocLista');
+  lista.innerHTML=docs.map(d=>'<button class="btn btn-secondary" style="width:100%;margin-bottom:6px;text-align:left" onclick="verDoc(\''+d.id+'\')">📎 '+esc(d.nombre)+'</button>').join('');
+  lista.style.display='';
+  document.getElementById('verDocIframeWrap').style.display='none';
   document.getElementById('verDocNombre').textContent='Selecciona un documento';
   document.getElementById('verDocIframe').src='about:blank';
   document.getElementById('verDocBtnAbrir').href='#';
   document.getElementById('verDocBtnDescargar').href='#';
-  const wrap=document.getElementById('verDocIframeWrap');
-  wrap.innerHTML='<div style="padding:20px">'+nombres+'</div>';
   openModal('modalVerDoc');
-  // Restaurar iframe al cerrar
-  const modalEl=document.getElementById('modalVerDoc');
-  const restore=()=>{wrap.innerHTML='<iframe id="verDocIframe" style="width:100%;height:100%;border:none" src="about:blank"></iframe>';modalEl.removeEventListener('click',restore);};
-  setTimeout(()=>modalEl.addEventListener('click',restore),300);
 }
 async function saveContrato(){
   if(!v('ctInquilino')||!v('ctHabitacion')){toast('Selecciona inquilino y habitacion','error');return;}
@@ -1507,8 +1495,8 @@ async function saveContrato(){
   }catch(e){toast(e.message,'error');}
 }
 async function deleteContrato(id){
-  if(!confirm('¿Eliminar?'))return;
-  try{const ct=STATE.contratos.find(x=>x.id===id);if(ct?.doc_path)await sb.storage.from('contratos').remove([ct.doc_path]);await dbDelete('contratos',id);STATE.contratos=STATE.contratos.filter(c=>c.id!==id);renderContratos();toast('Eliminado');}
+  if(!confirm('¿Eliminar este contrato? Sus documentos adjuntos se conservan.'))return;
+  try{await dbDelete('contratos',id);STATE.contratos=STATE.contratos.filter(c=>c.id!==id);renderContratos();toast('Eliminado');}
   catch(e){toast(e.message,'error');}
 }
 function renderContratos(){
@@ -1520,8 +1508,8 @@ function renderContratos(){
   const alerta=ct=>{const d=ct.fin?Math.ceil((new Date(ct.fin)-new Date())/86400000):null;if(d!==null&&d<=30&&d>0)return`<br><span class="text-sm text-yellow">⚠️ ${d}d</span>`;if(d!==null&&d<=0)return`<br><span class="text-sm text-red">Vencido</span>`;return'';};
   const tbody=document.getElementById('contratosTable');
   if(!cts.length){tbody.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="empty-icon">📄</div><div class="empty-title">No hay contratos</div></div></td></tr>`;document.getElementById('contratosMob').innerHTML='';return;}
-  tbody.innerHTML=cts.map(ct=>{const inq=STATE.inquilinos.find(x=>x.id===ct.inquilino_id);const h=STATE.habitaciones.find(x=>x.id===ct.habitacion_id);const ndocs=(STATE.contratoDocs||[]).filter(d=>d.contrato_id===ct.id).length;const dbtn=ndocs?'<button class="btn btn-secondary btn-sm" onclick="verDocContrato(\''+ct.id+'\')" title="'+ndocs+' doc(s)">📎'+(ndocs>1?'<span style="font-size:10px">'+ndocs+'</span>':'')+'</button>':'';return '<tr><td><strong>'+(inq?inq.nombre:'—')+'</strong></td><td>'+(h?h.nombre:'—')+'</td><td class="text-muted">'+(ct.inicio||'—')+'</td><td class="text-muted">'+(ct.fin||'<span style="color:var(--accent3)">Indefinido</span>')+alerta(ct)+'</td><td class="text-green font-bold">€'+ct.precio+'/mes</td><td><span class="badge badge-'+ct.estado+'">'+(cap(ct.estado))+'</span></td><td><div class="flex gap-2">'+dbtn+'<button class="btn btn-secondary btn-sm" onclick="openModalContrato(\''+ct.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteContrato(\''+ct.id+'\')">🗑</button></div></td></tr>';}).join('');
-  document.getElementById('contratosMob').innerHTML=cts.map(ct=>{const inq=STATE.inquilinos.find(x=>x.id===ct.inquilino_id);const h=STATE.habitaciones.find(x=>x.id===ct.habitacion_id);const ndocs=(STATE.contratoDocs||[]).filter(d=>d.contrato_id===ct.id).length;return '<div class="mob-card"><div class="mob-card-header"><div><div class="mob-card-name">'+(inq?inq.nombre:'—')+'</div><div class="mob-card-sub">'+(h?h.nombre:'—')+'</div></div><span class="badge badge-'+ct.estado+'">'+cap(ct.estado)+'</span></div><div class="mob-card-rows"><span class="mob-card-pill">💶 <strong>€'+ct.precio+'/mes</strong></span><span class="mob-card-pill">📅 '+(ct.inicio||'—')+' → '+(ct.fin||'Indefinido')+'</span></div><div class="mob-card-actions">'+(ndocs?'<button class="btn btn-secondary btn-sm" onclick="verDocContrato(\''+ct.id+'\')">📎 '+ndocs+' doc(s)</button>':'')+'<button class="btn btn-secondary btn-sm" onclick="openModalContrato(\''+ct.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteContrato(\''+ct.id+'\')">🗑</button></div></div>';}).join('');
+  tbody.innerHTML=cts.map(ct=>{const inq=STATE.inquilinos.find(x=>x.id===ct.inquilino_id);const h=STATE.habitaciones.find(x=>x.id===ct.habitacion_id);const ndocs=(STATE.contratoDocs||[]).filter(d=>d.contrato_id===ct.id).length;const dbtn=ndocs?'<button class="btn btn-secondary btn-sm" onclick="verDocContrato(\''+ct.id+'\')" title="'+ndocs+' doc(s)">📎'+(ndocs>1?'<span style="font-size:10px">'+ndocs+'</span>':'')+'</button>':'';return '<tr><td><strong>'+(inq?esc(inq.nombre):'—')+'</strong></td><td>'+(h?esc(h.nombre):'—')+'</td><td class="text-muted">'+(ct.inicio||'—')+'</td><td class="text-muted">'+(ct.fin||'<span style="color:var(--accent3)">Indefinido</span>')+alerta(ct)+'</td><td class="text-green font-bold">€'+ct.precio+'/mes</td><td><span class="badge badge-'+ct.estado+'">'+(cap(ct.estado))+'</span></td><td><div class="flex gap-2">'+dbtn+'<button class="btn btn-secondary btn-sm" onclick="openModalContrato(\''+ct.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteContrato(\''+ct.id+'\')">🗑</button></div></td></tr>';}).join('');
+  document.getElementById('contratosMob').innerHTML=cts.map(ct=>{const inq=STATE.inquilinos.find(x=>x.id===ct.inquilino_id);const h=STATE.habitaciones.find(x=>x.id===ct.habitacion_id);const ndocs=(STATE.contratoDocs||[]).filter(d=>d.contrato_id===ct.id).length;return '<div class="mob-card"><div class="mob-card-header"><div><div class="mob-card-name">'+(inq?esc(inq.nombre):'—')+'</div><div class="mob-card-sub">'+(h?esc(h.nombre):'—')+'</div></div><span class="badge badge-'+ct.estado+'">'+cap(ct.estado)+'</span></div><div class="mob-card-rows"><span class="mob-card-pill">💶 <strong>€'+ct.precio+'/mes</strong></span><span class="mob-card-pill">📅 '+(ct.inicio||'—')+' → '+(ct.fin||'Indefinido')+'</span></div><div class="mob-card-actions">'+(ndocs?'<button class="btn btn-secondary btn-sm" onclick="verDocContrato(\''+ct.id+'\')">📎 '+ndocs+' doc(s)</button>':'')+'<button class="btn btn-secondary btn-sm" onclick="openModalContrato(\''+ct.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteContrato(\''+ct.id+'\')">🗑</button></div></div>';}).join('');
 }
 
 // T2: Autocompletado inquilino ↔ habitación
@@ -1558,10 +1546,10 @@ function applyCobrosSort(arr){
 function openModalCobro(id=null){
   const si=document.getElementById('cbInquilino'),sh=document.getElementById('cbHabitacion');
   si.innerHTML='<option value="">-- Selecciona --</option>';sh.innerHTML='<option value="">-- Selecciona --</option>';
-  STATE.inquilinos.forEach(i=>si.innerHTML+=`<option value="${i.id}">${i.nombre}</option>`);
-  STATE.habitaciones.forEach(h=>sh.innerHTML+=`<option value="${h.id}">${h.nombre}</option>`);
+  STATE.inquilinos.forEach(i=>si.innerHTML+=`<option value="${i.id}">${esc(i.nombre)}</option>`);
+  STATE.habitaciones.forEach(h=>sh.innerHTML+=`<option value="${h.id}">${esc(h.nombre)}</option>`);
   document.getElementById('modalCobroTitle').textContent=id?'Editar cobro':'Registrar cobro';
-  const mesD=new Date().toISOString().slice(0,7);
+  const mesD=mesLocal();
   if(id){const cb=STATE.cobros.find(x=>x.id===id);document.getElementById('cbInquilino').value=cb.inquilino_id||'';document.getElementById('cbHabitacion').value=cb.habitacion_id||'';document.getElementById('cbConcepto').value=cb.concepto;document.getElementById('cbMes').value=cb.mes||'';document.getElementById('cbImporte').value=cb.importe;document.getElementById('cbMetodo').value=cb.metodo;document.getElementById('cbEstado').value=cb.estado;document.getElementById('cbFecha').value=cb.fecha||'';document.getElementById('cbNotas').value=cb.notas||'';document.getElementById('cbEditId').value=id;}
   else{document.getElementById('cbConcepto').value='Alquiler';document.getElementById('cbMes').value=mesD;document.getElementById('cbMetodo').value='Transferencia';document.getElementById('cbEstado').value='pendiente';['cbInquilino','cbHabitacion','cbImporte','cbFecha','cbNotas'].forEach(f=>document.getElementById(f).value='');document.getElementById('cbEditId').value='';}
   openModal('modalCobro');
@@ -1571,53 +1559,58 @@ async function saveCobro(){
   const payload={inquilino_id:v('cbInquilino'),habitacion_id:v('cbHabitacion')||null,concepto:v('cbConcepto'),mes:v('cbMes')||null,importe:parseFloat(v('cbImporte'))||0,metodo:v('cbMetodo'),estado:v('cbEstado'),fecha:v('cbFecha')||null,notas:v('cbNotas')};
   const eid=v('cbEditId');
   try{
-    const prevCobro=eid?STATE.cobros.find(x=>x.id===eid):null;
+    const prevCobro=eid?{...STATE.cobros.find(x=>x.id===eid)}:null;
     const row=await dbSave('cobros',payload,eid||null);
-    if(eid){
-      // Si se cambia de pagado a no-pagado → borrar apunte banco
-      if(prevCobro?.estado==='pagado'&&row.estado!=='pagado'){
-        await borrarApunteBancoPorOrigen(eid);
-      }
-      // Si se cambia de no-pagado a pagado → crear apunte (en caso de edición directa)
-      if(prevCobro?.estado!=='pagado'&&row.estado==='pagado'){
-        const inq=STATE.inquilinos.find(x=>x.id===row.inquilino_id);
-        const hab=STATE.habitaciones.find(x=>x.id===row.habitacion_id);
-        const concepto=`${row.concepto||'Cobro'}${row.mes?' '+row.mes:''}${inq?' — '+inq.nombre:''}${hab?' ('+hab.nombre+')':''}`;
-        try{await crearApunteBanco({tipo:'ingreso',importe:row.importe,fecha:row.fecha||new Date().toISOString().split('T')[0],concepto,notas:row.notas||'',origen:'cobro',origen_id:eid});}catch(_){}
-      }
-      const i=STATE.cobros.findIndex(x=>x.id===eid);STATE.cobros[i]=row;toast('Actualizado');
-    }else{
-      STATE.cobros.unshift(row);
-      // ── T2: Si el cobro nuevo ya viene como pagado, crear ingreso en banco ──
-      if(row.estado==='pagado'){
-        const inq=STATE.inquilinos.find(x=>x.id===row.inquilino_id);
-        const hab=STATE.habitaciones.find(x=>x.id===row.habitacion_id);
-        const concepto=`${row.concepto||'Cobro'}${row.mes?' '+row.mes:''}${inq?' — '+inq.nombre:''}${hab?' ('+hab.nombre+')':''}`;
-        try{await crearApunteBanco({tipo:'ingreso',importe:row.importe,fecha:row.fecha||new Date().toISOString().split('T')[0],concepto,notas:row.notas||'',origen:'cobro',origen_id:row.id});}catch(_){}
-      }
-      toast('Cobro registrado');
-    }
+    if(eid){const i=STATE.cobros.findIndex(x=>x.id===eid);STATE.cobros[i]=row;}
+    else STATE.cobros.unshift(row);
+    await sincronizarBancoCobro(prevCobro,row);
+    toast(eid?'Actualizado':'Cobro registrado');
     closeModal('modalCobro');renderCobros();
   }
   catch(e){toast(e.message,'error');}
 }
+// Texto del apunte de banco que se genera a partir de un cobro
+function conceptoCobro(cb){
+  const inq=STATE.inquilinos.find(x=>x.id===cb.inquilino_id);
+  const hab=STATE.habitaciones.find(x=>x.id===cb.habitacion_id);
+  return `${cb.concepto||'Cobro'}${cb.mes?' '+cb.mes:''}${inq?' — '+inq.nombre:''}${hab?' ('+hab.nombre+')':''}`;
+}
+// Mantiene el ingreso de Banco alineado con el cobro: lo crea, lo actualiza o lo quita según su estado
+async function sincronizarBancoCobro(prev,row){
+  const eraPagado=prev?.estado==='pagado', esPagado=row?.estado==='pagado';
+  try{
+    if(eraPagado&&!esPagado){await borrarApunteBancoPorOrigen(prev.id);return;}
+    if(!esPagado)return;
+    const datos={tipo:'ingreso',importe:row.importe,fecha:row.fecha||hoyLocal(),concepto:conceptoCobro(row),notas:row.notas||''};
+    const existentes=STATE.banco.filter(m=>m.origen_id===row.id);
+    // Solo se crea al pasar a pagado; si ya lo estaba y no tiene apunte, se respeta (pudo quitarse a mano)
+    if(!existentes.length){if(!eraPagado)await crearApunteBanco({...datos,origen:'cobro',origen_id:row.id});return;}
+    for(const m of existentes){
+      if(Number(m.importe)===Number(datos.importe)&&m.fecha===datos.fecha&&m.concepto===datos.concepto)continue;
+      const{data,error}=await sb.from('movimientos_banco').update({importe:datos.importe,fecha:datos.fecha,concepto:datos.concepto}).eq('id',m.id).select().single();
+      if(error)throw error;
+      const i=STATE.banco.findIndex(x=>x.id===m.id);STATE.banco[i]=data;
+    }
+  }catch(e){toast('Cobro guardado, pero no se pudo actualizar Banco: '+e.message,'error');}
+}
 async function deleteCobro(id){
-  if(!confirm('¿Eliminar?'))return;
-  try{await dbDelete('cobros',id);STATE.cobros=STATE.cobros.filter(c=>c.id!==id);renderCobros();toast('Eliminado');}
+  const cb=STATE.cobros.find(c=>c.id===id);
+  if(!confirm(cb?.estado==='pagado'?'¿Eliminar este cobro? También se quitará su ingreso de Banco.':'¿Eliminar?'))return;
+  try{
+    await dbDelete('cobros',id);STATE.cobros=STATE.cobros.filter(c=>c.id!==id);
+    if(cb?.estado==='pagado')await borrarApunteBancoPorOrigen(id);
+    renderCobros();toast('Eliminado');
+  }
   catch(e){toast(e.message,'error');}
 }
 async function marcarPagado(id){
   try{
-    const fechaPago=new Date().toISOString().split('T')[0];
-    const{data,error}=await sb.from('cobros').update({estado:'pagado',fecha:fechaPago}).eq('id',id).select().single();
+    const prev={...STATE.cobros.find(x=>x.id===id)};
+    const{data,error}=await sb.from('cobros').update({estado:'pagado',fecha:hoyLocal()}).eq('id',id).select().single();
     if(error)throw error;
     const i=STATE.cobros.findIndex(x=>x.id===id);STATE.cobros[i]=data;
-    // Apunte ingreso en banco
-    const inq=STATE.inquilinos.find(x=>x.id===data.inquilino_id);
-    const hab=STATE.habitaciones.find(x=>x.id===data.habitacion_id);
-    const concepto=`${data.concepto||'Cobro'}${data.mes?' '+data.mes:''}${inq?' — '+inq.nombre:''}${hab?' ('+hab.nombre+')':''}`;
-    try{await crearApunteBanco({tipo:'ingreso',importe:data.importe,fecha:fechaPago,concepto,notas:data.notas||'',origen:'cobro',origen_id:id});}catch(_){}
-    renderCobros();toast('Marcado como pagado');
+    await sincronizarBancoCobro(prev,data);
+    bumpSync();renderCobros();toast('Marcado como pagado');
   }catch(e){toast(e.message,'error');}
 }
 function renderCobros(){
@@ -1646,8 +1639,8 @@ function renderCobros(){
   cbs=applyCobrosSort(cbs);
   const tbody=document.getElementById('cobrosTable');
   if(!cbs.length){tbody.innerHTML=`<tr><td colspan="8"><div class="empty"><div class="empty-icon">💸</div><div class="empty-title">No hay cobros</div></div></td></tr>`;document.getElementById('cobrosMob').innerHTML='';return;}
-  tbody.innerHTML=cbs.map(cb=>{const inq=STATE.inquilinos.find(x=>x.id===cb.inquilino_id);const h=STATE.habitaciones.find(x=>x.id===cb.habitacion_id);return '<tr><td><strong>'+(inq?inq.nombre:'—')+'</strong></td><td class="text-muted">'+(h?h.nombre:'—')+'</td><td>'+cb.concepto+'</td><td class="text-muted">'+(cb.mes||'—')+'</td><td class="font-bold">€'+cb.importe+'</td><td class="text-muted">'+cb.metodo+'</td><td><span class="badge badge-'+cb.estado+'">'+(cap(cb.estado))+'</span></td><td><div class="flex gap-2">'+(cb.estado!=='pagado'?'<button class="btn btn-secondary btn-sm" onclick="marcarPagado(\''+cb.id+'\')">✅</button>':'')+'<button class="btn btn-secondary btn-sm" onclick="openModalCobro(\''+cb.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteCobro(\''+cb.id+'\')">🗑</button></div></td></tr>';}).join('');
-  document.getElementById('cobrosMob').innerHTML=cbs.map(cb=>{const inq=STATE.inquilinos.find(x=>x.id===cb.inquilino_id);const h=STATE.habitaciones.find(x=>x.id===cb.habitacion_id);return '<div class="mob-card"><div class="mob-card-header"><div><div class="mob-card-name">'+(inq?inq.nombre:'—')+'</div><div class="mob-card-sub">'+cb.concepto+' · '+(cb.mes||'—')+'</div></div><span class="badge badge-'+cb.estado+'">'+(cap(cb.estado))+'</span></div><div class="mob-card-rows"><span class="mob-card-pill">💶 <strong>€'+cb.importe+'</strong></span>'+(h?'<span class="mob-card-pill">🏠 '+h.nombre+'</span>':'')+'<span class="mob-card-pill">'+cb.metodo+'</span></div><div class="mob-card-actions">'+(cb.estado!=='pagado'?'<button class="btn btn-secondary btn-sm" onclick="marcarPagado(\''+cb.id+'\')">✅ Pagado</button>':'')+'<button class="btn btn-secondary btn-sm" onclick="openModalCobro(\''+cb.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteCobro(\''+cb.id+'\')">🗑</button></div></div>';}).join('');
+  tbody.innerHTML=cbs.map(cb=>{const inq=STATE.inquilinos.find(x=>x.id===cb.inquilino_id);const h=STATE.habitaciones.find(x=>x.id===cb.habitacion_id);return '<tr><td><strong>'+(inq?esc(inq.nombre):'—')+'</strong></td><td class="text-muted">'+(h?esc(h.nombre):'—')+'</td><td>'+esc(cb.concepto)+'</td><td class="text-muted">'+esc(cb.mes||'—')+'</td><td class="font-bold">€'+cb.importe+'</td><td class="text-muted">'+esc(cb.metodo)+'</td><td><span class="badge badge-'+cb.estado+'">'+(cap(cb.estado))+'</span></td><td><div class="flex gap-2">'+(cb.estado!=='pagado'?'<button class="btn btn-secondary btn-sm" onclick="marcarPagado(\''+cb.id+'\')">✅</button>':'')+'<button class="btn btn-secondary btn-sm" onclick="openModalCobro(\''+cb.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteCobro(\''+cb.id+'\')">🗑</button></div></td></tr>';}).join('');
+  document.getElementById('cobrosMob').innerHTML=cbs.map(cb=>{const inq=STATE.inquilinos.find(x=>x.id===cb.inquilino_id);const h=STATE.habitaciones.find(x=>x.id===cb.habitacion_id);return '<div class="mob-card"><div class="mob-card-header"><div><div class="mob-card-name">'+(inq?esc(inq.nombre):'—')+'</div><div class="mob-card-sub">'+esc(cb.concepto)+' · '+esc(cb.mes||'—')+'</div></div><span class="badge badge-'+cb.estado+'">'+(cap(cb.estado))+'</span></div><div class="mob-card-rows"><span class="mob-card-pill">💶 <strong>€'+cb.importe+'</strong></span>'+(h?'<span class="mob-card-pill">🏠 '+esc(h.nombre)+'</span>':'')+'<span class="mob-card-pill">'+esc(cb.metodo)+'</span></div><div class="mob-card-actions">'+(cb.estado!=='pagado'?'<button class="btn btn-secondary btn-sm" onclick="marcarPagado(\''+cb.id+'\')">✅ Pagado</button>':'')+'<button class="btn btn-secondary btn-sm" onclick="openModalCobro(\''+cb.id+'\')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteCobro(\''+cb.id+'\')">🗑</button></div></div>';}).join('');
 }
 
 // GASTOS
@@ -1676,38 +1669,38 @@ async function saveGasto(){
   const fechaInicio=esUnica?v('gtFechaUnica'):v('gtFechaInicio');
   const fechaFin=esUnica?v('gtFechaUnica'):v('gtFechaFin');
   if(!fechaInicio||!fechaFin){toast('Indica la fecha de cobro','error');return;}
-  const noProrratea=v('gtPagada')==='noProrratea';
-  const payload={tipo:v('gtTipo'),fecha_inicio:fechaInicio,fecha_fin:fechaFin,importe:imp,proveedor:v('gtProveedor')||null,num_factura:v('gtNumFactura')||null,pagada:noProrratea||v('gtPagada')==='true',notas:v('gtNotas')||null};
+  const estadoSel=v('gtPagada'); // 'false' pendiente | 'true' pagada | 'noProrratea'
+  const payload={tipo:v('gtTipo'),fecha_inicio:fechaInicio,fecha_fin:fechaFin,importe:imp,proveedor:v('gtProveedor')||null,num_factura:v('gtNumFactura')||null,pagada:estadoSel!=='false',notas:v('gtNotas')||null};
   const eid=v('gtEditId');
   try{
-    const row=await dbSave('gastos',payload,eid||null);
-    if(eid){const i=STATE.gastos.findIndex(x=>x.id===eid);STATE.gastos[i]=row;toast('Actualizada');}
-    else{
-      // Si "No se prorratea": archivar en histórico y NO mostrar en pendientes
-      if(noProrratea){
-        const hRow={user_id:STATE.user.id,gasto_id_origen:row.id,tipo:row.tipo,fecha_inicio:row.fecha_inicio,fecha_fin:row.fecha_fin,importe:row.importe,proveedor:row.proveedor,num_factura:row.num_factura,notas:row.notas,motivo:'No se prorratea'};
-        const{data:hd}=await sb.from('historico_gastos').insert(hRow).select().single();
-        if(hd)STATE.historicoGastos.unshift(hd);
-        // Eliminar de gastos (ya está pagada=true en BD)
-        await dbDelete('gastos',row.id);
-        // NO se crea apunte en banco aquí — se crea cuando el usuario marca "Cobrado del banco" en el histórico
-        toast('Gasto archivado. Márcalo como "Cobrado del banco" cuando aparezca el cargo real.');
-      } else {
-        STATE.gastos.unshift(row);
-        // NO se crea apunte en banco — los gastos pendientes de prorrateo no generan apunte
-        toast('Factura registrada');
-      }
+    if(estadoSel==='false'){
+      const row=await dbSave('gastos',payload,eid||null);
+      if(eid){const i=STATE.gastos.findIndex(x=>x.id===eid);STATE.gastos[i]=row;toast('Actualizada');}
+      else{STATE.gastos.unshift(row);toast('Factura registrada');}
+    } else {
+      // Pagada o "No se prorratea": va directa al histórico (nunca se queda oculta en pendientes).
+      // No se crea apunte en banco aquí: se crea al marcar "Cobrado del banco" en el histórico.
+      await archivarGasto({...payload,id:eid||null},estadoSel==='noProrratea'?'No se prorratea':'Pagada');
+      if(eid){await dbDelete('gastos',eid);STATE.gastos=STATE.gastos.filter(x=>x.id!==eid);}
+      toast('Factura archivada en el histórico. Márcala como "Cobrado del banco" cuando aparezca el cargo real.');
     }
     closeModal('modalGasto');renderGastos();
   }
   catch(e){toast(e.message,'error');}
 }
+// Copia una factura al histórico con el motivo indicado
+async function archivarGasto(g,motivo){
+  const hRow={user_id:STATE.user.id,gasto_id_origen:g.id||null,tipo:g.tipo,fecha_inicio:g.fecha_inicio,fecha_fin:g.fecha_fin,importe:g.importe,proveedor:g.proveedor,num_factura:g.num_factura,notas:g.notas,motivo};
+  const{data,error}=await sb.from('historico_gastos').insert(hRow).select().single();
+  if(error)throw error;
+  STATE.historicoGastos.unshift(data);bumpSync();
+  return data;
+}
 async function deleteGasto(id){
   if(!confirm('¿Eliminar?'))return;
   try{
     const g=STATE.gastos.find(x=>x.id===id);
-    if(g){const hRow={user_id:STATE.user.id,gasto_id_origen:g.id,tipo:g.tipo,fecha_inicio:g.fecha_inicio,fecha_fin:g.fecha_fin,importe:g.importe,proveedor:g.proveedor,num_factura:g.num_factura,notas:g.notas,motivo:'Borrado manual'};const{data:hd}=await sb.from('historico_gastos').insert(hRow).select().single();if(hd)STATE.historicoGastos.unshift(hd);}
-    await borrarApunteBancoPorOrigen(id);
+    if(g)await archivarGasto(g,'Borrado manual');
     await dbDelete('gastos',id);STATE.gastos=STATE.gastos.filter(x=>x.id!==id);renderGastos();toast('Eliminada y archivada');
   }catch(e){toast(e.message,'error');}
 }
@@ -1715,7 +1708,7 @@ function renderGastosFilters(){
   const wrap=document.getElementById('gastosFilters');if(!wrap)return;
   const tipos=[...new Set(STATE.gastos.map(g=>g.tipo))];
   wrap.innerHTML=`<button class="filter-btn ${gtFilter==='todos'?'active':''}" onclick="filterGastos('todos',this)">Todos</button>`;
-  tipos.forEach(t=>{const s=getSuml(t);wrap.innerHTML+=`<button class="filter-btn ${gtFilter===t?'active':''}" onclick="filterGastos('${t}',this)">${s.icono} ${t}</button>`;});
+  tipos.forEach(t=>{const s=getSuml(t);wrap.innerHTML+=`<button class="filter-btn ${gtFilter===t?'active':''}" data-tipo="${esc(t)}" onclick="filterGastos(this.dataset.tipo,this)">${esc(s.icono)} ${esc(t)}</button>`;});
 }
 function renderGastosStats(){
   const activos=STATE.gastos.filter(g=>!g.pagada);
@@ -1733,8 +1726,8 @@ function renderGastosTabla(){
   if(gtFilter!=='todos')gts=gts.filter(g=>g.tipo===gtFilter);
   const tbody=document.getElementById('gastosTable');
   if(!gts.length){tbody.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="empty-icon">⚡</div><div class="empty-title">No hay facturas pendientes</div></div></td></tr>`;document.getElementById('gastosMob').innerHTML='';return;}
-  tbody.innerHTML=gts.map(g=>{const s=getSuml(g.tipo);return `<tr><td><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:${s.color};flex-shrink:0"></span>${s.icono} <strong>${g.tipo}</strong></span></td><td class="text-muted">${g.proveedor||'—'}</td><td class="text-muted">${fmtD(g.fecha_inicio)}</td><td class="text-muted">${fmtD(g.fecha_fin)}</td><td class="font-bold text-yellow">€${fmt(g.importe)}</td><td>${g.pagada?'<span class="badge badge-pagado">Prorateada</span>':'<span class="badge badge-pendiente">Pendiente</span>'}</td><td><div class="flex gap-2"><button class="btn btn-secondary btn-sm" onclick="openModalGasto('${g.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteGasto('${g.id}')">🗑</button></div></td></tr>`;}).join('');
-  document.getElementById('gastosMob').innerHTML=gts.map(g=>{const s=getSuml(g.tipo);return `<div class="mob-card"><div class="mob-card-header"><div><div class="mob-card-name">${s.icono} ${g.tipo}${g.proveedor?' · '+g.proveedor:''}</div><div class="mob-card-sub">${fmtD(g.fecha_inicio)} → ${fmtD(g.fecha_fin)}</div></div>${g.pagada?'<span class="badge badge-pagado">✓</span>':'<span class="badge badge-pendiente">Pendiente</span>'}</div><div class="mob-card-rows"><span class="mob-card-pill">💶 <strong>€${fmt(g.importe)}</strong></span>${g.num_factura?`<span class="mob-card-pill">${g.num_factura}</span>`:''}</div><div class="mob-card-actions"><button class="btn btn-secondary btn-sm" onclick="openModalGasto('${g.id}')">✏️ Editar</button><button class="btn btn-danger btn-sm" onclick="deleteGasto('${g.id}')">🗑</button></div></div>`;}).join('');
+  tbody.innerHTML=gts.map(g=>{const s=getSuml(g.tipo);return `<tr><td><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:${esc(s.color)};flex-shrink:0"></span>${esc(s.icono)} <strong>${esc(g.tipo)}</strong></span></td><td class="text-muted">${esc(g.proveedor||'—')}</td><td class="text-muted">${fmtD(g.fecha_inicio)}</td><td class="text-muted">${fmtD(g.fecha_fin)}</td><td class="font-bold text-yellow">€${fmt(g.importe)}</td><td>${g.pagada?'<span class="badge badge-pagado">Prorateada</span>':'<span class="badge badge-pendiente">Pendiente</span>'}</td><td><div class="flex gap-2"><button class="btn btn-secondary btn-sm" onclick="openModalGasto('${g.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="deleteGasto('${g.id}')">🗑</button></div></td></tr>`;}).join('');
+  document.getElementById('gastosMob').innerHTML=gts.map(g=>{const s=getSuml(g.tipo);return `<div class="mob-card"><div class="mob-card-header"><div><div class="mob-card-name">${esc(s.icono)} ${esc(g.tipo)}${g.proveedor?' · '+esc(g.proveedor):''}</div><div class="mob-card-sub">${fmtD(g.fecha_inicio)} → ${fmtD(g.fecha_fin)}</div></div>${g.pagada?'<span class="badge badge-pagado">✓</span>':'<span class="badge badge-pendiente">Pendiente</span>'}</div><div class="mob-card-rows"><span class="mob-card-pill">💶 <strong>€${fmt(g.importe)}</strong></span>${g.num_factura?`<span class="mob-card-pill">${esc(g.num_factura)}</span>`:''}</div><div class="mob-card-actions"><button class="btn btn-secondary btn-sm" onclick="openModalGasto('${g.id}')">✏️ Editar</button><button class="btn btn-danger btn-sm" onclick="deleteGasto('${g.id}')">🗑</button></div></div>`;}).join('');
 }
 function clearHistoricoFiltros(){
   ['hFiltTipo','hFiltProveedor','hFiltDesde','hFiltHasta','hFiltArchivado'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
@@ -1749,7 +1742,7 @@ function renderHistorico(){
   if(selTipo){
     const tipos=[...new Set(STATE.historicoGastos.map(g=>g.tipo).filter(Boolean))].sort();
     const cur=selTipo.value;
-    selTipo.innerHTML='<option value="">Todos los tipos</option>'+tipos.map(t=>`<option value="${t}">${t}</option>`).join('');
+    selTipo.innerHTML='<option value="">Todos los tipos</option>'+tipos.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
     if(cur)selTipo.value=cur;
   }
 
@@ -1777,13 +1770,13 @@ function renderHistorico(){
     const cobrado=g.cobrado_banco===true||g.cobrado_banco==='true';
     const esTermFijo=g.proveedor==='Término fijo ACS';
     return `<tr>
-      <td><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:3px;background:${s.color}"></span>${s.icono} ${g.tipo}</span></td>
-      <td class="text-muted">${g.proveedor||'—'}</td>
+      <td><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:3px;background:${esc(s.color)}"></span>${esc(s.icono)} ${esc(g.tipo)}</span></td>
+      <td class="text-muted">${esc(g.proveedor||'—')}</td>
       <td class="text-muted">${fmtD(g.fecha_inicio)}</td>
       <td class="text-muted">${fmtD(g.fecha_fin)}</td>
       <td class="font-bold">€${fmt(g.importe)}</td>
-      <td class="text-muted">${g.num_factura||'—'}</td>
-      <td class="text-muted">${g.motivo||'—'}</td>
+      <td class="text-muted">${esc(g.num_factura||'—')}</td>
+      <td class="text-muted">${esc(g.motivo||'—')}</td>
       <td style="text-align:center">
         ${esTermFijo?'<span class="text-muted text-sm" title="El término fijo ACS no genera apunte en banco">—</span>':`<input type="checkbox" ${cobrado?'checked':''} style="width:auto;accent-color:var(--accent);cursor:pointer;transform:scale(1.3)"
           onchange="toggleCobradoBanco('${g.id}',this.checked)" title="Marcar como cobrado del banco">`}
@@ -1800,8 +1793,8 @@ function renderHistorico(){
     const s=getSuml(g.tipo);
     const cobrado=g.cobrado_banco===true||g.cobrado_banco==='true';
     const esTermFijo=g.proveedor==='Término fijo ACS';
-    return '<div class="mob-card"><div class="mob-card-header"><div><div class="mob-card-name">'+s.icono+' '+g.tipo+(g.proveedor?' · '+g.proveedor:'')+'</div><div class="mob-card-sub">'+fmtD(g.fecha_inicio)+' → '+fmtD(g.fecha_fin)+'</div></div><span class="badge badge-pagado">✓</span></div>'
-      +'<div class="mob-card-rows"><span class="mob-card-pill">💶 <strong>€'+fmt(g.importe)+'</strong></span>'+(g.num_factura?'<span class="mob-card-pill">'+g.num_factura+'</span>':'')+'</div>'
+    return '<div class="mob-card"><div class="mob-card-header"><div><div class="mob-card-name">'+esc(s.icono)+' '+esc(g.tipo)+(g.proveedor?' · '+esc(g.proveedor):'')+'</div><div class="mob-card-sub">'+fmtD(g.fecha_inicio)+' → '+fmtD(g.fecha_fin)+'</div></div><span class="badge badge-pagado">✓</span></div>'
+      +'<div class="mob-card-rows"><span class="mob-card-pill">💶 <strong>€'+fmt(g.importe)+'</strong></span>'+(g.num_factura?'<span class="mob-card-pill">'+esc(g.num_factura)+'</span>':'')+'</div>'
       +(!esTermFijo?'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><input type="checkbox" '+(cobrado?'checked':'')+' style="width:auto;accent-color:var(--accent);cursor:pointer" onchange="toggleCobradoBanco(\''+g.id+'\',this.checked)"><span class="text-sm text-muted">Cobrado del banco</span></div>':'')
       +'<div class="mob-card-actions"><button class="btn btn-secondary btn-sm" onclick="openModalHistoricoGasto(\''+g.id+'\')">✏️ Editar</button><button class="btn btn-secondary btn-sm" style="color:var(--accent2)" onclick="reactivarGasto(\''+g.id+'\')">&#9851; Reactivar</button><button class="btn btn-danger btn-sm" onclick="deleteHistoricoGasto(\''+g.id+'\')">🗑</button></div></div>';
   }).join('');
@@ -1812,7 +1805,7 @@ function openModalHistoricoGasto(id){
   const g=STATE.historicoGastos.find(x=>x.id===id);if(!g)return;
   // Poblar select de tipos
   const sel=document.getElementById('hgTipo');
-  if(sel){sel.innerHTML=STATE.tiposSupl.map(s=>`<option value="${s.nombre}">${s.icono} ${s.nombre}</option>`).join('');sel.value=g.tipo;}
+  if(sel){sel.innerHTML=STATE.tiposSupl.map(s=>`<option value="${esc(s.nombre)}">${esc(s.icono)} ${esc(s.nombre)}</option>`).join('');sel.value=g.tipo;}
   document.getElementById('hgProveedor').value=g.proveedor||'';
   document.getElementById('hgFechaInicio').value=g.fecha_inicio||'';
   document.getElementById('hgFechaFin').value=g.fecha_fin||'';
@@ -1842,13 +1835,24 @@ async function saveHistoricoGasto(){
     const{data,error}=await sb.from('historico_gastos').update({...payload,user_id:STATE.user.id}).eq('id',id).select().single();
     if(error)throw error;
     const i=STATE.historicoGastos.findIndex(x=>x.id===id);STATE.historicoGastos[i]=data;
+    // Si ya estaba cobrado del banco, el apunte refleja el nuevo importe y fecha
+    if(data.cobrado_banco===true||data.cobrado_banco==='true'){
+      for(const m of STATE.banco.filter(x=>x.origen_id===id)){
+        const{data:mb,error:me}=await sb.from('movimientos_banco').update({importe:data.importe,fecha:data.fecha_fin||data.fecha_inicio||m.fecha}).eq('id',m.id).select().single();
+        if(!me){const j=STATE.banco.findIndex(x=>x.id===m.id);STATE.banco[j]=mb;}
+      }
+    }
     bumpSync();closeModal('modalHistoricoGasto');renderHistorico();toast('Registro actualizado');
   }catch(e){toast(e.message,'error');}
 }
 async function deleteHistoricoGasto(id){
-  if(!confirm('¿Eliminar este registro del histórico?'))return;
+  const g=STATE.historicoGastos.find(x=>x.id===id);
+  const cobrado=g&&(g.cobrado_banco===true||g.cobrado_banco==='true');
+  if(!confirm(cobrado?'¿Eliminar este registro del histórico? También se quitará su gasto de Banco.':'¿Eliminar este registro del histórico?'))return;
   try{
-    await sb.from('historico_gastos').delete().eq('id',id);
+    const{error}=await sb.from('historico_gastos').delete().eq('id',id);
+    if(error)throw error;
+    if(cobrado)await borrarApunteBancoPorOrigen(id);
     STATE.historicoGastos=STATE.historicoGastos.filter(x=>x.id!==id);
     bumpSync();renderHistorico();toast('Registro eliminado');
   }catch(e){toast(e.message,'error');}
@@ -1862,8 +1866,10 @@ async function reactivarGasto(id){
     const{data,error}=await sb.from('gastos').insert({...payload,user_id:STATE.user.id}).select().single();
     if(error)throw error;
     STATE.gastos.unshift(data);
-    // Eliminar del histórico
-    await sb.from('historico_gastos').delete().eq('id',id);
+    // Eliminar del histórico (queda copia en la papelera) y quitar su cargo de Banco si lo tenía
+    const{error:delErr}=await sb.from('historico_gastos').delete().eq('id',id);
+    if(delErr)throw delErr;
+    if(g.cobrado_banco===true||g.cobrado_banco==='true')await borrarApunteBancoPorOrigen(id);
     STATE.historicoGastos=STATE.historicoGastos.filter(x=>x.id!==id);
     bumpSync();renderGastos();toast('Gasto reactivado como pendiente');
   }catch(e){toast(e.message,'error');}
@@ -1882,7 +1888,7 @@ async function toggleCobradoBanco(id,checked){
         await crearApunteBanco({
           tipo:'gasto',
           importe:g.importe,
-          fecha:g.fecha_fin||g.fecha_inicio||new Date().toISOString().split('T')[0],
+          fecha:g.fecha_fin||g.fecha_inicio||hoyLocal(),
           concepto:g.tipo+(g.proveedor?' — '+g.proveedor:'')+(g.num_factura?' ('+g.num_factura+')':''),
           notas:g.notas||'',
           origen:'historico_gasto',
@@ -1917,10 +1923,10 @@ function renderGantt(){
   while(cur<=maxDate){tickDates.push(new Date(cur));cur.setMonth(cur.getMonth()+1);}
   let svg=`<svg class="gantt-svg" width="${svgW}" height="${svgH}" xmlns="http://www.w3.org/2000/svg">`;
   tipos.forEach((t,i)=>{const y=margin.top+i*rowH;if(i%2===0)svg+=`<rect x="${margin.left}" y="${y}" width="${barW}" height="${rowH}" fill="rgba(255,255,255,0.018)" rx="0"/>`;});
-  tickDates.forEach(d=>{const x=margin.left+xOf(d.toISOString().slice(0,10));if(x<margin.left||x>margin.left+barW)return;svg+=`<line x1="${x}" y1="${margin.top}" x2="${x}" y2="${margin.top+chartH}" stroke="#2a2a38" stroke-width="1"/>`;const lbl=d.toLocaleDateString('es',{month:'short',year:'2-digit'}).replace('. ','/').toUpperCase();svg+=`<text x="${x}" y="${margin.top+chartH+18}" text-anchor="middle" font-size="9" fill="#8888a8" font-family="DM Sans,sans-serif">${lbl}</text>`;});
-  const hoyX=margin.left+xOf(new Date().toISOString().slice(0,10));
+  tickDates.forEach(d=>{const x=margin.left+xOf(hoyLocal(d));if(x<margin.left||x>margin.left+barW)return;svg+=`<line x1="${x}" y1="${margin.top}" x2="${x}" y2="${margin.top+chartH}" stroke="#2a2a38" stroke-width="1"/>`;const lbl=d.toLocaleDateString('es',{month:'short',year:'2-digit'}).replace('. ','/').toUpperCase();svg+=`<text x="${x}" y="${margin.top+chartH+18}" text-anchor="middle" font-size="9" fill="#8888a8" font-family="DM Sans,sans-serif">${lbl}</text>`;});
+  const hoyX=margin.left+xOf(hoyLocal());
   if(hoyX>=margin.left&&hoyX<=margin.left+barW){svg+=`<line x1="${hoyX}" y1="${margin.top}" x2="${hoyX}" y2="${margin.top+chartH}" stroke="#f76a6a" stroke-width="1.5" stroke-dasharray="4,3"/>`;svg+=`<text x="${hoyX}" y="${margin.top-5}" text-anchor="middle" font-size="9" fill="#f76a6a" font-family="DM Sans,sans-serif">HOY</text>`;}
-  tipos.forEach((t,i)=>{const g=porTipo[t];const s=getSuml(t);const y=margin.top+i*rowH;const barY=y+10;const barH=rowH-20;const x1=margin.left+xOf(g.fecha_inicio);const x2=margin.left+xOf(g.fecha_fin);const barLen=Math.max(x2-x1,4);const gId='g_'+t.replace(/\W/g,'_');svg+=`<defs><linearGradient id="${gId}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${s.color}" stop-opacity="0.9"/><stop offset="100%" stop-color="${s.color}" stop-opacity="0.5"/></linearGradient></defs>`;svg+=`<text x="${margin.left-6}" y="${barY+barH/2+4}" text-anchor="end" font-size="11" fill="#e8e8f0" font-family="DM Sans,sans-serif" font-weight="500">${s.icono} ${t}</text>`;svg+=`<rect x="${x1}" y="${barY}" width="${barLen}" height="${barH}" fill="url(#${gId})" rx="5"/>`;if(barLen>70){svg+=`<text x="${x1+6}" y="${barY+barH/2+4}" font-size="9" fill="rgba(0,0,0,0.75)" font-family="DM Sans,sans-serif">${fmtD(g.fecha_inicio)}</text>`;svg+=`<text x="${x2-6}" y="${barY+barH/2+4}" text-anchor="end" font-size="9" fill="rgba(0,0,0,0.75)" font-family="DM Sans,sans-serif">${fmtD(g.fecha_fin)}</text>`;}svg+=`<text x="${x1+barLen/2}" y="${barY-3}" text-anchor="middle" font-size="9" fill="${s.color}" font-family="DM Sans,sans-serif" font-weight="600">€${fmt(g.importe)}</text>`;});
+  tipos.forEach((t,i)=>{const g=porTipo[t];const s=getSuml(t);const y=margin.top+i*rowH;const barY=y+10;const barH=rowH-20;const x1=margin.left+xOf(g.fecha_inicio);const x2=margin.left+xOf(g.fecha_fin);const barLen=Math.max(x2-x1,4);const gId='g_'+t.replace(/\W/g,'_');svg+=`<defs><linearGradient id="${gId}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${esc(s.color)}" stop-opacity="0.9"/><stop offset="100%" stop-color="${esc(s.color)}" stop-opacity="0.5"/></linearGradient></defs>`;svg+=`<text x="${margin.left-6}" y="${barY+barH/2+4}" text-anchor="end" font-size="11" fill="#e8e8f0" font-family="DM Sans,sans-serif" font-weight="500">${esc(s.icono)} ${esc(t)}</text>`;svg+=`<rect x="${x1}" y="${barY}" width="${barLen}" height="${barH}" fill="url(#${gId})" rx="5"/>`;if(barLen>70){svg+=`<text x="${x1+6}" y="${barY+barH/2+4}" font-size="9" fill="rgba(0,0,0,0.75)" font-family="DM Sans,sans-serif">${fmtD(g.fecha_inicio)}</text>`;svg+=`<text x="${x2-6}" y="${barY+barH/2+4}" text-anchor="end" font-size="9" fill="rgba(0,0,0,0.75)" font-family="DM Sans,sans-serif">${fmtD(g.fecha_fin)}</text>`;}svg+=`<text x="${x1+barLen/2}" y="${barY-3}" text-anchor="middle" font-size="9" fill="${esc(s.color)}" font-family="DM Sans,sans-serif" font-weight="600">€${fmt(g.importe)}</text>`;});
   svg+='</svg>';container.innerHTML=svg;
 }
 function renderGastos(){renderGastosStats();renderGastosFilters();if(gastosActiveTab==='pendientes')renderGastosTabla();else if(gastosActiveTab==='historico')renderHistorico();else if(gastosActiveTab==='grafico')renderGantt();}
@@ -1937,7 +1943,7 @@ async function saveTerminoFijo(){
 async function crearGastoTerminoFijo(){
   const imp=STATE.terminoFijoAcs||0;
   if(!imp){toast('Configura primero el importe en Configuración > Mi empresa','error');return;}
-  const hoy=new Date().toISOString().split('T')[0];
+  const hoy=hoyLocal();
   const mes=hoy.slice(0,7);
   if(!confirm(`Crear gasto "Término fijo ACS" por €${fmt(imp)} para ${mes}?`))return;
   try{
@@ -1964,7 +1970,7 @@ async function crearCobrosProrateados(){
   const pendientes=STATE.gastos.filter(g=>!g.pagada);if(!pendientes.length){toast('No hay facturas pendientes de prorrateo','error');return;}
   const elegibles=STATE.habitaciones.filter(h=>h.estado==='ocupada'&&STATE.inquilinos.find(i=>i.habitacion_id===h.id&&i.estado==='activo'));if(!elegibles.length){toast('No hay habitaciones ocupadas con inquilino activo','error');return;}
   const total=pendientes.reduce((s,g)=>s+Number(g.importe),0);const cuota=Math.round((total/elegibles.length)*100)/100;
-  const hoy=new Date();const mes=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');const fecha=hoy.toISOString().split('T')[0];
+  const hoy=new Date();const mes=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');const fecha=hoyLocal(hoy);
   const cobroRows=elegibles.map(h=>{const inq=STATE.inquilinos.find(i=>i.habitacion_id===h.id&&i.estado==='activo');const detalle=pendientes.map(g=>`${getSuml(g.tipo).icono}${g.tipo} ${fmtD(g.fecha_inicio)}→${fmtD(g.fecha_fin)} €${fmt(Number(g.importe)/elegibles.length)}`).join(' | ');return{user_id:STATE.user.id,inquilino_id:inq.id,habitacion_id:h.id,concepto:'Suministros',mes,importe:cuota,metodo:'Transferencia',estado:'pendiente',fecha,notas:'Prorrateo: '+detalle};});
   const histRows=pendientes.map(g=>({user_id:STATE.user.id,gasto_id_origen:g.id,tipo:g.tipo,fecha_inicio:g.fecha_inicio,fecha_fin:g.fecha_fin,importe:g.importe,proveedor:g.proveedor,num_factura:g.num_factura,notas:g.notas,motivo:'Prorrateada'}));
   try{
@@ -1983,7 +1989,7 @@ async function crearCobrosProrateados(){
 function renderDashboard(){
   const th=STATE.habitaciones.length;const oc=STATE.habitaciones.filter(h=>h.estado==='ocupada').length;const li=STATE.habitaciones.filter(h=>h.estado==='libre').length;const pct=th?Math.round(oc/th*100):0;
   const ia=STATE.inquilinos.filter(i=>i.estado==='activo').length;const mo=STATE.inquilinos.filter(i=>i.estado==='moroso').length;
-  const mesH=new Date().toISOString().slice(0,7);const ing=STATE.cobros.filter(c=>c.estado==='pagado'&&c.mes===mesH).reduce((s,c)=>s+Number(c.importe),0);
+  const mesH=mesLocal();const ing=STATE.cobros.filter(c=>c.estado==='pagado'&&c.mes===mesH).reduce((s,c)=>s+Number(c.importe),0);
   const pend=STATE.cobros.filter(c=>c.estado==='pendiente').length;const gasto=STATE.gastos.filter(g=>!g.pagada).reduce((s,g)=>s+Number(g.importe),0);
   const fmtK=n=>{const v=Number(n||0);if(Math.abs(v)>=10000)return (v/1000).toFixed(1).replace('.',',')+'k';return fmt(v);};
   // T3: stats row as flex instead of grid so cards don't constrain each other
@@ -2000,7 +2006,7 @@ function renderDashboard(){
     (pend>0?'<div class="stat-card" style="flex:1;min-width:90px"><div class="stat-value stat-yellow">'+pend+'</div><div class="stat-label">Cobros pend.</div></div>':'');
 
   const grid=document.getElementById('dashboardHabs');const habsPiso=STATE.habitaciones.filter(h=>!STATE.currentPisoId||h.piso_id===STATE.currentPisoId);const pisoActivo=getCurrentPiso();
-  if(!habsPiso.length){grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:40px 20px"><div style="font-size:40px;margin-bottom:10px">🏠</div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700">${pisoActivo?pisoActivo.nombre:'Sin inmueble'}</div>${pisoActivo&&pisoActivo.direccion?`<div style="font-size:13px;color:var(--text2);margin-top:4px">${pisoActivo.direccion}</div>`:''}</div>`;return;}
+  if(!habsPiso.length){grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:40px 20px"><div style="font-size:40px;margin-bottom:10px">🏠</div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700">${pisoActivo?esc(pisoActivo.nombre):'Sin inmueble'}</div>${pisoActivo&&pisoActivo.direccion?`<div style="font-size:13px;color:var(--text2);margin-top:4px">${esc(pisoActivo.direccion)}</div>`:''}</div>`;return;}
   grid.innerHTML=habsPiso.map(h=>{
     const inq=STATE.inquilinos.find(i=>i.habitacion_id===h.id&&i.estado==='activo');
     const uc=STATE.cobros.find(c=>c.habitacion_id===h.id);
@@ -2008,12 +2014,12 @@ function renderDashboard(){
     const cobPend=STATE.cobros.filter(c=>c.habitacion_id===h.id&&c.estado==='pendiente');
     const pendHtml=cobPend.length?'<div style="margin-top:10px;padding:8px 10px;background:rgba(247,196,106,.08);border:1px solid rgba(247,196,106,.2);border-radius:8px">'
       +'<div style="font-size:10px;font-weight:600;color:var(--accent2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">⏳ Pendiente de pago</div>'
-      +cobPend.map(c=>'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:var(--text2)">'+c.concepto+(c.mes?' · '+c.mes:'')+'</span><span style="font-weight:600;color:var(--accent2)">€'+fmt(c.importe)+'</span></div>').join('')
+      +cobPend.map(c=>'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:var(--text2)">'+esc(c.concepto)+(c.mes?' · '+esc(c.mes):'')+'</span><span style="font-weight:600;color:var(--accent2)">€'+fmt(c.importe)+'</span></div>').join('')
       +'</div>':'';
     return `<div class="card" style="cursor:pointer;display:flex;flex-direction:column" onclick="showPage('habitaciones')">
-      <div class="card-header"><div class="card-title">${h.nombre}</div><span class="badge badge-${h.estado}">● ${cap(h.estado)}</span></div>
+      <div class="card-header"><div class="card-title">${esc(h.nombre)}</div><span class="badge badge-${h.estado}">● ${cap(h.estado)}</span></div>
       <div class="room-detail-row"><span class="room-detail-label">Renta</span><span class="room-detail-value text-green">€${h.precio}/mes</span></div>
-      ${inq?`<div class="room-detail-row" style="align-items:flex-start;gap:8px"><span class="room-detail-label" style="flex-shrink:0;padding-top:1px">Inquilino</span><span class="room-detail-value" style="text-align:right;word-break:break-word">👤 ${inq.nombre}</span></div>`:''}
+      ${inq?`<div class="room-detail-row" style="align-items:flex-start;gap:8px"><span class="room-detail-label" style="flex-shrink:0;padding-top:1px">Inquilino</span><span class="room-detail-value" style="text-align:right;word-break:break-word">👤 ${esc(inq.nombre)}</span></div>`:''}
       ${uc?`<div class="room-detail-row"><span class="room-detail-label">Último cobro</span><span class="room-detail-value"><span class="badge badge-${uc.estado}" style="font-size:10px">${uc.estado}</span></span></div>`:''}
       <div style="flex:1"></div>
       ${pendHtml}
@@ -2115,8 +2121,8 @@ function renderChartOcupacion(){
       const mesesRestantes=fin?Math.max(0,Math.ceil((fin-hoy)/(1000*60*60*24*30.44))):null;
       const pct=ini&&fin?Math.min(100,Math.round((hoy-ini)/(fin-ini)*100)):null;
       cardsHtml+=`<div class="stat-card">
-        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;margin-bottom:6px">${inq.nombre}</div>
-        <div class="text-sm text-muted" style="margin-bottom:8px">${hab?hab.nombre:'—'}</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;margin-bottom:6px">${esc(inq.nombre)}</div>
+        <div class="text-sm text-muted" style="margin-bottom:8px">${hab?esc(hab.nombre):'—'}</div>
         ${mesesTranscurridos!==null?`<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span class="text-muted">Transcurridos</span><span style="font-weight:600;color:var(--accent3)">${mesesTranscurridos} meses</span></div>`:''}
         ${mesesRestantes!==null?`<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px"><span class="text-muted">Restantes</span><span style="font-weight:600;color:var(--accent2)">${mesesRestantes} meses</span></div>`:''}
         ${fin?`<div style="background:var(--surface2);border-radius:4px;height:5px;overflow:hidden"><div style="background:var(--accent);height:100%;width:${pct}%;border-radius:4px;transition:width .3s"></div></div>
@@ -2155,7 +2161,7 @@ function renderOcupacionPorHab(){
   habs.forEach((h,hi)=>{
     const y=pad.top+hi*rowH;
     if(hi%2===0) svg+=`<rect x="${pad.left}" y="${y}" width="${cW}" height="${rowH}" fill="rgba(255,255,255,0.018)"/>`;
-    svg+=`<text x="${pad.left-8}" y="${y+rowH/2+4}" text-anchor="end" font-size="11" fill="#e8e8f0" font-family="DM Sans,sans-serif">${h.nombre}</text>`;
+    svg+=`<text x="${pad.left-8}" y="${y+rowH/2+4}" text-anchor="end" font-size="11" fill="#e8e8f0" font-family="DM Sans,sans-serif">${esc(h.nombre)}</text>`;
   });
 
   // Grid vertical (meses)
@@ -2199,7 +2205,7 @@ function renderOcupacionPorHab(){
       const color=colors[colorIdx];
       svg+=`<rect x="${x1}" y="${y}" width="${Math.max(4,x2-x1)}" height="${bH}" fill="${color}" rx="3" opacity="0.85"/>`;
       if(x2-x1>36&&inq){
-        svg+=`<text x="${x1+5}" y="${y+bH/2+4}" font-size="9" fill="rgba(0,0,0,0.85)" font-family="DM Sans,sans-serif">${inq.nombre.split(' ')[0]}</text>`;
+        svg+=`<text x="${x1+5}" y="${y+bH/2+4}" font-size="9" fill="rgba(0,0,0,0.85)" font-family="DM Sans,sans-serif">${esc(inq.nombre.split(' ')[0])}</text>`;
       }
     });
     // Si no hay contratos en rango, línea punteada
@@ -2209,7 +2215,7 @@ function renderOcupacionPorHab(){
   });
 
   // Línea HOY
-  const hoyYM=new Date().toISOString().slice(0,7);
+  const hoyYM=mesLocal();
   const hoyI=months.indexOf(hoyYM);
   if(hoyI>=0){
     const x=xOf(hoyI);
@@ -2240,7 +2246,7 @@ function renderChartIngresos(){
   const totalCobrado=cobrado.reduce((a,b)=>a+b,0);
   const totalPendiente=pendiente.reduce((a,b)=>a+b,0);
   const totalImpagado=impagado.reduce((a,b)=>a+b,0);
-  const mesActual=new Date().toISOString().slice(0,7);
+  const mesActual=mesLocal();
   const ingresosMes=STATE.cobros.filter(c=>c.mes===mesActual&&c.estado==='pagado').reduce((s,c)=>s+Number(c.importe),0);
 
   const kpis=document.getElementById('statsIngresosKpis');
@@ -2278,7 +2284,7 @@ function renderChartRentabilidad(){
   const totalGas=gastos.reduce((a,b)=>a+b,0);
   const totalBen=beneficio.reduce((a,b)=>a+b,0);
   const margen=totalIng>0?Math.round(totalBen/totalIng*100):0;
-  const mesActual=new Date().toISOString().slice(0,7);
+  const mesActual=mesLocal();
   const mesIdx=months.indexOf(mesActual);
   const benMes=mesIdx>=0?beneficio[mesIdx]:0;
   const mejorMes=months[beneficio.indexOf(Math.max(...beneficio))];
@@ -2315,10 +2321,10 @@ function renderTablaMorosos(){
     el.innerHTML='<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">Sin impagos</div><p>No hay cobros marcados como impagado.</p></div>';
     return;
   }
-  let html='<div class="table-wrap"><table><thead><tr><th>Inquilino</th><th>Meses con impago</th><th>Cobros impagados</th><th>Total impagado</th></tr></thead><tbody>';
+  let html='<div class="table-wrap keep-mobile"><table><thead><tr><th>Inquilino</th><th>Meses con impago</th><th>Cobros impagados</th><th>Total impagado</th></tr></thead><tbody>';
   rows.forEach(r=>{
     html+=`<tr>
-      <td><strong>${r.nombre}</strong></td>
+      <td><strong>${esc(r.nombre)}</strong></td>
       <td class="text-muted">${r.meses.sort().join(', ')||'—'}</td>
       <td class="text-muted">${r.count}</td>
       <td class="font-bold text-red">€${fmt(r.total)}</td>
@@ -2354,11 +2360,11 @@ function renderBarChart(el, labels, values, pcts, opts={}){
     const x=pad.left+i*gap+(gap-barW)/2;
     const bH=Math.max(2,Math.round((v/yMax)*cH));
     const y=pad.top+cH-bH;
-    svg+=`<rect x="${x}" y="${y}" width="${barW}" height="${bH}" fill="${opts.color||'#7c6af7'}" rx="3" opacity="0.85"/>`;
+    svg+=`<rect x="${x}" y="${y}" width="${barW}" height="${bH}" fill="${esc(opts.color||'#7c6af7')}" rx="3" opacity="0.85"/>`;
     if(opts.showPct&&pcts[i]!==undefined){
-      svg+=`<text x="${x+barW/2}" y="${y-5}" text-anchor="middle" font-size="9" fill="${opts.color||'#7c6af7'}" font-family="DM Sans,sans-serif">${pcts[i]}%</text>`;
+      svg+=`<text x="${x+barW/2}" y="${y-5}" text-anchor="middle" font-size="9" fill="${esc(opts.color||'#7c6af7')}" font-family="DM Sans,sans-serif">${pcts[i]}%</text>`;
     } else if(v>0){
-      svg+=`<text x="${x+barW/2}" y="${y-5}" text-anchor="middle" font-size="9" fill="${opts.color||'#7c6af7'}" font-family="DM Sans,sans-serif">${v}</text>`;
+      svg+=`<text x="${x+barW/2}" y="${y-5}" text-anchor="middle" font-size="9" fill="${esc(opts.color||'#7c6af7')}" font-family="DM Sans,sans-serif">${v}</text>`;
     }
     // Label eje X — mostrar cada N según densidad
     const step=n<=12?1:n<=24?2:3;
@@ -2369,7 +2375,7 @@ function renderBarChart(el, labels, values, pcts, opts={}){
   // Eje X
   svg+=`<line x1="${pad.left}" y1="${pad.top+cH}" x2="${W-pad.right}" y2="${pad.top+cH}" stroke="#2a2a38" stroke-width="1"/>`;
   // Título
-  svg+=`<text x="${pad.left}" y="16" font-size="11" fill="#8888a8" font-family="DM Sans,sans-serif">${opts.label||''}</text>`;
+  svg+=`<text x="${pad.left}" y="16" font-size="11" fill="#8888a8" font-family="DM Sans,sans-serif">${esc(opts.label||'')}</text>`;
   svg+='</svg>';
   el.innerHTML=svg;
 }
@@ -2398,7 +2404,7 @@ function renderGroupedBarChart(el, labels, series){
       const x=pad.left+i*groupW+si*(barW+2)+(groupW-series.length*(barW+2))/2;
       const bH=Math.max(val>0?2:0,Math.round((val/yMax)*cH));
       const y=pad.top+cH-bH;
-      svg+=`<rect x="${x}" y="${y}" width="${barW}" height="${bH}" fill="${s.color}" rx="2" opacity="0.85"/>`;
+      svg+=`<rect x="${x}" y="${y}" width="${barW}" height="${bH}" fill="${esc(s.color)}" rx="2" opacity="0.85"/>`;
     });
     const step=n<=12?1:n<=24?2:3;
     if(i%step===0){
@@ -2411,8 +2417,8 @@ function renderGroupedBarChart(el, labels, series){
   // Leyenda
   let lx=pad.left;
   series.forEach(s=>{
-    svg+=`<rect x="${lx}" y="10" width="10" height="10" fill="${s.color}" rx="2"/>`;
-    svg+=`<text x="${lx+13}" y="19" font-size="10" fill="#8888a8" font-family="DM Sans,sans-serif">${s.label}</text>`;
+    svg+=`<rect x="${lx}" y="10" width="10" height="10" fill="${esc(s.color)}" rx="2"/>`;
+    svg+=`<text x="${lx+13}" y="19" font-size="10" fill="#8888a8" font-family="DM Sans,sans-serif">${esc(s.label)}</text>`;
     lx+=s.label.length*6+22;
   });
   svg+='</svg>';
@@ -2445,11 +2451,11 @@ function renderLineChart(el, labels, series){
   series.forEach(s=>{
     const pts=s.values.map((v,i)=>`${xOf(i)},${yOf(v)}`).join(' ');
     const dash=s.dashed?'stroke-dasharray="6,3"':'';
-    svg+=`<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" ${dash} opacity="0.9"/>`;
+    svg+=`<polyline points="${pts}" fill="none" stroke="${esc(s.color)}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" ${dash} opacity="0.9"/>`;
     // Dots + valores
     s.values.forEach((v,i)=>{
       if(v===0)return;
-      svg+=`<circle cx="${xOf(i)}" cy="${yOf(v)}" r="3.5" fill="${s.color}" opacity="0.9"/>`;
+      svg+=`<circle cx="${xOf(i)}" cy="${yOf(v)}" r="3.5" fill="${esc(s.color)}" opacity="0.9"/>`;
     });
   });
   // Eje X labels
@@ -2465,8 +2471,8 @@ function renderLineChart(el, labels, series){
   let lx=pad.left;
   series.forEach(s=>{
     const dash=s.dashed?'stroke-dasharray="4,2"':'';
-    svg+=`<line x1="${lx}" y1="15" x2="${lx+16}" y2="15" stroke="${s.color}" stroke-width="2.5" ${dash}/>`;
-    svg+=`<text x="${lx+20}" y="19" font-size="10" fill="#8888a8" font-family="DM Sans,sans-serif">${s.label}</text>`;
+    svg+=`<line x1="${lx}" y1="15" x2="${lx+16}" y2="15" stroke="${esc(s.color)}" stroke-width="2.5" ${dash}/>`;
+    svg+=`<text x="${lx+20}" y="19" font-size="10" fill="#8888a8" font-family="DM Sans,sans-serif">${esc(s.label)}</text>`;
     lx+=s.label.length*6+30;
   });
   svg+='</svg>';
@@ -2498,7 +2504,7 @@ function filterSiniestros(f,btn){sinFilter=f;document.querySelectorAll('#page-si
 function openModalSiniestro(id=null){
   const sel=document.getElementById('sinHabitacion');
   sel.innerHTML='<option value="">— Zona común / Todo —</option>';
-  STATE.habitaciones.forEach(h=>sel.innerHTML+=`<option value="${h.id}">${h.nombre}</option>`);
+  STATE.habitaciones.forEach(h=>sel.innerHTML+=`<option value="${h.id}">${esc(h.nombre)}</option>`);
   document.getElementById('modalSiniestroTitle').textContent=id?'Editar siniestro':'Nuevo siniestro';
   if(id){
     const s=STATE.siniestros.find(x=>x.id===id);
@@ -2514,7 +2520,7 @@ function openModalSiniestro(id=null){
     document.getElementById('sinEditId').value=id;
   } else {
     ['sinTitulo','sinDescripcion','sinSeguro','sinExpediente','sinCoste'].forEach(f=>document.getElementById(f).value='');
-    document.getElementById('sinFecha').value=new Date().toISOString().split('T')[0];
+    document.getElementById('sinFecha').value=hoyLocal();
     document.getElementById('sinEstado').value='abierto';
     document.getElementById('sinTipo').value='otro';
     document.getElementById('sinHabitacion').value='';
@@ -2551,7 +2557,7 @@ async function deleteSiniestro(id){
 function openModalNotaSiniestro(id){
   document.getElementById('notaSinId').value=id;
   document.getElementById('notaSinTexto').value='';
-  document.getElementById('notaSinFecha').value=new Date().toISOString().split('T')[0];
+  document.getElementById('notaSinFecha').value=hoyLocal();
   openModal('modalNotaSiniestro');
 }
 
@@ -2592,15 +2598,15 @@ function renderSiniestros(){
     const notas=(s.notas||[]).slice().reverse();
     const notasHtml=notas.length?notas.map(n=>`
       <div style="background:var(--surface2);border-radius:6px;padding:8px 10px;margin-top:6px">
-        <div style="font-size:12px;font-weight:500">${n.texto}</div>
+        <div style="font-size:12px;font-weight:500">${esc(n.texto)}</div>
         <div class="text-sm text-muted" style="margin-top:3px">${n.fecha||'—'}</div>
       </div>`).join(''):'<div class="text-sm text-muted" style="margin-top:6px">Sin notas de seguimiento.</div>';
     return `<div class="card" style="grid-column:span 1">
       <div class="card-header">
         <div style="flex:1;min-width:0">
           <div style="font-size:18px;margin-bottom:4px">${tipo.icon}</div>
-          <div class="card-title">${s.titulo}</div>
-          <div class="text-sm text-muted">${tipo.label}${hab?' · '+hab.nombre:''}</div>
+          <div class="card-title">${esc(s.titulo)}</div>
+          <div class="text-sm text-muted">${esc(tipo.label)}${hab?' · '+esc(hab.nombre):''}</div>
         </div>
         <div class="card-actions">
           <button class="btn btn-secondary btn-sm btn-icon" onclick="openModalSiniestro('${s.id}')">✏️</button>
@@ -2608,13 +2614,13 @@ function renderSiniestros(){
         </div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px">
-        <span class="badge ${est.badge}">● ${est.label}</span>
+        <span class="badge ${est.badge}">● ${esc(est.label)}</span>
         <span class="text-sm text-muted">${s.fecha||'—'}</span>
       </div>
-      ${s.descripcion?`<div class="text-sm" style="margin-bottom:10px;color:var(--text)">${s.descripcion}</div>`:''}
+      ${s.descripcion?`<div class="text-sm" style="margin-bottom:10px;color:var(--text)">${esc(s.descripcion)}</div>`:''}
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
-        ${s.seguro?`<span class="mob-card-pill">🛡️ ${s.seguro}</span>`:''}
-        ${s.expediente?`<span class="mob-card-pill">📋 ${s.expediente}</span>`:''}
+        ${s.seguro?`<span class="mob-card-pill">🛡️ ${esc(s.seguro)}</span>`:''}
+        ${s.expediente?`<span class="mob-card-pill">📋 ${esc(s.expediente)}</span>`:''}
         ${s.coste?`<span class="mob-card-pill">💶 €${fmt(s.coste)}</span>`:''}
       </div>
       <!-- Estado rápido -->
@@ -2697,7 +2703,7 @@ function renderDatosFilters(){
   const wrap=document.getElementById('datosFilters');if(!wrap)return;
   const cats=[...new Set(STATE.datosInteres.map(d=>d.categoria))];
   wrap.innerHTML=`<button class="filter-btn ${datoFilter==='todos'?'active':''}" onclick="filterDatos('todos',this)">Todos</button>`;
-  cats.forEach(c=>{const cat=DATO_CATS[c]||DATO_CATS.otro;wrap.innerHTML+=`<button class="filter-btn ${datoFilter===c?'active':''}" onclick="filterDatos('${c}',this)">${cat.icon} ${cat.label}</button>`;});
+  cats.forEach(c=>{const cat=DATO_CATS[c]||DATO_CATS.otro;wrap.innerHTML+=`<button class="filter-btn ${datoFilter===c?'active':''}" onclick="filterDatos('${c}',this)">${cat.icon} ${esc(cat.label)}</button>`;});
 }
 
 function renderDatosInteres(){
@@ -2720,8 +2726,8 @@ function renderDatosInteres(){
       <div class="card-header">
         <div style="flex:1;min-width:0">
           <div style="font-size:16px;margin-bottom:4px">${cat.icon}</div>
-          <div class="card-title">${d.nombre}</div>
-          <div class="text-sm text-muted">${cat.label}${d.compania?' · '+d.compania:''}</div>
+          <div class="card-title">${esc(d.nombre)}</div>
+          <div class="text-sm text-muted">${esc(cat.label)}${d.compania?' · '+esc(d.compania):''}</div>
         </div>
         <div class="card-actions">
           <button class="btn btn-secondary btn-sm btn-icon" onclick="openModalDato('${d.id}')">✏️</button>
@@ -2730,12 +2736,12 @@ function renderDatosInteres(){
       </div>
       ${alertaVence?`<div style="margin-bottom:10px">${alertaVence}</div>`:''}
       <div style="display:flex;flex-direction:column;gap:5px">
-        ${d.poliza?`<div class="room-detail-row"><span class="room-detail-label">Póliza/Ref.</span><span class="room-detail-value">${d.poliza}</span></div>`:''}
-        ${d.telefono?`<div class="room-detail-row"><span class="room-detail-label">Teléfono</span><span class="room-detail-value"><a href="tel:${d.telefono}" style="color:var(--accent)">${d.telefono}</a></span></div>`:''}
+        ${d.poliza?`<div class="room-detail-row"><span class="room-detail-label">Póliza/Ref.</span><span class="room-detail-value">${esc(d.poliza)}</span></div>`:''}
+        ${d.telefono?`<div class="room-detail-row"><span class="room-detail-label">Teléfono</span><span class="room-detail-value"><a href="tel:${esc(d.telefono)}" style="color:var(--accent)">${esc(d.telefono)}</a></span></div>`:''}
         ${d.precio?`<div class="room-detail-row"><span class="room-detail-label">Precio</span><span class="room-detail-value text-green">€${fmt(d.precio)}${d.periodo?' /'+d.periodo:''}</span></div>`:''}
         ${d.fecha_inicio?`<div class="room-detail-row"><span class="room-detail-label">Inicio</span><span class="room-detail-value text-muted">${fmtD(d.fecha_inicio)}</span></div>`:''}
         ${d.fecha_fin?`<div class="room-detail-row"><span class="room-detail-label">Vencimiento</span><span class="room-detail-value ${diasVence!==null&&diasVence<=60?'text-yellow':'text-muted'}">${fmtD(d.fecha_fin)}</span></div>`:''}
-        ${d.notas?`<div style="margin-top:8px;font-size:12px;color:var(--text2);background:var(--surface2);border-radius:6px;padding:8px">${d.notas}</div>`:''}
+        ${d.notas?`<div style="margin-top:8px;font-size:12px;color:var(--text2);background:var(--surface2);border-radius:6px;padding:8px">${esc(d.notas)}</div>`:''}
       </div>
     </div>`;
   }).join('');
@@ -2784,8 +2790,8 @@ function renderPropietariosTable(){
   }
   tbody.innerHTML=STATE.propietarios.map(p=>`
     <tr>
-      <td><strong>${p.nombre}</strong></td>
-      <td class="text-muted">${p.email||'—'}</td>
+      <td><strong>${esc(p.nombre)}</strong></td>
+      <td class="text-muted">${esc(p.email||'—')}</td>
       <td><div class="flex gap-2">
         <button class="btn btn-secondary btn-sm" onclick="openModalPropietario('${p.id}')">✏️</button>
         <button class="btn btn-danger btn-sm" onclick="deletePropietario('${p.id}')">🗑</button>
@@ -2798,7 +2804,7 @@ function populatePropietarioSelects(){
   if(sel){
     const cur=sel.value;
     sel.innerHTML='<option value="">Ambos / Común</option>';
-    STATE.propietarios.forEach(p=>sel.innerHTML+=`<option value="${p.id}">${p.nombre}</option>`);
+    STATE.propietarios.forEach(p=>sel.innerHTML+=`<option value="${p.id}">${esc(p.nombre)}</option>`);
     if(cur)sel.value=cur;
   }
   // Filtro banco
@@ -2806,7 +2812,7 @@ function populatePropietarioSelects(){
   if(filt){
     const cur2=filt.value;
     filt.innerHTML='<option value="">Todos los propietarios</option><option value="_comun">Ambos / Común</option>';
-    STATE.propietarios.forEach(p=>filt.innerHTML+=`<option value="${p.id}">${p.nombre}</option>`);
+    STATE.propietarios.forEach(p=>filt.innerHTML+=`<option value="${p.id}">${esc(p.nombre)}</option>`);
     if(cur2)filt.value=cur2;
   }
 }
@@ -2859,7 +2865,7 @@ function renderBugs(){
     const resuelto=b.tipo==='resuelto';
     return `<div class="card" style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;margin-bottom:10px;opacity:${resuelto?'0.6':'1'}">
       <div style="flex:1;min-width:0">
-        <div style="font-size:13px;color:var(--text);white-space:pre-wrap;word-break:break-word;text-decoration:${resuelto?'line-through':'none'}">${b.texto}</div>
+        <div style="font-size:13px;color:var(--text);white-space:pre-wrap;word-break:break-word;text-decoration:${resuelto?'line-through':'none'}">${esc(b.texto)}</div>
         <div class="text-sm text-muted" style="margin-top:5px">${new Date(b.created_at).toLocaleDateString('es')} · <span class="badge badge-${resuelto?'pagado':'pendiente'}" style="font-size:10px">${resuelto?'✅ Completado':'🔴 Pendiente'}</span></div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0">
@@ -2935,14 +2941,14 @@ function exportarBancoExcel(){
     const ws=XLSX.utils.json_to_sheet(rows);
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,'Banco');
-    const mes=document.getElementById('bancoFiltMes')?.value||new Date().toISOString().slice(0,7);
+    const mes=document.getElementById('bancoFiltMes')?.value||mesLocal();
     XLSX.writeFile(wb,'banco_'+mes+'.xlsx');
   } else {
     // Fallback CSV
     const header=Object.keys(rows[0]);
     const csv=[header.join(','),...rows.map(r=>header.map(h=>'"'+(r[h]+'').replace(/"/g,'""')+'"').join(','))].join('\n');
     const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
-    const mes=document.getElementById('bancoFiltMes')?.value||new Date().toISOString().slice(0,7);
+    const mes=document.getElementById('bancoFiltMes')?.value||mesLocal();
     a.download='banco_'+mes+'.csv';a.click();
   }
   toast('Descargando…');
@@ -2952,7 +2958,7 @@ function filterBanco(f,btn){bancoFilter=f;document.querySelectorAll('#page-banco
 
 function copiarMovimientoBanco(id){
   const m=STATE.banco.find(x=>x.id===id);if(!m)return;
-  const hoy=new Date().toISOString().split('T')[0];
+  const hoy=hoyLocal();
   document.getElementById('modalBancoTitle').textContent='Nuevo movimiento (copia)';
   document.getElementById('bancoTipo').value=m.tipo;
   document.getElementById('bancoFecha').value=hoy;
@@ -2978,7 +2984,7 @@ function openModalBanco(id=null){
     document.getElementById('bancoEditId').value=id;
   } else {
     document.getElementById('bancoTipo').value='ingreso';
-    document.getElementById('bancoFecha').value=new Date().toISOString().split('T')[0];
+    document.getElementById('bancoFecha').value=hoyLocal();
     document.getElementById('bancoConcepto').value='';
     document.getElementById('bancoImporte').value='';
     document.getElementById('bancoPropietario').value='';
@@ -3040,7 +3046,7 @@ function renderBanco(){
     </div>`;
   STATE.propietarios.forEach(p=>{
     const s=saldoProp[p.id]||0;
-    kpiHtml+=`<div class="stat-card"><div class="stat-value ${s>=0?'stat-accent':'stat-red'}">€${fmt(s)}</div><div class="stat-label">Saldo ${p.nombre}</div></div>`;
+    kpiHtml+=`<div class="stat-card"><div class="stat-value ${s>=0?'stat-accent':'stat-red'}">€${fmt(s)}</div><div class="stat-label">Saldo ${esc(p.nombre)}</div></div>`;
   });
   document.getElementById('bancoKpis').innerHTML=kpiHtml;
 
@@ -3063,12 +3069,12 @@ function renderBanco(){
   }
   tbody.innerHTML=movs.map(m=>{
     const prop=STATE.propietarios.find(p=>p.id===m.propietario_id);
-    const propLabel=prop?prop.nombre:'<span class="text-muted">Ambos</span>';
+    const propLabel=prop?esc(prop.nombre):'<span class="text-muted">Ambos</span>';
     const esAutomatic=m.origen&&m.origen!=='manual';
     return `<tr>
       <td class="text-muted">${fmtD(m.fecha)}</td>
       <td>${m.tipo==='ingreso'?'<span class="badge badge-pagado">💚 Ingreso</span>':'<span class="badge badge-impagado">🔴 Gasto</span>'}</td>
-      <td><strong>${m.concepto}</strong>${m.notas?`<div class="text-sm text-muted">${m.notas}</div>`:''}</td>
+      <td><strong>${esc(m.concepto)}</strong>${m.notas?`<div class="text-sm text-muted">${esc(m.notas)}</div>`:''}</td>
       <td>${propLabel}</td>
       <td class="${m.tipo==='ingreso'?'text-green':'text-red'} font-bold">${m.tipo==='ingreso'?'+':'-'}€${fmt(m.importe)}</td>
       <td class="text-muted text-sm">${esAutomatic?'<span class="badge badge-pendiente" style="font-size:10px">Auto</span>':'Manual'}</td>
@@ -3085,10 +3091,10 @@ function renderBanco(){
     const prop=STATE.propietarios.find(p=>p.id===m.propietario_id);
     return `<div class="mob-card">
       <div class="mob-card-header" style="align-items:flex-start">
-        <div style="flex:1;min-width:0;margin-right:10px"><div class="mob-card-name" style="word-break:break-word">${m.concepto}</div><div class="mob-card-sub">${fmtD(m.fecha)}${prop?' · '+prop.nombre:' · Ambos'}</div></div>
+        <div style="flex:1;min-width:0;margin-right:10px"><div class="mob-card-name" style="word-break:break-word">${esc(m.concepto)}</div><div class="mob-card-sub">${fmtD(m.fecha)}${prop?' · '+esc(prop.nombre):' · Ambos'}</div></div>
         <span class="${m.tipo==='ingreso'?'text-green':'text-red'} font-bold" style="font-size:15px;flex-shrink:0;white-space:nowrap">${m.tipo==='ingreso'?'+':'-'}€${fmt(m.importe)}</span>
       </div>
-      ${m.notas?`<div class="text-sm text-muted" style="margin-bottom:8px">${m.notas}</div>`:''}
+      ${m.notas?`<div class="text-sm text-muted" style="margin-bottom:8px">${esc(m.notas)}</div>`:''}
       <div class="mob-card-actions">
         <button class="btn btn-secondary btn-sm" onclick="copiarMovimientoBanco('${m.id}')">📋 Copiar</button>
         <button class="btn btn-secondary btn-sm" onclick="openModalBanco('${m.id}')">✏️ Editar</button>
@@ -3110,7 +3116,7 @@ function renderExtractor(){
   // Poblar el select de tipos de suministro
   const sel=document.getElementById('extGTipo');
   if(sel){
-    sel.innerHTML=STATE.tiposSupl.map(s=>`<option value="${s.nombre}">${s.icono} ${s.nombre}</option>`).join('');
+    sel.innerHTML=STATE.tiposSupl.map(s=>`<option value="${esc(s.nombre)}">${esc(s.icono)} ${esc(s.nombre)}</option>`).join('');
     sel.onchange=()=>extOnTipoChange();
   }
 }
@@ -3285,7 +3291,7 @@ async function ejecutarExtraccion(){
 // ── MODO FACTURA ────────────────────────────────────────────────
 async function extraerFactura(){
   const tiposNombres=STATE.tiposSupl.map(s=>s.nombre).join(', ');
-  const hoy=new Date().toISOString().split('T')[0];
+  const hoy=hoyLocal();
   const prompt=`Eres un asistente que extrae datos de facturas de suministros (luz, agua, gas, internet, comunidad, etc.) para una app de gestión de pisos de alquiler.
 
 Analiza la imagen y extrae los siguientes datos en JSON puro (sin markdown, sin explicaciones):
@@ -3390,7 +3396,7 @@ async function crearGastoDesdeExtraccion(){
 
 // ── MODO EXTRACTO BANCARIO ──────────────────────────────────────
 async function extraerExtracto(){
-  const hoy=new Date().toISOString().split('T')[0];
+  const hoy=hoyLocal();
   const propietarios=STATE.propietarios.map(p=>p.nombre).join(', ')||'sin propietarios';
 
   const prompt=`Eres un asistente que extrae movimientos bancarios de capturas de pantalla o documentos de extractos bancarios para una app de gestión de pisos de alquiler.
@@ -3470,7 +3476,7 @@ SOLO JSON, nada más.`;
 }
 
 function renderTablaExtracto(movs){
-  const propOpts='<option value="">Ambos</option>'+STATE.propietarios.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join('');
+  const propOpts='<option value="">Ambos</option>'+STATE.propietarios.map(p=>`<option value="${p.id}">${esc(p.nombre)}</option>`).join('');
   const html=`<table style="width:100%;border-collapse:collapse;font-size:12px">
     <thead><tr style="border-bottom:1px solid var(--border)">
       <th style="padding:6px;text-align:center;width:32px">✓</th>
@@ -3527,8 +3533,7 @@ async function crearMovimientosDesdeExtraccion(){
     }catch{err++;}
   }
   if(ok>0){
-    const{data}=await sb.from('movimientos_banco').select('*').eq('user_id',STATE.user.id).order('fecha',{ascending:false});
-    if(data)STATE.banco=data;
+    try{STATE.banco=await cargarTabla('movimientos_banco');}catch(_){}
     bumpSync();
     limpiarExtractor();
     toast(`✅ ${ok} movimiento(s) creados${err?' — '+err+' errores':''}`);
