@@ -8,13 +8,24 @@
 <!-- Supabase JS SDK -->
 
 <style>
-:root{--bg:#0f0f13;--surface:#18181f;--surface2:#1f1f2a;--border:#2a2a38;--accent:#7c6af7;--accent2:#f7c46a;--accent3:#6af7b8;--danger:#f76a6a;--text:#e8e8f0;--text2:#8888a8;--radius:12px;--radius-lg:18px;}
+:root{--bg:#0f0f13;--surface:#18181f;--surface2:#1f1f2a;--border:#2a2a38;--accent:#7c6af7;--accent2:#f7c46a;--accent3:#6af7b8;--danger:#f76a6a;--text:#e8e8f0;--text2:#8888a8;--radius:12px;--radius-lg:18px;--on-accent:#fff;--font-title:'Syne',sans-serif;--font-body:'DM Sans',sans-serif;--shadow:0 6px 24px rgba(0,0,0,.5);color-scheme:dark;}
+.tema-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;}
+.tema-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius-lg);padding:12px;cursor:pointer;text-align:left;font:inherit;color:var(--text);transition:border-color .15s;}
+.tema-card:hover{border-color:var(--accent);}
+.tema-card.activo{border-color:var(--text);}
+.tema-prev{border-radius:8px;overflow:hidden;border:1px solid rgba(0,0,0,.08);margin-bottom:10px;}
+.tema-prev-bar{height:22px;display:flex;align-items:center;gap:5px;padding:0 8px;}
+.tema-prev-bar i{width:8px;height:8px;border-radius:50%;display:block;}
+.tema-prev-body{display:flex;gap:6px;padding:8px;}
+.tema-prev-body span{flex:1;height:38px;display:block;}
+.tema-nombre{font-family:var(--font-title);font-weight:700;font-size:14px;display:flex;justify-content:space-between;}
+.tema-desc{font-size:12px;color:var(--text2);margin-top:3px;}
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{width:100%;max-width:100%;overflow-x:hidden;}
-body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:14px;min-height:100vh;}
 #authScreen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;}
 .auth-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:36px 30px;width:100%;max-width:360px;}
-.auth-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:24px;margin-bottom:4px;text-align:center;}
+.auth-logo{font-family:var(--font-title);font-weight:800;font-size:24px;margin-bottom:4px;text-align:center;}
 .auth-logo span{color:var(--accent);}
 .auth-sub{font-size:12px;color:var(--text2);text-align:center;margin-bottom:28px;}
 .auth-error{color:var(--danger);font-size:12px;min-height:18px;margin-top:8px;text-align:center;}
@@ -23,63 +34,63 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;fon
 .page{display:none;}.page.active{display:block;}
 .sidebar{width:220px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:100;}
 .sidebar-logo{padding:24px 20px 18px;border-bottom:1px solid var(--border);}
-.logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;letter-spacing:-.5px;}
+.logo-text{font-family:var(--font-title);font-weight:800;font-size:17px;letter-spacing:-.5px;}
 .logo-text span{color:var(--accent);}
 .logo-sub{font-size:11px;color:var(--text2);margin-top:2px;}
 .sidebar-nav{padding:14px 10px;flex:1;overflow-y:auto;}
 .nav-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text2);padding:0 10px;margin:14px 0 5px;}
 .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;color:var(--text2);font-size:13px;transition:all .15s;margin-bottom:2px;font-weight:500;}
 .nav-item:hover{background:var(--surface2);color:var(--text);}
-.nav-item.active{background:rgba(124,106,247,.15);color:var(--accent);}
+.nav-item.active{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);}
 .nav-item .icon{font-size:16px;width:20px;text-align:center;}
 .sidebar-footer{padding:14px;border-top:1px solid var(--border);}
 .piso-badge{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;}
-.piso-badge .piso-name{font-weight:600;color:var(--text);font-family:'Syne',sans-serif;}
+.piso-badge .piso-name{font-weight:600;color:var(--text);font-family:var(--font-title);}
 .piso-badge .piso-addr{color:var(--text2);font-size:11px;margin-top:2px;}
 .user-badge{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;}
 .user-email{font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;gap:12px;flex-wrap:wrap;}
-.page-title{font-family:'Syne',sans-serif;font-weight:800;font-size:24px;letter-spacing:-.5px;}
+.page-title{font-family:var(--font-title);font-weight:800;font-size:24px;letter-spacing:-.5px;}
 .page-sub{color:var(--text2);font-size:13px;margin-top:3px;}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;}
-.btn-primary{background:var(--accent);color:#fff;}.btn-primary:hover{background:#6a58e0;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-family:var(--font-body);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;}
+.btn-primary{background:var(--accent);color:var(--on-accent);}.btn-primary:hover{filter:brightness(.92);}
 .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
-.btn-danger{background:rgba(247,106,106,.15);color:var(--danger);border:1px solid rgba(247,106,106,.3);}.btn-danger:hover{background:rgba(247,106,106,.25);}
+.btn-danger{background:color-mix(in srgb,var(--danger) 15%,transparent);color:var(--danger);border:1px solid color-mix(in srgb,var(--danger) 30%,transparent);}.btn-danger:hover{background:color-mix(in srgb,var(--danger) 25%,transparent);}
 .btn-sm{padding:6px 12px;font-size:12px;}.btn-icon{padding:7px;}.btn:disabled{opacity:.5;cursor:not-allowed;}
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
 .cards-grid-habs{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;align-items:stretch;}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;transition:border-color .15s;}
 .card:hover{border-color:var(--accent);}
 .card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
-.card-title{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;}
+.card-title{font-family:var(--font-title);font-weight:700;font-size:15px;}
 .card-actions{display:flex;gap:6px;flex-shrink:0;}
 .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;}
-.badge-libre{background:rgba(106,247,184,.12);color:var(--accent3);border:1px solid rgba(106,247,184,.25);}
-.badge-ocupada{background:rgba(247,196,106,.12);color:var(--accent2);border:1px solid rgba(247,196,106,.25);}
-.badge-reservada{background:rgba(124,106,247,.12);color:var(--accent);border:1px solid rgba(124,106,247,.25);}
-.badge-mantenimiento{background:rgba(247,106,106,.12);color:var(--danger);border:1px solid rgba(247,106,106,.25);}
-.badge-activo{background:rgba(106,247,184,.12);color:var(--accent3);border:1px solid rgba(106,247,184,.25);}
-.badge-moroso{background:rgba(247,106,106,.12);color:var(--danger);border:1px solid rgba(247,106,106,.25);}
-.badge-pasado{background:rgba(136,136,168,.12);color:var(--text2);border:1px solid var(--border);}
-.badge-pagado{background:rgba(106,247,184,.12);color:var(--accent3);border:1px solid rgba(106,247,184,.25);}
-.badge-pendiente{background:rgba(247,196,106,.12);color:var(--accent2);border:1px solid rgba(247,196,106,.25);}
-.badge-impagado{background:rgba(247,106,106,.12);color:var(--danger);border:1px solid rgba(247,106,106,.25);}
-.badge-vigente{background:rgba(106,247,184,.12);color:var(--accent3);border:1px solid rgba(106,247,184,.25);}
-.badge-finalizado{background:rgba(136,136,168,.12);color:var(--text2);border:1px solid var(--border);}
+.badge-libre{background:color-mix(in srgb,var(--accent3) 12%,transparent);color:var(--accent3);border:1px solid color-mix(in srgb,var(--accent3) 25%,transparent);}
+.badge-ocupada{background:color-mix(in srgb,var(--accent2) 12%,transparent);color:var(--accent2);border:1px solid color-mix(in srgb,var(--accent2) 25%,transparent);}
+.badge-reservada{background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 25%,transparent);}
+.badge-mantenimiento{background:color-mix(in srgb,var(--danger) 12%,transparent);color:var(--danger);border:1px solid color-mix(in srgb,var(--danger) 25%,transparent);}
+.badge-activo{background:color-mix(in srgb,var(--accent3) 12%,transparent);color:var(--accent3);border:1px solid color-mix(in srgb,var(--accent3) 25%,transparent);}
+.badge-moroso{background:color-mix(in srgb,var(--danger) 12%,transparent);color:var(--danger);border:1px solid color-mix(in srgb,var(--danger) 25%,transparent);}
+.badge-pasado{background:color-mix(in srgb,var(--text2) 12%,transparent);color:var(--text2);border:1px solid var(--border);}
+.badge-pagado{background:color-mix(in srgb,var(--accent3) 12%,transparent);color:var(--accent3);border:1px solid color-mix(in srgb,var(--accent3) 25%,transparent);}
+.badge-pendiente{background:color-mix(in srgb,var(--accent2) 12%,transparent);color:var(--accent2);border:1px solid color-mix(in srgb,var(--accent2) 25%,transparent);}
+.badge-impagado{background:color-mix(in srgb,var(--danger) 12%,transparent);color:var(--danger);border:1px solid color-mix(in srgb,var(--danger) 25%,transparent);}
+.badge-vigente{background:color-mix(in srgb,var(--accent3) 12%,transparent);color:var(--accent3);border:1px solid color-mix(in srgb,var(--accent3) 25%,transparent);}
+.badge-finalizado{background:color-mix(in srgb,var(--text2) 12%,transparent);color:var(--text2);border:1px solid var(--border);}
 .stats-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:18px;}
 .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:11px 13px;min-width:0;}
-.stat-value{font-family:'Syne',sans-serif;font-size:clamp(14px,2vw,22px);font-weight:800;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.stat-value{font-family:var(--font-title);font-size:clamp(14px,2vw,22px);font-weight:800;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .stat-label{color:var(--text2);font-size:12px;margin-top:4px;}
 .sortable{cursor:pointer;user-select:none;white-space:nowrap}.sortable:hover{color:var(--accent)}.sort-icon{font-size:10px;opacity:.4;margin-left:2px}.sort-icon.asc,.sort-icon.desc{opacity:1;color:var(--accent)}
 .banco-kpis{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;}
 .banco-kpis .stat-card{flex:0 0 auto;min-width:130px;max-width:190px;padding:10px 13px;}
-.banco-kpis .stat-value{font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Syne',sans-serif;line-height:1.2;}
+.banco-kpis .stat-value{font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--font-title);line-height:1.2;}
 .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
 table{width:100%;border-collapse:collapse;}
 thead{background:var(--surface2);}
 th{padding:11px 13px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);font-weight:600;white-space:nowrap;}
 td{padding:11px 13px;border-top:1px solid var(--border);font-size:13px;}
-tr:hover td{background:rgba(124,106,247,.04);}
+tr:hover td{background:color-mix(in srgb,var(--accent) 4%,transparent);}
 .mob-list{display:none;}
 .mob-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;}
 .mob-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px;}
@@ -93,11 +104,11 @@ tr:hover td{background:rgba(124,106,247,.04);}
 .modal-overlay.open{display:flex;}
 .modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px;width:100%;max-width:500px;animation:slideUp .2s ease;margin:auto 0;}
 @keyframes slideUp{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
-.modal-title{font-family:'Syne',sans-serif;font-weight:700;font-size:17px;margin-bottom:16px;}
+.modal-title{font-family:var(--font-title);font-weight:700;font-size:17px;margin-bottom:16px;}
 .form-group{margin-bottom:13px;}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:11px;}.form-row>*{min-width:0;}
 label{display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;}
-input,select,textarea{width:100%;min-width:0;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .15s;}
+input,select,textarea{width:100%;min-width:0;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none;transition:border-color .15s;}
 input[type=date],input[type=month]{appearance:none;-webkit-appearance:none;}
 input:focus,select:focus,textarea:focus{border-color:var(--accent);}
 select option{background:var(--surface2);}
@@ -111,12 +122,12 @@ textarea{resize:vertical;min-height:68px;}
 .equip-tag{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 9px;font-size:11px;color:var(--text2);}
 .filters{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch;}
 .filters::-webkit-scrollbar{display:none;}
-.filter-btn{padding:6px 13px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap;flex-shrink:0;}
-.filter-btn:hover,.filter-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.filter-btn{padding:6px 13px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;font-family:var(--font-body);transition:all .15s;white-space:nowrap;flex-shrink:0;}
+.filter-btn:hover,.filter-btn.active{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
 .empty{text-align:center;padding:44px 20px;color:var(--text2);}
 .empty-icon{font-size:34px;margin-bottom:9px;}
-.empty-title{font-family:'Syne',sans-serif;font-size:15px;color:var(--text);margin-bottom:5px;}
-.toast{position:fixed;bottom:76px;right:14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 15px;font-size:13px;z-index:9999;transform:translateY(16px);opacity:0;transition:all .28s;box-shadow:0 6px 24px rgba(0,0,0,.5);}
+.empty-title{font-family:var(--font-title);font-size:15px;color:var(--text);margin-bottom:5px;}
+.toast{position:fixed;bottom:76px;right:14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 15px;font-size:13px;z-index:9999;transform:translateY(16px);opacity:0;transition:all .28s;box-shadow:var(--shadow);}
 .toast.show{transform:none;opacity:1;}
 .toast.success{border-color:var(--accent3);}.toast.error{border-color:var(--danger);}
 #loadingOverlay{position:fixed;inset:0;background:var(--bg);z-index:8000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;}
@@ -129,21 +140,21 @@ textarea{resize:vertical;min-height:68px;}
 .sync-dot.ok{background:var(--accent3);}.sync-dot.err{background:var(--danger);}.sync-dot.pulse{background:var(--accent2);animation:pulse 1.2s infinite;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
 .cfg-tabs{display:flex;gap:0;margin-bottom:22px;border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}.cfg-tabs::-webkit-scrollbar{display:none;}
-.cfg-tab{padding:10px 20px;font-size:13px;font-weight:500;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;transition:all .15s;font-family:'DM Sans',sans-serif;background:none;border-top:none;border-left:none;border-right:none;flex-shrink:0;white-space:nowrap;}
+.cfg-tab{padding:10px 20px;font-size:13px;font-weight:500;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;transition:all .15s;font-family:var(--font-body);background:none;border-top:none;border-left:none;border-right:none;flex-shrink:0;white-space:nowrap;}
 .cfg-tab:hover{color:var(--text);}
 .cfg-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
 .cfg-panel{display:none;}.cfg-panel.active{display:block;}
 .cfg-header{display:flex;flex-direction:row;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px;}
 .cfg-btn{flex-shrink:0;white-space:nowrap;}
 .gastos-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:20px;}
-.gastos-tab{padding:9px 18px;font-size:13px;font-weight:500;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;transition:all .15s;font-family:'DM Sans',sans-serif;background:none;border-top:none;border-left:none;border-right:none;}
+.gastos-tab{padding:9px 18px;font-size:13px;font-weight:500;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;transition:all .15s;font-family:var(--font-body);background:none;border-top:none;border-left:none;border-right:none;}
 .gastos-tab:hover{color:var(--text);}
 .gastos-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
 .gastos-panel{display:none;}.gastos-panel.active{display:block;}
 .gantt-wrap{overflow-x:auto;margin-top:10px;}.chart-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}.chart-scroll svg{display:block;}
 .gantt-svg{display:block;}
 .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);z-index:200;height:60px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}.bottom-nav::-webkit-scrollbar{display:none;}
-.bottom-nav-item{flex:0 0 auto;min-width:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer;color:var(--text2);font-size:9px;font-family:'DM Sans',sans-serif;font-weight:500;padding:3px 4px;transition:color .15s;border:none;background:none;}
+.bottom-nav-item{flex:0 0 auto;min-width:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer;color:var(--text2);font-size:9px;font-family:var(--font-body);font-weight:500;padding:3px 4px;transition:color .15s;border:none;background:none;}
 .bottom-nav-item .bn-icon{font-size:16px;line-height:1.1;}
 .bottom-nav-item.active{color:var(--accent);}
 @media(min-width:769px){.sidebar{display:flex;}.main{margin-left:220px;}.bottom-nav{display:none!important;}.table-wrap{display:block;}.mob-list{display:none!important;}}
@@ -157,6 +168,28 @@ textarea{resize:vertical;min-height:68px;}
 .text-accent{color:var(--accent);}.text-green{color:var(--accent3);}.text-yellow{color:var(--accent2);}.text-red{color:var(--danger);}.text-muted{color:var(--text2);}.text-sm{font-size:12px;}
 </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ESTILOS DE LA APP — cada tema redefine las variables de color, radios y tipografía
+const TEMAS={
+  noche:{nombre:'Noche violeta',desc:'El estilo original: oscuro con acento violeta',oscuro:true,v:{bg:'#0f0f13',surface:'#18181f',surface2:'#1f1f2a',border:'#2a2a38',accent:'#7c6af7',accent2:'#f7c46a',accent3:'#6af7b8',danger:'#f76a6a',text:'#e8e8f0',text2:'#8888a8','on-accent':'#ffffff',radius:'12px','radius-lg':'18px'}},
+  pizarra:{nombre:'Pizarra oscura',desc:'Fondo oscuro con acento dorado',oscuro:true,v:{bg:'#111111',surface:'#1b1b1b',surface2:'#242424',border:'#333333',accent:'#d4a64a',accent2:'#e8c170',accent3:'#7fc8a9',danger:'#e5675b',text:'#ececec',text2:'#9a9a9a','on-accent':'#1a1a1a',radius:'10px','radius-lg':'14px'}},
+  nordico:{nombre:'Minimal nórdico',desc:'Blanco, líneas finas, sin sombras',v:{bg:'#ffffff',surface:'#ffffff',surface2:'#f6f6f6',border:'#e2e2e2',accent:'#111111',accent2:'#a8650f',accent3:'#2f7d4f',danger:'#c53030',text:'#111111',text2:'#6b6b6b','on-accent':'#ffffff',radius:'6px','radius-lg':'8px',shadow:'none'}},
+  oceano:{nombre:'Océano',desc:'Azul marino y tarjetas blancas',v:{bg:'#eef3fa',surface:'#ffffff',surface2:'#f3f7fc',border:'#d6e2f0',accent:'#1463d6',accent2:'#b8740c',accent3:'#12825a',danger:'#d03b3b',text:'#13233a',text2:'#5c6f88','on-accent':'#ffffff',radius:'12px','radius-lg':'16px'}},
+  mediterraneo:{nombre:'Mediterráneo',desc:'Cálido, terracota y esquinas redondeadas',v:{bg:'#f6efe6',surface:'#fffaf3',surface2:'#f3e9dc',border:'#e5d6c3',accent:'#b5532c',accent2:'#b07a12',accent3:'#4f8a5b',danger:'#b93a32',text:'#3a2a1f',text2:'#8a7360','on-accent':'#ffffff',radius:'16px','radius-lg':'22px'}},
+  tinta:{nombre:'Tinta editorial',desc:'Crema y azul marino, serifa y marcos nítidos',v:{bg:'#f4efe3',surface:'#fbf8f0',surface2:'#efe8d8',border:'#c9bfa8',accent:'#1f2a44',accent2:'#9a6b12',accent3:'#2e6b4f',danger:'#a3302a',text:'#1c2333',text2:'#5f6472','on-accent':'#ffffff',radius:'2px','radius-lg':'4px','font-title':"Georgia,'Times New Roman',serif",shadow:'none'}},
+  vibrante:{nombre:'Moderno vibrante',desc:'Violeta y rosa, muy redondeado',v:{bg:'#f6f3ff',surface:'#ffffff',surface2:'#f1ecff',border:'#e3dafc',accent:'#7c3aed',accent2:'#db2777',accent3:'#059669',danger:'#e11d48',text:'#1e1336',text2:'#6b5f86','on-accent':'#ffffff',radius:'18px','radius-lg':'26px'}},
+  bosque:{nombre:'Bosque',desc:'Verde profundo y tonos naturales',v:{bg:'#f1f5f1',surface:'#ffffff',surface2:'#eaf1ea',border:'#d3e0d3',accent:'#1f5f3a',accent2:'#a8740f',accent3:'#2f8a55',danger:'#c0392b',text:'#16261b',text2:'#5d7062','on-accent':'#ffffff',radius:'10px','radius-lg':'14px'}}
+};
+function aplicarTema(id){
+  const t=TEMAS[id]||TEMAS.noche, r=document.documentElement;
+  Object.entries(TEMAS.noche.v).forEach(([k,val])=>r.style.setProperty('--'+k,val)); // base
+  ['font-title','shadow'].forEach(k=>r.style.removeProperty('--'+k));
+  Object.entries(t.v).forEach(([k,val])=>r.style.setProperty('--'+k,val));
+  r.style.colorScheme=t.oscuro?'dark':'light';
+  r.dataset.tema=TEMAS[id]?id:'noche';
+}
+try{aplicarTema(localStorage.getItem('tema')||'noche');}catch(_){aplicarTema('noche');}
+</script>
 </head>
 <body>
 <div id="loadingOverlay"><div class="spinner"></div><div class="loading-text">Conectando…</div></div>
@@ -283,17 +316,17 @@ textarea{resize:vertical;min-height:68px;}
 </div>
 <div class="page" id="page-configurar">
   <div class="topbar"><div><div class="page-title">⚙️ Configurar</div><div class="page-sub">Configuración general</div></div></div>
-  <div class="cfg-tabs"><button class="cfg-tab active" onclick="switchCfgTab('inmuebles',this)">🏠 Inmuebles</button><button class="cfg-tab" onclick="switchCfgTab('suministros',this)">⚡ Suministros</button><button class="cfg-tab" onclick="switchCfgTab('cuenta',this)">🏢 Mi empresa</button><button class="cfg-tab" onclick="switchCfgTab('readme',this)">📖 READ ME</button></div>
+  <div class="cfg-tabs"><button class="cfg-tab active" onclick="switchCfgTab('inmuebles',this)">🏠 Inmuebles</button><button class="cfg-tab" onclick="switchCfgTab('suministros',this)">⚡ Suministros</button><button class="cfg-tab" onclick="switchCfgTab('reparto',this)">📊 Reparto facturas</button><button class="cfg-tab" onclick="switchCfgTab('cuenta',this)">🏢 Mi empresa</button><button class="cfg-tab" onclick="switchCfgTab('estilo',this)">🎨 Estilo</button><button class="cfg-tab" onclick="switchCfgTab('readme',this)">📖 READ ME</button></div>
   <div class="cfg-panel active" id="cfgpanel-inmuebles">
-    <div class="cfg-header"><div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px">Inmuebles</div><div class="text-sm text-muted">Gestiona tus propiedades</div></div><button class="btn btn-primary cfg-btn" onclick="openModalNuevoPiso()">+ Nuevo inmueble</button></div>
+    <div class="cfg-header"><div><div style="font-family:var(--font-title);font-weight:700;font-size:16px">Inmuebles</div><div class="text-sm text-muted">Gestiona tus propiedades</div></div><button class="btn btn-primary cfg-btn" onclick="openModalNuevoPiso()">+ Nuevo inmueble</button></div>
     <div id="pisosGrid"></div>
   </div>
   <div class="cfg-panel" id="cfgpanel-suministros">
-    <div class="cfg-header"><div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px">Tipos de suministro</div><div class="text-sm text-muted">Categorías usadas en Gastos</div></div><button class="btn btn-primary cfg-btn" onclick="openModalSuministro()">+ Nuevo tipo</button></div>
+    <div class="cfg-header"><div><div style="font-family:var(--font-title);font-weight:700;font-size:16px">Tipos de suministro</div><div class="text-sm text-muted">Categorías usadas en Gastos</div></div><button class="btn btn-primary cfg-btn" onclick="openModalSuministro()">+ Nuevo tipo</button></div>
     <div class="table-wrap keep-mobile"><table><thead><tr><th>Icono</th><th>Nombre</th><th>Color</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody id="suministrosTable"></tbody></table></div>
   </div>
   <div class="cfg-panel" id="cfgpanel-cuenta">
-    <div class="cfg-header"><div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px">Mi empresa</div><div class="text-sm text-muted">Nombre que aparece en el panel</div></div></div>
+    <div class="cfg-header"><div><div style="font-family:var(--font-title);font-weight:700;font-size:16px">Mi empresa</div><div class="text-sm text-muted">Nombre que aparece en el panel</div></div></div>
     <div class="card" style="max-width:440px">
       <div class="form-group" style="margin-bottom:0">
         <label>Nombre de empresa</label>
@@ -305,7 +338,7 @@ textarea{resize:vertical;min-height:68px;}
       </div>
     </div>
     <div class="card" style="max-width:440px;margin-top:16px">
-      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:10px">🌡️ Término fijo Agua Caliente</div>
+      <div style="font-family:var(--font-title);font-weight:700;font-size:14px;margin-bottom:10px">🌡️ Término fijo Agua Caliente</div>
       <div class="text-sm text-muted" style="margin-bottom:12px">Importe fijo mensual de ACS (Agua Caliente Sanitaria) que se genera como gasto pendiente de prorrateo para todos los inquilinos activos.</div>
       <div class="form-group" style="margin-bottom:0">
         <label>Importe mensual (€)</label>
@@ -318,7 +351,7 @@ textarea{resize:vertical;min-height:68px;}
     <div style="margin-top:20px;max-width:440px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <div>
-          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px">Propietarios</div>
+          <div style="font-family:var(--font-title);font-weight:700;font-size:14px">Propietarios</div>
           <div class="text-sm text-muted">Personas con participación en el inmueble</div>
         </div>
         <button class="btn btn-primary btn-sm" onclick="openModalPropietario()">+ Añadir</button>
@@ -329,15 +362,33 @@ textarea{resize:vertical;min-height:68px;}
       </table></div>
     </div>
   </div>
+  <!-- PANEL REPARTO DE FACTURAS -->
+  <div class="cfg-panel" id="cfgpanel-reparto">
+    <div class="cfg-header"><div><div style="font-family:var(--font-title);font-weight:700;font-size:16px">Reparto de facturas</div><div class="text-sm text-muted">Porcentaje de cada factura que paga cada habitación del inmueble activo</div></div></div>
+    <div class="card" style="max-width:560px">
+      <div id="repartoLista"></div>
+      <div id="repartoTotal" style="display:flex;justify-content:space-between;font-weight:700;padding:10px 0 4px;border-top:1px solid var(--border);margin-top:6px"></div>
+      <div class="text-sm text-muted" style="margin:6px 0 14px">Por defecto se reparte a partes iguales. Si una habitación está libre al generar los cobros, su parte se reparte entre las ocupadas manteniendo la proporción.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-secondary" onclick="repartoIgual()">⚖️ A partes iguales</button>
+        <button class="btn btn-primary" onclick="guardarReparto()">Guardar porcentajes</button>
+      </div>
+    </div>
+  </div>
+  <!-- PANEL ESTILO -->
+  <div class="cfg-panel" id="cfgpanel-estilo">
+    <div class="cfg-header"><div><div style="font-family:var(--font-title);font-weight:700;font-size:16px">🎨 Estilo de la app</div><div class="text-sm text-muted">Preferencia personal: cada usuario tiene la suya. Se aplica y se guarda al momento.</div></div></div>
+    <div class="tema-grid" id="temasGrid"></div>
+  </div>
   <!-- PANEL README -->
   <div class="cfg-panel" id="cfgpanel-readme">
     <div style="max-width:760px">
-      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;margin-bottom:6px">📖 Manual de uso</div>
+      <div style="font-family:var(--font-title);font-weight:800;font-size:22px;margin-bottom:6px">📖 Manual de uso</div>
       <div class="text-muted text-sm" style="margin-bottom:24px">Guía completa de la aplicación de gestión de pisos</div>
 
       <!-- FLUJO GENERAL -->
       <div class="card" style="margin-bottom:16px">
-        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:12px">🗺️ Flujo de trabajo recomendado</div>
+        <div style="font-family:var(--font-title);font-weight:700;font-size:15px;margin-bottom:12px">🗺️ Flujo de trabajo recomendado</div>
         <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
           <div style="display:flex;gap:10px;align-items:flex-start"><span style="background:var(--accent);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:11px">1</span><div><strong>Configurar</strong> → Crea tu inmueble, habitaciones y tipos de suministro.</div></div>
           <div style="display:flex;gap:10px;align-items:flex-start"><span style="background:var(--accent);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:11px">2</span><div><strong>Inquilinos + Contratos</strong> → Alta de inquilinos y asociación a habitaciones mediante contrato.</div></div>
@@ -349,7 +400,7 @@ textarea{resize:vertical;min-height:68px;}
 
       <!-- GASTOS -->
       <div class="card" style="margin-bottom:16px">
-        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:12px">⚡ Gastos — Cómo funciona</div>
+        <div style="font-family:var(--font-title);font-weight:700;font-size:15px;margin-bottom:12px">⚡ Gastos — Cómo funciona</div>
         <div style="font-size:13px;display:flex;flex-direction:column;gap:10px">
           <div><span class="badge badge-pendiente" style="margin-right:6px">Pendiente prorrateo</span>La factura está registrada pero aún no se ha repartido entre los inquilinos. Aparece en la pestaña <em>Pendientes</em>.</div>
           <div><span class="badge badge-pagado" style="margin-right:6px">Prorrateada</span>Al pulsar <strong>⚡ Cobros suministros</strong>, la factura se divide entre las habitaciones ocupadas, se generan cobros para cada inquilino y la factura pasa al <em>Histórico</em>.</div>
@@ -360,7 +411,7 @@ textarea{resize:vertical;min-height:68px;}
 
       <!-- COBROS -->
       <div class="card" style="margin-bottom:16px">
-        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:12px">💸 Cobros — Estados y automatismos</div>
+        <div style="font-family:var(--font-title);font-weight:700;font-size:15px;margin-bottom:12px">💸 Cobros — Estados y automatismos</div>
         <div style="font-size:13px;display:flex;flex-direction:column;gap:8px">
           <div><span class="badge badge-pendiente" style="margin-right:6px">Pendiente</span>Cobro generado, a la espera de recibir el pago.</div>
           <div><span class="badge badge-pagado" style="margin-right:6px">Pagado</span>Al marcar como pagado (✅) o crear un cobro directamente en estado <em>Pagado</em>, se genera automáticamente un <strong>ingreso en Banco</strong>.</div>
@@ -372,7 +423,7 @@ textarea{resize:vertical;min-height:68px;}
 
       <!-- BANCO -->
       <div class="card" style="margin-bottom:16px">
-        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:12px">🏦 Banco — Movimientos automáticos vs manuales</div>
+        <div style="font-family:var(--font-title);font-weight:700;font-size:15px;margin-bottom:12px">🏦 Banco — Movimientos automáticos vs manuales</div>
         <div style="font-size:13px;display:flex;flex-direction:column;gap:8px">
           <div><span class="badge badge-pendiente" style="font-size:10px;margin-right:6px">Auto</span>Apuntes creados automáticamente por la app: cobros marcados como pagados, gastos directos, gastos del histórico marcados como cobrados.</div>
           <div><strong>Manual</strong>: movimientos que introduces tú directamente (transferencias, ingresos extraordinarios, etc.).</div>
@@ -382,7 +433,7 @@ textarea{resize:vertical;min-height:68px;}
 
       <!-- ESTADISTICAS -->
       <div class="card" style="margin-bottom:16px">
-        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:12px">📈 Estadísticas</div>
+        <div style="font-family:var(--font-title);font-weight:700;font-size:15px;margin-bottom:12px">📈 Estadísticas</div>
         <div style="font-size:13px;display:flex;flex-direction:column;gap:6px">
           <div><strong>🏠 Ocupación:</strong> habitaciones ocupadas por mes según fechas de contratos + duración individual por inquilino.</div>
           <div><strong>💶 Ingresos:</strong> cobros cobrados vs pendientes vs impagados por mes.</div>
@@ -393,13 +444,13 @@ textarea{resize:vertical;min-height:68px;}
 
       <!-- SINIESTROS -->
       <div class="card" style="margin-bottom:16px">
-        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:12px">🚨 Siniestros e incidencias</div>
+        <div style="font-family:var(--font-title);font-weight:700;font-size:15px;margin-bottom:12px">🚨 Siniestros e incidencias</div>
         <div style="font-size:13px">Registra cualquier incidencia (avería, humedad, robo…) con su tipo, descripción, compañía de seguros y coste estimado. Puedes cambiar el estado rápidamente (Abierto → En gestión → Resuelto) y añadir notas de seguimiento con fecha para llevar un historial completo.</div>
       </div>
 
       <!-- SYNC -->
       <div class="card" style="margin-bottom:16px">
-        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:12px">🔄 Sincronización</div>
+        <div style="font-family:var(--font-title);font-weight:700;font-size:15px;margin-bottom:12px">🔄 Sincronización</div>
         <div style="font-size:13px;display:flex;flex-direction:column;gap:6px">
           <div>La barra de sync en el Dashboard muestra la hora de la última actualización. Se actualiza automáticamente tras <strong>cada acción</strong> (guardar, borrar, marcar pagado…).</div>
           <div>Si necesitas forzar una recarga completa desde Supabase, pulsa <strong>🔄 Actualizar</strong> en el Dashboard.</div>
@@ -408,7 +459,7 @@ textarea{resize:vertical;min-height:68px;}
 
       <!-- PROPIETARIOS -->
       <div class="card">
-        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:12px">👥 Propietarios</div>
+        <div style="font-family:var(--font-title);font-weight:700;font-size:15px;margin-bottom:12px">👥 Propietarios</div>
         <div style="font-size:13px">Puedes registrar varios propietarios en <em>Mi empresa → Propietarios</em>. Al crear movimientos en Banco puedes asignar un propietario concreto o dejarlo en «Ambos/Común» para que se reparta automáticamente.</div>
       </div>
     </div>
@@ -433,7 +484,7 @@ textarea{resize:vertical;min-height:68px;}
     </div>
     <div class="stats-row" id="statsOcupKpis" style="margin-bottom:16px;align-items:start"></div>
     <div class="card" style="padding:20px"><div class="gantt-wrap" id="chartOcupacion"><div class="text-muted text-sm">Cargando…</div></div></div>
-    <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin:20px 0 10px">Ocupación por habitación</div>
+    <div style="font-family:var(--font-title);font-weight:700;font-size:14px;margin:20px 0 10px">Ocupación por habitación</div>
     <div class="card" style="padding:20px"><div class="gantt-wrap" id="chartOcupacionHabs"><div class="text-muted text-sm">Cargando…</div></div></div>
   </div>
   <!-- Ingresos -->
@@ -479,11 +530,11 @@ textarea{resize:vertical;min-height:68px;}
     <button class="filter-btn" onclick="filterBanco('gasto',this)">🔴 Gastos</button>
   </div>
   <div style="margin-bottom:14px;display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center">
-    <select id="bancoFiltProp" onchange="renderBanco()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none">
+    <select id="bancoFiltProp" onchange="renderBanco()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none">
       <option value="">Todos los propietarios</option>
     </select>
-    <input id="bancoFiltConcepto" placeholder="🔍 Concepto…" oninput="renderBanco()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none">
-    <input type="month" id="bancoFiltMes" onchange="renderBanco()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none">
+    <input id="bancoFiltConcepto" placeholder="🔍 Concepto…" oninput="renderBanco()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none">
+    <input type="month" id="bancoFiltMes" onchange="renderBanco()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none">
   </div>
   <div class="table-wrap"><table>
     <thead><tr><th>Fecha</th><th>Tipo</th><th>Concepto</th><th>Propietario</th><th>Importe</th><th>Origen</th><th>Acciones</th></tr></thead>
@@ -529,7 +580,7 @@ textarea{resize:vertical;min-height:68px;}
     <button class="btn filter-btn"        id="bugFiltDone"  onclick="setBugFiltro('resuelto',this)">✅ Completados</button>
   </div>
   <div style="display:flex;gap:10px;margin-bottom:18px;align-items:flex-start">
-    <textarea id="bugInput" placeholder="Describe el bug o mejora…" rows="2" style="flex:1;resize:vertical;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:10px 12px;font-size:13px;font-family:'DM Sans',sans-serif"></textarea>
+    <textarea id="bugInput" placeholder="Describe el bug o mejora…" rows="2" style="flex:1;resize:vertical;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:10px 12px;font-size:13px;font-family:var(--font-body)"></textarea>
     <button class="btn btn-primary" onclick="addBug()" style="align-self:flex-end">+ Añadir</button>
   </div>
   <div id="bugsList"></div>
@@ -548,7 +599,7 @@ textarea{resize:vertical;min-height:68px;}
   <!-- Zona de drop compartida -->
   <div id="extDropZone" style="border:2px dashed var(--border);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px;background:var(--surface2)"
     onclick="document.getElementById('extFileInput').click()"
-    ondragover="event.preventDefault();this.style.borderColor='var(--accent)';this.style.background='rgba(124,106,247,.07)'"
+    ondragover="event.preventDefault();this.style.borderColor='var(--accent)';this.style.background='color-mix(in srgb,var(--accent) 7%,transparent)'"
     ondragleave="this.style.borderColor='var(--border)';this.style.background='var(--surface2)'"
     ondrop="handleExtDrop(event)">
     <input type="file" id="extFileInput" accept="image/*,.pdf" style="display:none" onchange="handleExtFile(this.files[0])">
@@ -583,7 +634,7 @@ textarea{resize:vertical;min-height:68px;}
   <!-- Resultado: MODO FACTURA -->
   <div id="extResultFactura" style="display:none">
     <div class="card" style="margin-bottom:14px;padding:16px">
-      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin-bottom:12px">📋 Datos extraídos — revisa y confirma</div>
+      <div style="font-family:var(--font-title);font-weight:700;font-size:14px;margin-bottom:12px">📋 Datos extraídos — revisa y confirma</div>
       <div class="form-row">
         <div class="form-group"><label>Tipo de suministro</label><select id="extGTipo"></select></div>
         <div class="form-group"><label>Proveedor</label><input id="extGProveedor"></div>
@@ -617,7 +668,7 @@ textarea{resize:vertical;min-height:68px;}
   <div id="extResultBanco" style="display:none">
     <div class="card" style="padding:16px;margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px">🏦 Movimientos detectados — marca los que quieres crear</div>
+        <div style="font-family:var(--font-title);font-weight:700;font-size:14px">🏦 Movimientos detectados — marca los que quieres crear</div>
         <div style="display:flex;gap:6px">
           <button class="btn btn-secondary btn-sm" onclick="extSeleccionarTodos(true)">Todos</button>
           <button class="btn btn-secondary btn-sm" onclick="extSeleccionarTodos(false)">Ninguno</button>
@@ -876,6 +927,15 @@ textarea{resize:vertical;min-height:68px;}
     </select>
   </div>
   <div class="form-group"><label>Notas / Coberturas / Detalles</label><textarea id="datoNotas" placeholder="Cobertura total, include robo, deducible 300€..."></textarea></div>
+  <div class="form-group">
+    <label>Adjuntos (PDF, imagen — max 5 MB c/u)</label>
+    <div id="datoDocArea" style="border:2px dashed var(--border);border-radius:8px;padding:14px;text-align:center;cursor:pointer" onclick="document.getElementById('datoDocInput').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor='var(--border)'" ondrop="event.preventDefault();this.style.borderColor='var(--border)';Array.from(event.dataTransfer.files).forEach(addDatoDocFile)">
+      <input type="file" id="datoDocInput" accept=".pdf,.jpg,.jpeg,.png,.webp" multiple style="display:none" onchange="Array.from(this.files).forEach(addDatoDocFile);this.value=''">
+      <div class="text-muted text-sm">Toca aquí o arrastra los archivos<br><span style="font-size:11px">Póliza, contrato de suministro, factura…</span></div>
+    </div>
+    <div id="datoDocPending" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+    <div id="datoDocExisting" style="margin-top:10px"></div>
+  </div>
   <input type="hidden" id="datoEditId">
   <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modalDato')">Cancelar</button><button class="btn btn-primary" onclick="saveDato()">Guardar</button></div>
 </div></div>
@@ -1013,12 +1073,13 @@ async function bootApp(){
   document.getElementById('userEmail').textContent=STATE.user?.email||'';
   STATE.currentPisoId=localStorage.getItem('currentPisoId_'+STATE.user.id)||null;
   // Cargar preferencias de empresa desde Supabase
-  const{data:prefs}=await sb.from('user_prefs').select('empresa,current_piso_id,termino_fijo_acs,ultima_revision_banco').eq('user_id',STATE.user.id).maybeSingle();
+  const{data:prefs}=await sb.from('user_prefs').select('empresa,current_piso_id,termino_fijo_acs,ultima_revision_banco,tema').eq('user_id',STATE.user.id).maybeSingle();
   if(prefs){
     if(prefs.empresa) STATE.empresa=prefs.empresa;
     if(prefs.current_piso_id && !STATE.currentPisoId) STATE.currentPisoId=prefs.current_piso_id;
     STATE.terminoFijoAcs=parseFloat(prefs.termino_fijo_acs)||0;
     STATE.ultimaRevisionBanco=prefs.ultima_revision_banco||'';
+    if(prefs.tema&&TEMAS[prefs.tema]){aplicarTema(prefs.tema);try{localStorage.setItem('tema',prefs.tema);}catch(_){}}
   }
   applyEmpresaUI();
   await loadAllData();
@@ -1030,14 +1091,14 @@ async function loadAllData(){
   setSyncStatus('loading','Actualizando…');
   try{
     // Si alguna tabla falla, se lanza el error y no se pisa nada de lo que ya hay en pantalla
-    const [pisos,habs,inqs,cts,cbs,gts,hist,suml,sins,datos,props,banco,bugs,ctDocs]=await Promise.all(
+    const [pisos,habs,inqs,cts,cbs,gts,hist,suml,sins,datos,props,banco,bugs,ctDocs,datoDocs]=await Promise.all(
       Object.keys(TABLAS).map(k=>cargarTabla(k))
     );
     STATE.pisos=pisos;STATE.habitaciones=habs;STATE.inquilinos=inqs;
     STATE.contratos=cts;STATE.cobros=cbs;STATE.gastos=gts;
     STATE.historicoGastos=hist;STATE.tiposSupl=suml;
     STATE.siniestros=sins;STATE.datosInteres=datos;STATE.bugs=bugs;STATE.contratoDocs=ctDocs;
-    STATE.propietarios=props;STATE.banco=banco;
+    STATE.propietarios=props;STATE.banco=banco;STATE.datoDocs=datoDocs;
     if(!STATE.tiposSupl.length)await insertDefaultSuml();
     if(STATE.currentPisoId&&!STATE.pisos.find(p=>p.id===STATE.currentPisoId))STATE.currentPisoId=null;
     if(!STATE.currentPisoId&&STATE.pisos.length)STATE.currentPisoId=STATE.pisos[0].id;
@@ -1052,7 +1113,7 @@ const TABLAS={
   pisos:['created_at',true], habitaciones:['created_at',true], inquilinos:['created_at',true], contratos:['created_at',true],
   cobros:['created_at',false], gastos:['fecha_fin',false,q=>q.eq('pagada',false)], historico_gastos:['archivado_at',false],
   tipos_suml:['created_at',true], siniestros:['fecha',false], datos_interes:['created_at',true], propietarios:['created_at',true],
-  movimientos_banco:['fecha',false], bugs:['created_at',false], contrato_docs:['created_at',false],
+  movimientos_banco:['fecha',false], bugs:['created_at',false], contrato_docs:['created_at',false], dato_docs:['created_at',true],
 };
 // Carga todas las filas del usuario paginando de 1000 en 1000 (Supabase corta en 1000 por petición)
 async function cargarTabla(tabla){
@@ -1126,6 +1187,7 @@ function switchCfgTab(tab,btn){
   document.querySelectorAll('.cfg-panel').forEach(p=>p.classList.remove('active'));
   btn.classList.add('active');document.getElementById('cfgpanel-'+tab).classList.add('active');
   if(tab==='suministros')renderSuministrosTable();if(tab==='inmuebles')renderPisosGrid();
+  if(tab==='estilo')renderTemas();if(tab==='reparto')renderReparto();
   if(tab==='cuenta'){const inp=document.getElementById('cfgEmpresaInput');if(inp)inp.value=STATE.empresa||'';const tf=document.getElementById('cfgTerminoFijoInput');if(tf)tf.value=STATE.terminoFijoAcs||'';renderPropietariosTable();}
   // tab==='readme' no necesita render dinámico
 }
@@ -1213,6 +1275,82 @@ async function saveEmpresa(){
   if(error){toast(error.message,'error');return;}
   toast('Nombre de empresa guardado');
 }
+// ESTILO DE LA APP
+function renderTemas(){
+  const grid=document.getElementById('temasGrid');if(!grid)return;
+  const actual=document.documentElement.dataset.tema||'noche';
+  grid.innerHTML=Object.entries(TEMAS).map(([id,t])=>{const c=t.v;return `<button class="tema-card${id===actual?' activo':''}" onclick="elegirTema('${id}')">
+    <div class="tema-prev" style="background:${c.bg};border-radius:${c['radius-lg']}">
+      <div class="tema-prev-bar" style="background:${['oceano','bosque'].includes(id)?c.accent:c.surface2};border-bottom:1px solid ${c.border}"><i style="background:${['oceano','bosque'].includes(id)?'#fff':c.accent}"></i><i style="background:${c.text2}"></i></div>
+      <div class="tema-prev-body"><span style="background:${c.surface};border:1px solid ${c.border};border-radius:${c.radius}"></span><span style="background:${c.surface};border:1px solid ${c.border};border-radius:${c.radius}"></span></div>
+    </div>
+    <div class="tema-nombre" style="font-family:${c['font-title']||'var(--font-title)'}">${t.nombre}${id===actual?'<span>✓</span>':''}</div>
+    <div class="tema-desc">${t.desc}</div></button>`;}).join('');
+}
+async function elegirTema(id){
+  if(!TEMAS[id])return;
+  aplicarTema(id);try{localStorage.setItem('tema',id);}catch(_){}
+  renderTemas();
+  if(!STATE.user)return;
+  const{error}=await sb.from('user_prefs').upsert({user_id:STATE.user.id,tema:id},{onConflict:'user_id'});
+  if(error){toast('Estilo aplicado, pero no se pudo guardar: '+error.message,'error');return;}
+  bumpSync();toast('Estilo «'+TEMAS[id].nombre+'» guardado');
+}
+
+// REPARTO DE FACTURAS (porcentaje por habitación; null = a partes iguales)
+function habsPisoActual(){return STATE.habitaciones.filter(h=>!STATE.currentPisoId||h.piso_id===STATE.currentPisoId).slice().sort((a,b)=>a.nombre.localeCompare(b.nombre,'es',{numeric:true}));}
+function renderReparto(){
+  const lista=document.getElementById('repartoLista');if(!lista)return;
+  const habs=habsPisoActual();
+  if(!habs.length){lista.innerHTML='<div class="text-muted text-sm">No hay habitaciones en el inmueble activo.</div>';document.getElementById('repartoTotal').innerHTML='';return;}
+  const igual=Math.round(10000/habs.length)/100;
+  const todasNull=habs.every(h=>h.pct_reparto==null);
+  lista.innerHTML=habs.map(h=>`<div class="room-detail-row"><span class="room-detail-label">${esc(h.nombre)} <span class="badge badge-${h.estado}" style="font-size:10px;margin-left:4px">${cap(h.estado)}</span></span>
+    <span style="display:flex;align-items:center;gap:6px"><input type="number" class="reparto-input" data-hab="${h.id}" min="0" max="100" step="0.01" value="${todasNull?igual:(h.pct_reparto??0)}" oninput="actualizarTotalReparto()" style="width:90px;text-align:right"> %</span></div>`).join('');
+  actualizarTotalReparto();
+}
+function actualizarTotalReparto(){
+  const total=[...document.querySelectorAll('.reparto-input')].reduce((s,i)=>s+(parseFloat(i.value)||0),0);
+  const ok=Math.abs(total-100)<0.05;
+  document.getElementById('repartoTotal').innerHTML=`<span>Total</span><span style="color:var(${ok?'--accent3':'--danger'})">${fmt(total)} %${ok?' ✓':' — debe sumar 100'}</span>`;
+  return ok;
+}
+function repartoIgual(){
+  const ins=[...document.querySelectorAll('.reparto-input')];if(!ins.length)return;
+  const igual=Math.round(10000/ins.length)/100;ins.forEach(i=>i.value=igual);actualizarTotalReparto();
+}
+async function guardarReparto(){
+  const ins=[...document.querySelectorAll('.reparto-input')];if(!ins.length)return;
+  if(!actualizarTotalReparto()){toast('Los porcentajes deben sumar 100','error');return;}
+  const vals=ins.map(i=>parseFloat(i.value)||0);
+  // Si todos son iguales se guarda como "a partes iguales" (null): así se adapta si se añaden habitaciones
+  const iguales=vals.every(x=>Math.abs(x-vals[0])<0.05);
+  try{
+    for(const i of ins){
+      const pct=iguales?null:(parseFloat(i.value)||0);
+      const{data,error}=await sb.from('habitaciones').update({pct_reparto:pct}).eq('id',i.dataset.hab).select().single();
+      if(error)throw error;
+      const k=STATE.habitaciones.findIndex(h=>h.id===data.id);STATE.habitaciones[k]=data;
+    }
+    bumpSync();renderReparto();toast(iguales?'Reparto a partes iguales guardado':'Porcentajes de reparto guardados');
+  }catch(e){toast(e.message,'error');}
+}
+// Peso de una habitación en el reparto: su % o, si no tiene, la parte igual de su inmueble
+function pesoReparto(h){
+  if(h.pct_reparto!=null)return Number(h.pct_reparto);
+  const n=STATE.habitaciones.filter(x=>x.piso_id===h.piso_id).length||1;
+  return 100/n;
+}
+// Reparte un importe entre habitaciones según su peso; el último absorbe el redondeo para que cuadre al céntimo
+function repartirImporte(total,habs){
+  const pesos=habs.map(pesoReparto);const suma=pesos.reduce((a,b)=>a+b,0);
+  let acumulado=0;
+  return habs.map((h,i)=>{
+    if(i===habs.length-1)return Math.round((total-acumulado)*100)/100;
+    const parte=suma>0?Math.round(total*pesos[i]/suma*100)/100:Math.round(total/habs.length*100)/100;
+    acumulado+=parte;return parte;
+  });
+}
 function renderConfigPage(){const panelInm=document.getElementById('cfgpanel-inmuebles');if(panelInm?.classList.contains('active'))renderPisosGrid();const panelCuenta=document.getElementById('cfgpanel-cuenta');if(panelCuenta?.classList.contains('active'))renderPropietariosTable();}
 function renderPisosGrid(){
   const grid=document.getElementById('pisosGrid');if(!grid)return;
@@ -1222,7 +1360,7 @@ function renderPisosGrid(){
     const numHabs=STATE.habitaciones.filter(h=>h.piso_id===p.id).length;
     const numInqs=STATE.inquilinos.filter(i=>{const h=STATE.habitaciones.find(x=>x.id===i.habitacion_id);return h&&h.piso_id===p.id&&i.estado==='activo';}).length;
     const isActive=STATE.currentPisoId===p.id;
-    const borde=isActive?'border-color:var(--accent);background:rgba(124,106,247,.06)':'';
+    const borde=isActive?'border-color:var(--accent);background:color-mix(in srgb,var(--accent) 6%,transparent)':'';
     html+=`<div class="card" style="margin-bottom:14px;${borde}">
       <div class="card-header"><div style="flex:1;min-width:0"><div class="card-title">${esc(p.nombre)}</div><div class="text-sm text-muted">${esc(p.direccion||'Sin direccion')}</div></div>${isActive?'<span class="badge badge-activo">Activo</span>':''}</div>
       <div class="room-detail-row"><span class="room-detail-label">Habitaciones</span><span class="room-detail-value">${numHabs}</span></div>
@@ -1429,7 +1567,7 @@ async function renderExistingDocs(contratoId){
   '</div>';
 }
 async function verDoc(docId){
-  const d=(STATE.contratoDocs||[]).find(x=>x.id===docId);if(!d)return;
+  const d=[...(STATE.contratoDocs||[]),...(STATE.datoDocs||[])].find(x=>x.id===docId);if(!d)return;
   const{data,error}=await sb.storage.from('contratos').createSignedUrl(d.path,600);
   if(error){toast('Error al obtener URL','error');return;}
   document.getElementById('verDocNombre').textContent=d.nombre||'Documento';
@@ -1458,9 +1596,13 @@ async function deleteDoc(docId){
 async function verDocContrato(id){
   const{data:docs,error}=await sb.from('contrato_docs').select('*').eq('contrato_id',id).order('created_at');
   if(error||!docs||!docs.length){toast('Sin documentos adjuntos','error');return;}
-  if(docs.length===1){await verDoc(docs[0].id);return;}
-  // Si hay varios: mostrar lista en el modal de ver doc
   STATE.contratoDocs=(STATE.contratoDocs||[]).filter(d=>d.contrato_id!==id).concat(docs);
+  mostrarListaDocs(docs);
+}
+// Abre el visor: un solo documento directamente, varios como lista para elegir
+function mostrarListaDocs(docs){
+  if(!docs.length){toast('Sin documentos adjuntos','error');return;}
+  if(docs.length===1){verDoc(docs[0].id);return;}
   const lista=document.getElementById('verDocLista');
   lista.innerHTML=docs.map(d=>'<button class="btn btn-secondary" style="width:100%;margin-bottom:6px;text-align:left" onclick="verDoc(\''+d.id+'\')">📎 '+esc(d.nombre)+'</button>').join('');
   lista.style.display='';
@@ -1714,7 +1856,7 @@ function renderGastosStats(){
   const activos=STATE.gastos.filter(g=>!g.pagada);
   const total=activos.reduce((s,g)=>s+Number(g.importe),0);
   const cardStyle='flex:0 0 auto;min-width:130px;max-width:190px;padding:10px 13px;';
-  const valStyle='font-family:\'Syne\',sans-serif;font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;';
+  const valStyle='font-family:var(--font-title);font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;';
   const lblStyle='font-size:11px;color:var(--text2);margin-top:3px;';
   document.getElementById('gastosStats').innerHTML=
     `<div class="stat-card" style="${cardStyle}"><div class="stat-value stat-accent" style="${valStyle}">€${fmt(total)}</div><div class="stat-label" style="${lblStyle}">Total facturas</div></div>`+
@@ -1923,10 +2065,10 @@ function renderGantt(){
   while(cur<=maxDate){tickDates.push(new Date(cur));cur.setMonth(cur.getMonth()+1);}
   let svg=`<svg class="gantt-svg" width="${svgW}" height="${svgH}" xmlns="http://www.w3.org/2000/svg">`;
   tipos.forEach((t,i)=>{const y=margin.top+i*rowH;if(i%2===0)svg+=`<rect x="${margin.left}" y="${y}" width="${barW}" height="${rowH}" fill="rgba(255,255,255,0.018)" rx="0"/>`;});
-  tickDates.forEach(d=>{const x=margin.left+xOf(hoyLocal(d));if(x<margin.left||x>margin.left+barW)return;svg+=`<line x1="${x}" y1="${margin.top}" x2="${x}" y2="${margin.top+chartH}" stroke="#2a2a38" stroke-width="1"/>`;const lbl=d.toLocaleDateString('es',{month:'short',year:'2-digit'}).replace('. ','/').toUpperCase();svg+=`<text x="${x}" y="${margin.top+chartH+18}" text-anchor="middle" font-size="9" fill="#8888a8" font-family="DM Sans,sans-serif">${lbl}</text>`;});
+  tickDates.forEach(d=>{const x=margin.left+xOf(hoyLocal(d));if(x<margin.left||x>margin.left+barW)return;svg+=`<line x1="${x}" y1="${margin.top}" x2="${x}" y2="${margin.top+chartH}" style="stroke:var(--border)" stroke-width="1"/>`;const lbl=d.toLocaleDateString('es',{month:'short',year:'2-digit'}).replace('. ','/').toUpperCase();svg+=`<text x="${x}" y="${margin.top+chartH+18}" text-anchor="middle" font-size="9" style="fill:var(--text2)" font-family="inherit">${lbl}</text>`;});
   const hoyX=margin.left+xOf(hoyLocal());
-  if(hoyX>=margin.left&&hoyX<=margin.left+barW){svg+=`<line x1="${hoyX}" y1="${margin.top}" x2="${hoyX}" y2="${margin.top+chartH}" stroke="#f76a6a" stroke-width="1.5" stroke-dasharray="4,3"/>`;svg+=`<text x="${hoyX}" y="${margin.top-5}" text-anchor="middle" font-size="9" fill="#f76a6a" font-family="DM Sans,sans-serif">HOY</text>`;}
-  tipos.forEach((t,i)=>{const g=porTipo[t];const s=getSuml(t);const y=margin.top+i*rowH;const barY=y+10;const barH=rowH-20;const x1=margin.left+xOf(g.fecha_inicio);const x2=margin.left+xOf(g.fecha_fin);const barLen=Math.max(x2-x1,4);const gId='g_'+t.replace(/\W/g,'_');svg+=`<defs><linearGradient id="${gId}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${esc(s.color)}" stop-opacity="0.9"/><stop offset="100%" stop-color="${esc(s.color)}" stop-opacity="0.5"/></linearGradient></defs>`;svg+=`<text x="${margin.left-6}" y="${barY+barH/2+4}" text-anchor="end" font-size="11" fill="#e8e8f0" font-family="DM Sans,sans-serif" font-weight="500">${esc(s.icono)} ${esc(t)}</text>`;svg+=`<rect x="${x1}" y="${barY}" width="${barLen}" height="${barH}" fill="url(#${gId})" rx="5"/>`;if(barLen>70){svg+=`<text x="${x1+6}" y="${barY+barH/2+4}" font-size="9" fill="rgba(0,0,0,0.75)" font-family="DM Sans,sans-serif">${fmtD(g.fecha_inicio)}</text>`;svg+=`<text x="${x2-6}" y="${barY+barH/2+4}" text-anchor="end" font-size="9" fill="rgba(0,0,0,0.75)" font-family="DM Sans,sans-serif">${fmtD(g.fecha_fin)}</text>`;}svg+=`<text x="${x1+barLen/2}" y="${barY-3}" text-anchor="middle" font-size="9" fill="${esc(s.color)}" font-family="DM Sans,sans-serif" font-weight="600">€${fmt(g.importe)}</text>`;});
+  if(hoyX>=margin.left&&hoyX<=margin.left+barW){svg+=`<line x1="${hoyX}" y1="${margin.top}" x2="${hoyX}" y2="${margin.top+chartH}" stroke="#f76a6a" stroke-width="1.5" stroke-dasharray="4,3"/>`;svg+=`<text x="${hoyX}" y="${margin.top-5}" text-anchor="middle" font-size="9" fill="#f76a6a" font-family="inherit">HOY</text>`;}
+  tipos.forEach((t,i)=>{const g=porTipo[t];const s=getSuml(t);const y=margin.top+i*rowH;const barY=y+10;const barH=rowH-20;const x1=margin.left+xOf(g.fecha_inicio);const x2=margin.left+xOf(g.fecha_fin);const barLen=Math.max(x2-x1,4);const gId='g_'+t.replace(/\W/g,'_');svg+=`<defs><linearGradient id="${gId}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${esc(s.color)}" stop-opacity="0.9"/><stop offset="100%" stop-color="${esc(s.color)}" stop-opacity="0.5"/></linearGradient></defs>`;svg+=`<text x="${margin.left-6}" y="${barY+barH/2+4}" text-anchor="end" font-size="11" style="fill:var(--text)" font-family="inherit" font-weight="500">${esc(s.icono)} ${esc(t)}</text>`;svg+=`<rect x="${x1}" y="${barY}" width="${barLen}" height="${barH}" fill="url(#${gId})" rx="5"/>`;if(barLen>70){svg+=`<text x="${x1+6}" y="${barY+barH/2+4}" font-size="9" fill="rgba(0,0,0,0.75)" font-family="inherit">${fmtD(g.fecha_inicio)}</text>`;svg+=`<text x="${x2-6}" y="${barY+barH/2+4}" text-anchor="end" font-size="9" fill="rgba(0,0,0,0.75)" font-family="inherit">${fmtD(g.fecha_fin)}</text>`;}svg+=`<text x="${x1+barLen/2}" y="${barY-3}" text-anchor="middle" font-size="9" fill="${esc(s.color)}" font-family="inherit" font-weight="600">€${fmt(g.importe)}</text>`;});
   svg+='</svg>';container.innerHTML=svg;
 }
 function renderGastos(){renderGastosStats();renderGastosFilters();if(gastosActiveTab==='pendientes')renderGastosTabla();else if(gastosActiveTab==='historico')renderHistorico();else if(gastosActiveTab==='grafico')renderGantt();}
@@ -1969,9 +2111,12 @@ async function crearCobrosAlquiler(){
 async function crearCobrosProrateados(){
   const pendientes=STATE.gastos.filter(g=>!g.pagada);if(!pendientes.length){toast('No hay facturas pendientes de prorrateo','error');return;}
   const elegibles=STATE.habitaciones.filter(h=>h.estado==='ocupada'&&STATE.inquilinos.find(i=>i.habitacion_id===h.id&&i.estado==='activo'));if(!elegibles.length){toast('No hay habitaciones ocupadas con inquilino activo','error');return;}
-  const total=pendientes.reduce((s,g)=>s+Number(g.importe),0);const cuota=Math.round((total/elegibles.length)*100)/100;
   const hoy=new Date();const mes=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');const fecha=hoyLocal(hoy);
-  const cobroRows=elegibles.map(h=>{const inq=STATE.inquilinos.find(i=>i.habitacion_id===h.id&&i.estado==='activo');const detalle=pendientes.map(g=>`${getSuml(g.tipo).icono}${g.tipo} ${fmtD(g.fecha_inicio)}→${fmtD(g.fecha_fin)} €${fmt(Number(g.importe)/elegibles.length)}`).join(' | ');return{user_id:STATE.user.id,inquilino_id:inq.id,habitacion_id:h.id,concepto:'Suministros',mes,importe:cuota,metodo:'Transferencia',estado:'pendiente',fecha,notas:'Prorrateo: '+detalle};});
+  // Cada factura se reparte según los porcentajes de Configuración > Reparto facturas (por defecto, a partes iguales)
+  const partes=pendientes.map(g=>repartirImporte(Number(g.importe),elegibles));
+  const cobroRows=elegibles.map((h,k)=>{const inq=STATE.inquilinos.find(i=>i.habitacion_id===h.id&&i.estado==='activo');const detalle=pendientes.map((g,j)=>`${getSuml(g.tipo).icono}${g.tipo} ${fmtD(g.fecha_inicio)}→${fmtD(g.fecha_fin)} €${fmt(partes[j][k])}`).join(' | ');const importe=Math.round(partes.reduce((s,p)=>s+p[k],0)*100)/100;return{user_id:STATE.user.id,inquilino_id:inq.id,habitacion_id:h.id,concepto:'Suministros',mes,importe,metodo:'Transferencia',estado:'pendiente',fecha,notas:'Prorrateo: '+detalle};});
+  const resumen=cobroRows.map(r=>(STATE.habitaciones.find(h=>h.id===r.habitacion_id)?.nombre||'?')+': €'+fmt(r.importe)).join('\n');
+  if(!confirm('Se van a generar estos cobros de suministros:\n\n'+resumen+'\n\n¿Continuar?'))return;
   const histRows=pendientes.map(g=>({user_id:STATE.user.id,gasto_id_origen:g.id,tipo:g.tipo,fecha_inicio:g.fecha_inicio,fecha_fin:g.fecha_fin,importe:g.importe,proveedor:g.proveedor,num_factura:g.num_factura,notas:g.notas,motivo:'Prorrateada'}));
   try{
     const{data:cbData,error:cbErr}=await sb.from('cobros').insert(cobroRows).select();if(cbErr)throw cbErr;
@@ -1981,7 +2126,7 @@ async function crearCobrosProrateados(){
     // Quitar del array local los ya prorateados (pasan al histórico)
     const idsProrateados=new Set(pendientes.map(g=>g.id));
     STATE.gastos=STATE.gastos.filter(g=>!idsProrateados.has(g.id));
-    renderGastos();renderCobros();toast(elegibles.length+' cobro(s) de €'+fmt(cuota)+' — Facturas archivadas');
+    renderGastos();renderCobros();toast(elegibles.length+' cobro(s) de suministros creados — Facturas archivadas');
   }catch(e){toast(e.message,'error');}
 }
 
@@ -2006,15 +2151,17 @@ function renderDashboard(){
     (pend>0?'<div class="stat-card" style="flex:1;min-width:90px"><div class="stat-value stat-yellow">'+pend+'</div><div class="stat-label">Cobros pend.</div></div>':'');
 
   const grid=document.getElementById('dashboardHabs');const habsPiso=STATE.habitaciones.filter(h=>!STATE.currentPisoId||h.piso_id===STATE.currentPisoId);const pisoActivo=getCurrentPiso();
-  if(!habsPiso.length){grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:40px 20px"><div style="font-size:40px;margin-bottom:10px">🏠</div><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700">${pisoActivo?esc(pisoActivo.nombre):'Sin inmueble'}</div>${pisoActivo&&pisoActivo.direccion?`<div style="font-size:13px;color:var(--text2);margin-top:4px">${esc(pisoActivo.direccion)}</div>`:''}</div>`;return;}
+  if(!habsPiso.length){grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:40px 20px"><div style="font-size:40px;margin-bottom:10px">🏠</div><div style="font-family:var(--font-title);font-size:18px;font-weight:700">${pisoActivo?esc(pisoActivo.nombre):'Sin inmueble'}</div>${pisoActivo&&pisoActivo.direccion?`<div style="font-size:13px;color:var(--text2);margin-top:4px">${esc(pisoActivo.direccion)}</div>`:''}</div>`;return;}
   grid.innerHTML=habsPiso.map(h=>{
     const inq=STATE.inquilinos.find(i=>i.habitacion_id===h.id&&i.estado==='activo');
     const uc=STATE.cobros.find(c=>c.habitacion_id===h.id);
-    // T2: pending cobros for this habitacion
+    // Cobros pendientes de esta habitación, con su total
     const cobPend=STATE.cobros.filter(c=>c.habitacion_id===h.id&&c.estado==='pendiente');
-    const pendHtml=cobPend.length?'<div style="margin-top:10px;padding:8px 10px;background:rgba(247,196,106,.08);border:1px solid rgba(247,196,106,.2);border-radius:8px">'
+    const totalPend=cobPend.reduce((s,c)=>s+Number(c.importe||0),0);
+    const pendHtml=cobPend.length?'<div style="margin-top:10px;padding:8px 10px;background:color-mix(in srgb,var(--accent2) 8%,transparent);border:1px solid color-mix(in srgb,var(--accent2) 20%,transparent);border-radius:8px">'
       +'<div style="font-size:10px;font-weight:600;color:var(--accent2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">⏳ Pendiente de pago</div>'
       +cobPend.map(c=>'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:var(--text2)">'+esc(c.concepto)+(c.mes?' · '+esc(c.mes):'')+'</span><span style="font-weight:600;color:var(--accent2)">€'+fmt(c.importe)+'</span></div>').join('')
+      +'<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-top:6px;padding-top:6px;border-top:1px solid color-mix(in srgb,var(--accent2) 30%,transparent)"><span>Total pendiente'+(inq?' · '+esc(inq.nombre.split(' ')[0]):'')+'</span><span style="color:var(--accent2)">€'+fmt(totalPend)+'</span></div>'
       +'</div>':'';
     return `<div class="card" style="cursor:pointer;display:flex;flex-direction:column" onclick="showPage('habitaciones')">
       <div class="card-header"><div class="card-title">${esc(h.nombre)}</div><span class="badge badge-${h.estado}">● ${cap(h.estado)}</span></div>
@@ -2121,7 +2268,7 @@ function renderChartOcupacion(){
       const mesesRestantes=fin?Math.max(0,Math.ceil((fin-hoy)/(1000*60*60*24*30.44))):null;
       const pct=ini&&fin?Math.min(100,Math.round((hoy-ini)/(fin-ini)*100)):null;
       cardsHtml+=`<div class="stat-card">
-        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;margin-bottom:6px">${esc(inq.nombre)}</div>
+        <div style="font-family:var(--font-title);font-weight:700;font-size:13px;margin-bottom:6px">${esc(inq.nombre)}</div>
         <div class="text-sm text-muted" style="margin-bottom:8px">${hab?esc(hab.nombre):'—'}</div>
         ${mesesTranscurridos!==null?`<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span class="text-muted">Transcurridos</span><span style="font-weight:600;color:var(--accent3)">${mesesTranscurridos} meses</span></div>`:''}
         ${mesesRestantes!==null?`<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px"><span class="text-muted">Restantes</span><span style="font-weight:600;color:var(--accent2)">${mesesRestantes} meses</span></div>`:''}
@@ -2161,16 +2308,16 @@ function renderOcupacionPorHab(){
   habs.forEach((h,hi)=>{
     const y=pad.top+hi*rowH;
     if(hi%2===0) svg+=`<rect x="${pad.left}" y="${y}" width="${cW}" height="${rowH}" fill="rgba(255,255,255,0.018)"/>`;
-    svg+=`<text x="${pad.left-8}" y="${y+rowH/2+4}" text-anchor="end" font-size="11" fill="#e8e8f0" font-family="DM Sans,sans-serif">${esc(h.nombre)}</text>`;
+    svg+=`<text x="${pad.left-8}" y="${y+rowH/2+4}" text-anchor="end" font-size="11" style="fill:var(--text)" font-family="inherit">${esc(h.nombre)}</text>`;
   });
 
   // Grid vertical (meses)
   months.forEach((ym,i)=>{
     const x=xOf(i);
     const step=n<=12?1:n<=24?2:3;
-    svg+=`<line x1="${x}" y1="${pad.top}" x2="${x}" y2="${pad.top+habs.length*rowH}" stroke="#2a2a38" stroke-width="1"/>`;
+    svg+=`<line x1="${x}" y1="${pad.top}" x2="${x}" y2="${pad.top+habs.length*rowH}" style="stroke:var(--border)" stroke-width="1"/>`;
     if(i%step===0){
-      svg+=`<text x="${x}" y="${H-pad.bottom+16}" text-anchor="middle" font-size="9" fill="#8888a8" font-family="DM Sans,sans-serif" transform="rotate(-35,${x},${H-pad.bottom+16})">${mesLabel(ym)}</text>`;
+      svg+=`<text x="${x}" y="${H-pad.bottom+16}" text-anchor="middle" font-size="9" style="fill:var(--text2)" font-family="inherit" transform="rotate(-35,${x},${H-pad.bottom+16})">${mesLabel(ym)}</text>`;
     }
   });
 
@@ -2205,12 +2352,12 @@ function renderOcupacionPorHab(){
       const color=colors[colorIdx];
       svg+=`<rect x="${x1}" y="${y}" width="${Math.max(4,x2-x1)}" height="${bH}" fill="${color}" rx="3" opacity="0.85"/>`;
       if(x2-x1>36&&inq){
-        svg+=`<text x="${x1+5}" y="${y+bH/2+4}" font-size="9" fill="rgba(0,0,0,0.85)" font-family="DM Sans,sans-serif">${esc(inq.nombre.split(' ')[0])}</text>`;
+        svg+=`<text x="${x1+5}" y="${y+bH/2+4}" font-size="9" fill="rgba(0,0,0,0.85)" font-family="inherit">${esc(inq.nombre.split(' ')[0])}</text>`;
       }
     });
     // Si no hay contratos en rango, línea punteada
     if(!cts.length){
-      svg+=`<line x1="${xOf(0)}" y1="${y+bH/2}" x2="${xOf(n-1)}" y2="${y+bH/2}" stroke="#2a2a38" stroke-width="1" stroke-dasharray="4,3"/>`;
+      svg+=`<line x1="${xOf(0)}" y1="${y+bH/2}" x2="${xOf(n-1)}" y2="${y+bH/2}" style="stroke:var(--border)" stroke-width="1" stroke-dasharray="4,3"/>`;
     }
   });
 
@@ -2220,7 +2367,7 @@ function renderOcupacionPorHab(){
   if(hoyI>=0){
     const x=xOf(hoyI);
     svg+=`<line x1="${x}" y1="${pad.top}" x2="${x}" y2="${pad.top+habs.length*rowH}" stroke="#f76a6a" stroke-width="1.5" stroke-dasharray="4,3"/>`;
-    svg+=`<text x="${x}" y="${pad.top-6}" text-anchor="middle" font-size="9" fill="#f76a6a" font-family="DM Sans,sans-serif">HOY</text>`;
+    svg+=`<text x="${x}" y="${pad.top-6}" text-anchor="middle" font-size="9" fill="#f76a6a" font-family="inherit">HOY</text>`;
   }
 
   svg+='</svg>';
@@ -2352,8 +2499,8 @@ function renderBarChart(el, labels, values, pcts, opts={}){
   for(let i=0;i<=4;i++){
     const y=pad.top+cH*(1-i/4);
     const val=Math.round(yMax*i/4);
-    svg+=`<line x1="${pad.left}" y1="${y}" x2="${W-pad.right}" y2="${y}" stroke="#2a2a38" stroke-width="1"/>`;
-    svg+=`<text x="${pad.left-6}" y="${y+4}" text-anchor="end" font-size="10" fill="#8888a8" font-family="DM Sans,sans-serif">${val}</text>`;
+    svg+=`<line x1="${pad.left}" y1="${y}" x2="${W-pad.right}" y2="${y}" style="stroke:var(--border)" stroke-width="1"/>`;
+    svg+=`<text x="${pad.left-6}" y="${y+4}" text-anchor="end" font-size="10" style="fill:var(--text2)" font-family="inherit">${val}</text>`;
   }
   // Bars
   values.forEach((v,i)=>{
@@ -2362,20 +2509,20 @@ function renderBarChart(el, labels, values, pcts, opts={}){
     const y=pad.top+cH-bH;
     svg+=`<rect x="${x}" y="${y}" width="${barW}" height="${bH}" fill="${esc(opts.color||'#7c6af7')}" rx="3" opacity="0.85"/>`;
     if(opts.showPct&&pcts[i]!==undefined){
-      svg+=`<text x="${x+barW/2}" y="${y-5}" text-anchor="middle" font-size="9" fill="${esc(opts.color||'#7c6af7')}" font-family="DM Sans,sans-serif">${pcts[i]}%</text>`;
+      svg+=`<text x="${x+barW/2}" y="${y-5}" text-anchor="middle" font-size="9" fill="${esc(opts.color||'#7c6af7')}" font-family="inherit">${pcts[i]}%</text>`;
     } else if(v>0){
-      svg+=`<text x="${x+barW/2}" y="${y-5}" text-anchor="middle" font-size="9" fill="${esc(opts.color||'#7c6af7')}" font-family="DM Sans,sans-serif">${v}</text>`;
+      svg+=`<text x="${x+barW/2}" y="${y-5}" text-anchor="middle" font-size="9" fill="${esc(opts.color||'#7c6af7')}" font-family="inherit">${v}</text>`;
     }
     // Label eje X — mostrar cada N según densidad
     const step=n<=12?1:n<=24?2:3;
     if(i%step===0){
-      svg+=`<text x="${x+barW/2}" y="${H-pad.bottom+16}" text-anchor="middle" font-size="9" fill="#8888a8" font-family="DM Sans,sans-serif" transform="rotate(-35,${x+barW/2},${H-pad.bottom+16})">${labels[i]}</text>`;
+      svg+=`<text x="${x+barW/2}" y="${H-pad.bottom+16}" text-anchor="middle" font-size="9" style="fill:var(--text2)" font-family="inherit" transform="rotate(-35,${x+barW/2},${H-pad.bottom+16})">${labels[i]}</text>`;
     }
   });
   // Eje X
-  svg+=`<line x1="${pad.left}" y1="${pad.top+cH}" x2="${W-pad.right}" y2="${pad.top+cH}" stroke="#2a2a38" stroke-width="1"/>`;
+  svg+=`<line x1="${pad.left}" y1="${pad.top+cH}" x2="${W-pad.right}" y2="${pad.top+cH}" style="stroke:var(--border)" stroke-width="1"/>`;
   // Título
-  svg+=`<text x="${pad.left}" y="16" font-size="11" fill="#8888a8" font-family="DM Sans,sans-serif">${esc(opts.label||'')}</text>`;
+  svg+=`<text x="${pad.left}" y="16" font-size="11" style="fill:var(--text2)" font-family="inherit">${esc(opts.label||'')}</text>`;
   svg+='</svg>';
   el.innerHTML=svg;
 }
@@ -2394,8 +2541,8 @@ function renderGroupedBarChart(el, labels, series){
   // Grid
   for(let i=0;i<=4;i++){
     const y=pad.top+cH*(1-i/4);
-    svg+=`<line x1="${pad.left}" y1="${y}" x2="${W-pad.right}" y2="${y}" stroke="#2a2a38" stroke-width="1"/>`;
-    svg+=`<text x="${pad.left-6}" y="${y+4}" text-anchor="end" font-size="10" fill="#8888a8" font-family="DM Sans,sans-serif">€${fmt(Math.round(yMax*i/4))}</text>`;
+    svg+=`<line x1="${pad.left}" y1="${y}" x2="${W-pad.right}" y2="${y}" style="stroke:var(--border)" stroke-width="1"/>`;
+    svg+=`<text x="${pad.left-6}" y="${y+4}" text-anchor="end" font-size="10" style="fill:var(--text2)" font-family="inherit">€${fmt(Math.round(yMax*i/4))}</text>`;
   }
   // Bars
   labels.forEach((lbl,i)=>{
@@ -2409,16 +2556,16 @@ function renderGroupedBarChart(el, labels, series){
     const step=n<=12?1:n<=24?2:3;
     if(i%step===0){
       const xc=pad.left+i*groupW+groupW/2;
-      svg+=`<text x="${xc}" y="${H-pad.bottom+16}" text-anchor="middle" font-size="9" fill="#8888a8" font-family="DM Sans,sans-serif" transform="rotate(-35,${xc},${H-pad.bottom+16})">${lbl}</text>`;
+      svg+=`<text x="${xc}" y="${H-pad.bottom+16}" text-anchor="middle" font-size="9" style="fill:var(--text2)" font-family="inherit" transform="rotate(-35,${xc},${H-pad.bottom+16})">${lbl}</text>`;
     }
   });
   // Eje X
-  svg+=`<line x1="${pad.left}" y1="${pad.top+cH}" x2="${W-pad.right}" y2="${pad.top+cH}" stroke="#2a2a38" stroke-width="1"/>`;
+  svg+=`<line x1="${pad.left}" y1="${pad.top+cH}" x2="${W-pad.right}" y2="${pad.top+cH}" style="stroke:var(--border)" stroke-width="1"/>`;
   // Leyenda
   let lx=pad.left;
   series.forEach(s=>{
     svg+=`<rect x="${lx}" y="10" width="10" height="10" fill="${esc(s.color)}" rx="2"/>`;
-    svg+=`<text x="${lx+13}" y="19" font-size="10" fill="#8888a8" font-family="DM Sans,sans-serif">${esc(s.label)}</text>`;
+    svg+=`<text x="${lx+13}" y="19" font-size="10" style="fill:var(--text2)" font-family="inherit">${esc(s.label)}</text>`;
     lx+=s.label.length*6+22;
   });
   svg+='</svg>';
@@ -2442,8 +2589,8 @@ function renderLineChart(el, labels, series){
   for(let i=0;i<=4;i++){
     const val=yMin+(yRange*i/4);
     const y=yOf(val);
-    svg+=`<line x1="${pad.left}" y1="${y}" x2="${W-pad.right}" y2="${y}" stroke="#2a2a38" stroke-width="1"/>`;
-    svg+=`<text x="${pad.left-6}" y="${y+4}" text-anchor="end" font-size="10" fill="#8888a8" font-family="DM Sans,sans-serif">€${fmt(Math.round(val))}</text>`;
+    svg+=`<line x1="${pad.left}" y1="${y}" x2="${W-pad.right}" y2="${y}" style="stroke:var(--border)" stroke-width="1"/>`;
+    svg+=`<text x="${pad.left-6}" y="${y+4}" text-anchor="end" font-size="10" style="fill:var(--text2)" font-family="inherit">€${fmt(Math.round(val))}</text>`;
   }
   // Zero line destacada si hay negativos
   if(yMin<0){const y0=yOf(0);svg+=`<line x1="${pad.left}" y1="${y0}" x2="${W-pad.right}" y2="${y0}" stroke="#8888a8" stroke-width="1.5" stroke-dasharray="4,2"/>`;}
@@ -2463,16 +2610,16 @@ function renderLineChart(el, labels, series){
     const step=n<=12?1:n<=24?2:3;
     if(i%step===0){
       const x=xOf(i);
-      svg+=`<text x="${x}" y="${H-pad.bottom+16}" text-anchor="middle" font-size="9" fill="#8888a8" font-family="DM Sans,sans-serif" transform="rotate(-35,${x},${H-pad.bottom+16})">${lbl}</text>`;
+      svg+=`<text x="${x}" y="${H-pad.bottom+16}" text-anchor="middle" font-size="9" style="fill:var(--text2)" font-family="inherit" transform="rotate(-35,${x},${H-pad.bottom+16})">${lbl}</text>`;
     }
   });
-  svg+=`<line x1="${pad.left}" y1="${pad.top+cH}" x2="${W-pad.right}" y2="${pad.top+cH}" stroke="#2a2a38" stroke-width="1"/>`;
+  svg+=`<line x1="${pad.left}" y1="${pad.top+cH}" x2="${W-pad.right}" y2="${pad.top+cH}" style="stroke:var(--border)" stroke-width="1"/>`;
   // Leyenda
   let lx=pad.left;
   series.forEach(s=>{
     const dash=s.dashed?'stroke-dasharray="4,2"':'';
     svg+=`<line x1="${lx}" y1="15" x2="${lx+16}" y2="15" stroke="${esc(s.color)}" stroke-width="2.5" ${dash}/>`;
-    svg+=`<text x="${lx+20}" y="19" font-size="10" fill="#8888a8" font-family="DM Sans,sans-serif">${esc(s.label)}</text>`;
+    svg+=`<text x="${lx+20}" y="19" font-size="10" style="fill:var(--text2)" font-family="inherit">${esc(s.label)}</text>`;
     lx+=s.label.length*6+30;
   });
   svg+='</svg>';
@@ -2678,8 +2825,55 @@ function openModalDato(id=null){
     document.getElementById('datoPeriodo').value='';
     document.getElementById('datoEditId').value='';
   }
+  _datoDocFiles=[];renderDatoDocsPendientes();renderDatoDocsGuardados(id);
   openModal('modalDato');
 }
+
+// Adjuntos de Datos de interés (se guardan en el almacenamiento, carpeta del usuario /datos/<id>/)
+let _datoDocFiles=[];
+function addDatoDocFile(file){
+  if(file.size>5242880){toast(file.name+' supera 5 MB','error');return;}
+  if(_datoDocFiles.find(f=>f.name===file.name))return;
+  _datoDocFiles.push(file);renderDatoDocsPendientes();
+}
+function quitarDatoDocPendiente(i){_datoDocFiles.splice(i,1);renderDatoDocsPendientes();}
+function renderDatoDocsPendientes(){
+  const el=document.getElementById('datoDocPending');if(!el)return;
+  el.innerHTML=_datoDocFiles.map((f,i)=>`<span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px">📎 ${esc(f.name)} <span style="cursor:pointer;color:var(--danger)" onclick="quitarDatoDocPendiente(${i})">✕</span></span>`).join('');
+}
+function renderDatoDocsGuardados(datoId){
+  const el=document.getElementById('datoDocExisting');if(!el)return;
+  const docs=(STATE.datoDocs||[]).filter(d=>d.dato_id===datoId);
+  if(!datoId||!docs.length){el.innerHTML='';return;}
+  el.innerHTML='<div class="text-sm text-muted" style="margin-bottom:6px">Adjuntos guardados:</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+
+    docs.map(d=>'<span style="display:inline-flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--accent3);border-radius:6px;padding:6px 10px;font-size:12px">'+
+      '<a href="#" onclick="event.stopPropagation();verDoc(\''+d.id+'\');return false" style="color:var(--accent3)">📎 '+esc(d.nombre)+'</a>'+
+      '<span style="cursor:pointer;color:var(--danger);font-size:14px;line-height:1" onclick="event.stopPropagation();quitarDatoDoc(\''+d.id+'\')">🗑</span></span>').join('')+'</div>';
+}
+async function subirDatoDocs(datoId){
+  let fallos=0;
+  for(const file of _datoDocFiles){
+    const limpio=file.name.replace(/[^\w.\-]+/g,'_');
+    const path=`${STATE.user.id}/datos/${datoId}/${Date.now()}_${limpio}`;
+    const{error:upErr}=await sb.storage.from('contratos').upload(path,file);
+    if(upErr){fallos++;toast('Error al subir '+file.name+': '+upErr.message,'error');continue;}
+    const{data:doc,error}=await sb.from('dato_docs').insert({user_id:STATE.user.id,dato_id:datoId,path,nombre:file.name}).select().single();
+    if(error){fallos++;toast('Error al registrar '+file.name+': '+error.message,'error');continue;}
+    STATE.datoDocs.push(doc);
+  }
+  _datoDocFiles=[];return fallos;
+}
+async function quitarDatoDoc(docId){
+  if(!confirm('¿Quitar este adjunto?'))return;
+  const d=(STATE.datoDocs||[]).find(x=>x.id===docId);if(!d)return;
+  try{
+    // El archivo se conserva en el almacenamiento; solo se quita el vínculo (queda en la papelera)
+    const{error}=await sb.from('dato_docs').delete().eq('id',docId);if(error)throw error;
+    STATE.datoDocs=STATE.datoDocs.filter(x=>x.id!==docId);
+    bumpSync();renderDatoDocsGuardados(d.dato_id);renderDatosInteres();toast('Adjunto quitado');
+  }catch(e){toast(e.message,'error');}
+}
+function verAdjuntosDato(id){mostrarListaDocs((STATE.datoDocs||[]).filter(d=>d.dato_id===id));}
 
 async function saveDato(){
   const nombre=v('datoNombre').trim();if(!nombre){toast('Nombre obligatorio','error');return;}
@@ -2687,14 +2881,16 @@ async function saveDato(){
   const eid=v('datoEditId');
   try{
     const row=await dbSave('datos_interes',payload,eid||null);
-    if(eid){const i=STATE.datosInteres.findIndex(x=>x.id===eid);STATE.datosInteres[i]=row;toast('Actualizado');}
-    else{STATE.datosInteres.push(row);toast('Dato añadido');}
+    if(eid){const i=STATE.datosInteres.findIndex(x=>x.id===eid);STATE.datosInteres[i]=row;}
+    else{STATE.datosInteres.push(row);}
+    const fallos=_datoDocFiles.length?await subirDatoDocs(row.id):0;
+    if(!fallos)toast(eid?'Actualizado':'Dato añadido');
     closeModal('modalDato');renderDatosInteres();
   }catch(e){toast(e.message,'error');}
 }
 
 async function deleteDato(id){
-  if(!confirm('¿Eliminar?'))return;
+  if(!confirm('¿Eliminar? Sus adjuntos se conservan.'))return;
   try{await dbDelete('datos_interes',id);STATE.datosInteres=STATE.datosInteres.filter(d=>d.id!==id);renderDatosInteres();toast('Eliminado');}
   catch(e){toast(e.message,'error');}
 }
@@ -2742,6 +2938,7 @@ function renderDatosInteres(){
         ${d.fecha_inicio?`<div class="room-detail-row"><span class="room-detail-label">Inicio</span><span class="room-detail-value text-muted">${fmtD(d.fecha_inicio)}</span></div>`:''}
         ${d.fecha_fin?`<div class="room-detail-row"><span class="room-detail-label">Vencimiento</span><span class="room-detail-value ${diasVence!==null&&diasVence<=60?'text-yellow':'text-muted'}">${fmtD(d.fecha_fin)}</span></div>`:''}
         ${d.notas?`<div style="margin-top:8px;font-size:12px;color:var(--text2);background:var(--surface2);border-radius:6px;padding:8px">${esc(d.notas)}</div>`:''}
+        ${(()=>{const n=(STATE.datoDocs||[]).filter(x=>x.dato_id===d.id).length;return n?`<button class="btn btn-secondary btn-sm" style="margin-top:8px;align-self:flex-start" onclick="verAdjuntosDato('${d.id}')">📎 ${n} adjunto${n>1?'s':''}</button>`:'';})()}
       </div>
     </div>`;
   }).join('');
